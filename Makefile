@@ -1,6 +1,7 @@
 PROJECT ?= piraeus-client
 REGISTRY ?= piraeusdatastore
 TAG ?= latest
+NOCACHE ?= false
 
 help:
 	@echo "Useful targets: 'update', 'upload'"
@@ -9,7 +10,7 @@ all: update upload
 
 .PHONY: update
 update:
-	docker build -t $(PROJECT):$(TAG) .
+	docker build --no-cache=$(NOCACHE) -t $(PROJECT):$(TAG) .
 	docker tag $(PROJECT):$(TAG) $(PROJECT):latest
 
 .PHONY: upload
