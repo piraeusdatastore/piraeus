@@ -1,3 +1,6 @@
+[![Docker Automated build](https://img.shields.io/docker/automated/piraeusdatastore/piraeus-client.svg)](https://hub.docker.com/r/piraeusdatastore/piraeus-client)
+[![Docker Repository on Quay](https://quay.io/repository/piraeusdatastore/piraeus-client/status "Docker Repository on Quay")](https://quay.io/repository/piraeusdatastore/piraeus-client)
+
 # piraeus-client
 
 This is the Piraeus container image containing the [linstor-client](https://github.com/LINBIT/linstor-client)
@@ -9,6 +12,10 @@ docker run -it --rm -e LS_CONTROLLERS=yourcontrollerIP piraeusdatastore/piraeus-
 ```
 
 The environment variable is used to specify the current controller's IP.
+
+# Registries
+- [Docker Hub](https://hub.docker.com/r/piraeusdatastore/piraeus-client)
+- [quay.io](https://quay.io/repository/piraeusdatastore/piraeus-client)
 
 # How does this differ from LINBIT's LINSTOR?
 The containers we provide in the Piraeus project are Debian based and packages get installed from a
