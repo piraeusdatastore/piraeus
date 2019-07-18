@@ -1,4 +1,5 @@
 FROM ubuntu:bionic
+MAINTAINER Roland Kammerer <roland.kammerer@linbit.com>
 
 ENV DRBD_VERSION 9.0.19-1
 
