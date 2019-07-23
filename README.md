@@ -15,7 +15,7 @@ docker run -d --name=piraeus-controller -p 3370:3370 piraeusdatastore/piraeus-se
 
 ## As a satellite
 ```sh
-docker run -d --name=piraeus-satellite --net=host --privileged -v /run/udev:/run/udev:ro piraeusdatastore/piraeus-server startSatellite
+docker run -d --name=piraeus-satellite --net=host --privileged -v /dev:/dev piraeusdatastore/piraeus-server startSatellite
 ```
 
 If `startSatellite` is omitted, and no other command is given, starting a satellite is the default. Host
