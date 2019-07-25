@@ -18,7 +18,7 @@ RUN wget https://packages.linbit.com/piraeus/lvm2_2.03.02-3+b1_amd64.deb -O /tmp
 RUN sed -i 's/udev_rules.*=.*/udev_rules=0/ ; s/udev_sync.*=.*/udev_sync=0/ ; s/obtain_device_list_from_udev.*=.*/obtain_device_list_from_udev=0/' /etc/lvm/lvm.conf
 
 # controller
-EXPOSE 3376/tcp 3377/tcp 3370/tcp
+EXPOSE 3376/tcp 3377/tcp 3370/tcp 3371/tcp
 
 # satellite
 EXPOSE 3366/tcp 3367/tcp
