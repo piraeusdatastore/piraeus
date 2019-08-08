@@ -6,7 +6,7 @@ ENV DRBD_VERSION 9.0.19-1
 RUN apt-get update && apt-get upgrade -y && apt-get install -y kmod gnupg wget make gcc && apt-get clean
 
 RUN wget https://www.linbit.com/downloads/drbd/9.0/drbd-${DRBD_VERSION}.tar.gz -O /drbd.tar.gz && \
-    wget https://raw.githubusercontent.com/LINBIT/drbd-9.0/master/docker/entry.sh -O /entry.sh
+    wget https://raw.githubusercontent.com/LINBIT/drbd/drbd-9.0/docker/entry.sh -O /entry.sh
 
 RUN chmod +x /entry.sh
 ENTRYPOINT /entry.sh
