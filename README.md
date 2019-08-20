@@ -42,3 +42,7 @@ Container used for module loading are based on Centos/Ubuntu.
 
 Additionally, container images provided by LINBIT as commercal offer on [drbd.io](http://drbd.io), are based
 on RHEL/UBI images and are for example OpenShift certified.
+
+# Maintainer workflow
+- `make update TAG=v1.0.0 NOCACHE=true`
+- `make upload TAG=v1.0.0 REGISTRY='quay.io/piraeusdatastore piraeusdatastore'`
