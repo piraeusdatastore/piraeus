@@ -28,6 +28,19 @@ docker run -it --rm --privileged \
    piraeusdatastore/drbd9-bionic:latest
 ```
 
+## Installing the kernel objects to the host
+
+This feature will be available starting from version 9.0.20. One has to mark the bind mounted `/lib/modules`
+directory writable (by removing the ':ro'), and set the environment variable "LB_INSTALL" to "yes". For
+RHEL/Centos this looks like this:
+
+```sh
+docker run -it --rm --privileged \
+   -v /lib/modules:/lib/modules -v /usr/src:/usr/src:ro \
+   -e "LB_INSTALL=yes" \
+   piraeusdatastore/drbd9-centos7:latest
+```
+
 # Registries
 - [Docker Hub](https://hub.docker.com/r/piraeusdatastore/)
 - [quay.io](https://quay.io/repository/piraeusdatastore/)
