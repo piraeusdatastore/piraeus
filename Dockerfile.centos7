@@ -1,7 +1,7 @@
 FROM centos:centos7
 MAINTAINER Roland Kammerer <roland.kammerer@linbit.com>
 
-ENV DRBD_VERSION 9.0.19-1
+ENV DRBD_VERSION 9.0.20-1
 
 RUN yum -y update-minimal --security --sec-severity=Important --sec-severity=Critical && \
 	yum install -y wget gcc make patch curl && yum clean all -y
