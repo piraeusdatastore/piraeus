@@ -1,5 +1,5 @@
 PROJECT ?= drbd9
-DF = Dockerfile.centos7 Dockerfile.bionic
+DF = Dockerfile.centos7 Dockerfile.centos8 Dockerfile.bionic
 REGISTRY ?= piraeusdatastore
 TAG ?= latest
 NOCACHE ?= false
