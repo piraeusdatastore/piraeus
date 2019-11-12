@@ -1,7 +1,7 @@
 FROM ubuntu:bionic
 MAINTAINER Roland Kammerer <roland.kammerer@linbit.com>
 
-ENV DRBD_VERSION 9.0.20-1
+ENV DRBD_VERSION 9.0.21-1
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y kmod gnupg wget make gcc patch curl && apt-get clean
 
