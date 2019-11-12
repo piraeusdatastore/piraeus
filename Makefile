@@ -28,10 +28,10 @@ upload:
 				if [ "$$f" = "${CENTOS}" ]; then \
 					docker tag $$pd:$(TAG) $$r/centos:$(TAG) ; \
 					docker tag $$pd:$(TAG) $$r/centos:latest ; \
-					echo docker push $$r/centos:$(TAG) ; \
-					echo docker push $$r/centos:latest ; \
+					docker push $$r/centos:$(TAG) ; \
+					docker push $$r/centos:latest ; \
 				fi; \
-			echo docker push $$r/$$pd:$(TAG) ; \
-			echo docker push $$r/$$pd:latest ; \
+			docker push $$r/$$pd:$(TAG) ; \
+			docker push $$r/$$pd:latest ; \
 		done; \
 	done
