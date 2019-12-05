@@ -49,7 +49,8 @@ spec:
       # - name: piraeus-regcred
       initContainers:
       - name: init
-        image: alexzhc/piraeus-init
+        image: 192.168.176.151/piraeus/piraeus-init
+        # image: alexzhc/piraeus-init
         imagePullPolicy: Always
         resources:
           # requests:
@@ -81,8 +82,8 @@ spec:
         - name: etc-linstor
           mountPath: /etc/linstor 
       containers:
-      - name: piraeus-controller
-        image: piraeusdatastore/piraeus-server:v1.2.1
+      - name: controller
+        image: piraeusdatastore/piraeus-server:v1.3.1
         imagePullPolicy: Always
         resources:
           # requests:
