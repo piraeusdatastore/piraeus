@@ -1,0 +1,523 @@
+
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: piraeus-csi-controller
+  namespace: piraeus
+  labels:
+    app.kubernetes.io/name: piraeus
+    app.kubernetes.io/component: piraeus-csi-controller
+spec:
+  serviceName: piraeus-csi-controller
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: piraeus
+      app.kubernetes.io/component: piraeus-csi-controller
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: piraeus
+        app.kubernetes.io/component: piraeus-csi-controller
+    spec:
+      serviceAccount: piraeus-csi-controller-sa
+      priorityClassName: system-cluster-critical
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 0
+      # hostNetwork: true
+      # dnsPolicy: ClusterFirstWithHostNet
+      dnsPolicy: ClusterFirst
+      # imagePullSecrets:
+      # - name: piraeus-regcred
+      containers:
+      - name: csi-provisioner
+        image: piraeus/csi-provisioner:v1.2.0
+        imagePullPolicy: "Always"
+        resources:
+          # requests:
+          #   cpu: '500m'
+          #   memory: '500Mi'
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        args:
+        - "--csi-address=$(ADDRESS)"
+        - "--v=5"
+        - "--feature-gates=Topology=true"
+        - "--timeout=120s"
+        env:
+        - name: ADDRESS
+          value: /var/lib/csi/sockets/pluginproxy/csi.sock
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /var/lib/csi/sockets/pluginproxy/
+      - name: csi-snapshotter
+        image: piraeus/csi-snapshotter:v1.1.0
+        imagePullPolicy: "Always"
+        resources:
+          # requests:
+          #   cpu: '500m'
+          #   memory: '500Mi'
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        args:
+        - "--csi-address=$(ADDRESS)"
+        - "--timeout=120s"
+        env:
+        - name: ADDRESS
+          value: /var/lib/csi/sockets/pluginproxy/csi.sock
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /var/lib/csi/sockets/pluginproxy/
+      - name: csi-cluster-driver-registrar
+        image: piraeus/csi-cluster-driver-registrar:v1.0.1
+        imagePullPolicy: "Always"
+        resources:
+          # requests:
+          #   cpu: '500m'
+          #   memory: '500Mi'
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        args:
+        - "--v=5"
+        - "--pod-info-mount-version=\"v1\""
+        - "--csi-address=$(ADDRESS)"
+        env:
+        - name: ADDRESS
+          value: /var/lib/csi/sockets/pluginproxy/csi.sock
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /var/lib/csi/sockets/pluginproxy/
+      - name: csi-attacher
+        image: piraeus/csi-attacher:v1.1.1
+        imagePullPolicy: "Always"
+        resources:
+          # requests:
+          #   cpu: '500m'
+          #   memory: '500Mi'
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        args:
+        - "--v=5"
+        - "--csi-address=$(ADDRESS)"
+        - "--timeout=120s"
+        env:
+        - name: ADDRESS
+          value: /var/lib/csi/sockets/pluginproxy/csi.sock
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /var/lib/csi/sockets/pluginproxy/
+      - name: piraeus-csi-plugin
+        image: piraeus/piraeus-csi:v0.7.2
+        imagePullPolicy: "Always"
+        resources:
+          # requests:
+          #   cpu: '500m'
+          #   memory: '500Mi'
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        args:
+          - "--csi-endpoint=$(CSI_ENDPOINT)"
+          - "--node=$(KUBE_NODE_NAME)"
+          - "--linstor-endpoint=$(LS_CONTROLLERS)"
+          - "--log-level=debug"
+        env:
+          - name: CSI_ENDPOINT
+            value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
+          - name: KUBE_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: LS_CONTROLLERS
+            value: "http://piraeus-controller.piraeus:3370"
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: socket-dir
+          mountPath: /var/lib/csi/sockets/pluginproxy/
+
+      volumes:
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+      - name: socket-dir
+        emptyDir: {}
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #       - matchExpressions:
+      #        - key: piraeus/controller
+      #          operator: In
+      #          values:
+      #          - "true"
+      #         - key: node-role.kubernetes.io/master
+      #           operator: Exists
+      # tolerations:
+      #   - operator: "Exists"
+      #     effect: "NoSchedule"
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: piraeus-csi-controller-sa
+  namespace: piraeus
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-provisioner-role
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshots"]
+    verbs: ["get", "list"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotcontents"]
+    verbs: ["get", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-provisioner-binding
+subjects:
+  - kind: ServiceAccount
+    name: piraeus-csi-controller-sa
+    namespace: piraeus
+roleRef:
+  kind: ClusterRole
+  name: csi-provisioner-role
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-attacher-role
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-attacher-binding
+subjects:
+  - kind: ServiceAccount
+    name: piraeus-csi-controller-sa
+    namespace: piraeus
+roleRef:
+  kind: ClusterRole
+  name: csi-attacher-role
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-cluster-driver-registrar-role
+rules:
+- apiGroups: ["csi.storage.k8s.io"]
+  resources: ["csidrivers"]
+  verbs: ["create", "delete", "list"]
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["create", "delete"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-cluster-driver-registrar-binding
+subjects:
+  - kind: ServiceAccount
+    name: piraeus-csi-controller-sa
+    namespace: piraeus
+roleRef:
+  kind: ClusterRole
+  name: csi-cluster-driver-registrar-role
+  apiGroup: rbac.authorization.k8s.io 
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: piraeus-csi-node
+  namespace: piraeus
+spec:
+  minReadySeconds: 0
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: piraeus
+        app.kubernetes.io/component: piraeus-csi-node
+    spec:
+      priorityClassName: system-node-critical
+      serviceAccount: piraeus-csi-node-sa
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 0
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      # imagePullSecrets:
+      # - name: piraeus-regcred
+      containers:
+      - name: csi-node-driver-registrar
+        image: piraeus/csi-node-driver-registrar:v1.1.0
+        imagePullPolicy: "Always"
+        resources:
+          # requests:
+          #   cpu: '500m'
+          #   memory: '500Mi'
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        args:
+        - "--v=5"
+        - "--csi-address=$(ADDRESS)"
+        - "--kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)"
+        lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "rm -rf /registration/linstor.csi.linbit.com /registration/linstor.csi.linbit.com-reg.sock"]
+        env:
+        - name: ADDRESS
+          value: /csi/csi.sock
+        - name: DRIVER_REG_SOCK_PATH
+          value: /var/lib/kubelet/plugins/linstor.csi.linbit.com/csi.sock
+        - name: KUBE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: plugin-dir
+          mountPath: /csi/
+        - name: registration-dir
+          mountPath: /registration/
+      - name: piraeus-csi-plugin
+        image: piraeus/piraeus-csi:v0.7.2
+        imagePullPolicy: "Always"
+        resources:
+          # requests:
+          #   cpu: '500m'
+          #   memory: '500Mi'
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        args:
+        - "--csi-endpoint=$(CSI_ENDPOINT)"
+        - "--node=$(KUBE_NODE_NAME)"
+        - "--linstor-endpoint=$(LS_CONTROLLERS)"
+        - "--log-level=debug"
+        env:
+        - name: CSI_ENDPOINT
+          value: unix:///csi/csi.sock
+        - name: KUBE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: LS_CONTROLLERS
+          value: "http://piraeus-controller.piraeus:3370"
+        securityContext:
+          privileged: true
+          capabilities:
+            add: ["SYS_ADMIN"]
+          allowPrivilegeEscalation: true
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: plugin-dir
+          mountPath: /csi
+        - name: pods-mount-dir
+          mountPath: /var/lib/kubelet
+          mountPropagation: "Bidirectional"
+        - name: device-dir
+          mountPath: /dev
+
+      volumes:
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+      - name: registration-dir
+        hostPath:
+          path: /var/lib/kubelet/plugins_registry/
+          type: DirectoryOrCreate
+      - name: plugin-dir
+        hostPath:
+          path: /var/lib/kubelet/plugins/linstor.csi.linbit.com/
+          type: DirectoryOrCreate
+      - name: pods-mount-dir
+        hostPath:
+          path: /var/lib/kubelet
+          type: Directory
+      - name: device-dir
+        hostPath:
+          path: /dev
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: piraeus/node
+                operator: In
+                values:
+                - "true"
+              # - key: node-role.kubernetes.io/master
+              #   operator: DoesNotExist
+      tolerations:
+        - operator: "Exists"
+          effect: "NoSchedule"          
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: piraeus-csi-node-sa
+  namespace: piraeus
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-driver-registrar-role
+  namespace: piraeus
+rules:
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-driver-registrar-binding
+subjects:
+- kind: ServiceAccount
+  name: piraeus-csi-node-sa
+  namespace: piraeus
+roleRef:
+  kind: ClusterRole
+  name: csi-driver-registrar-role
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-snapshotter-role
+rules:
+- apiGroups: [""]
+  resources: ["persistentvolumes"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["persistentvolumeclaims"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["storage.k8s.io"]
+  resources: ["storageclasses"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["list", "watch", "create", "update", "patch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list"]
+- apiGroups: ["snapshot.storage.k8s.io"]
+  resources: ["volumesnapshotclasses"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["snapshot.storage.k8s.io"]
+  resources: ["volumesnapshotcontents"]
+  verbs: ["create", "get", "list", "watch", "update", "delete"]
+- apiGroups: ["snapshot.storage.k8s.io"]
+  resources: ["volumesnapshots"]
+  verbs: ["get", "list", "watch", "update"]
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["create", "list", "watch", "delete"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-snapshotter-binding
+subjects:
+- kind: ServiceAccount
+  name: piraeus-controller-sa
+  namespace: piraeus
+roleRef:
+  kind: ClusterRole
+  name: csi-snapshotter-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: piraeus-default-r1
+provisioner: linstor.csi.linbit.com
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+parameters:
+  placementCount: "1"
+  placementPolicy: AutoPlace
+  allowRemoteVolumeAccess: "true"
+  disklessOnRemaining: "false"
+  fs: ext4
+  mountOpts: noatime,discard
+  storagePool: DfltStorPool
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: piraeus-default-r2
+provisioner: linstor.csi.linbit.com
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+parameters:
+  placementCount: "2"
+  placementPolicy: AutoPlace
+  allowRemoteVolumeAccess: "true"
+  disklessOnRemaining: "false"
+  fs: ext4
+  mountOpts: noatime,discard
+  storagePool: DfltStorPool
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: piraeus-default-r3
+provisioner: linstor.csi.linbit.com
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+parameters:
+  placementCount: "3"
+  placementPolicy: AutoPlace
+  allowRemoteVolumeAccess: "true"
+  disklessOnRemaining: "false"
+  fs: ext4
+  mountOpts: noatime,discard
+  storagePool: DfltStorPool
