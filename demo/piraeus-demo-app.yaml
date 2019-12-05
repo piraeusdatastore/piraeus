@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: piraeus-demo-app
+  namespace: default
+  labels:
+    dce.daocloud.io/component: piraeus-demo-app
+    dce.daocloud.io/app: piraeus-demo
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  replicas: 1
+  selector:
+    matchLabels:
+      dce.daocloud.io/component: piraeus-demo-app
+  template:
+    metadata:
+      labels:
+        dce.daocloud.io/component: piraeus-demo-app
+        dce.daocloud.io/app: piraeus-demo
+      name: piraeus-demo-app
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 0
+      initContainers:
+      - image: nginx:alpine
+        imagePullPolicy: IfNotPresent
+        name: piraeus-demo-app-init
+        command: [
+          'sh',
+          '-c',
+          'echo "<center><h1>Demo volume $( df | grep -E drbd )</h1></center>" > /usr/share/nginx/html/index.html'
+          ]
+        volumeMounts:
+        - name: html-root
+          mountPath: /usr/share/nginx/html
+        resources:
+          requests:
+            cpu: '100m'
+            memory: '100Mi'
+          limits:
+            cpu: '500m'
+            memory: '500Mi'
+      containers:
+      - image: nginx:alpine
+        imagePullPolicy: IfNotPresent
+        name: piraeus-demo-app
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html-root
+          mountPath: /usr/share/nginx/html
+        resources:
+          requests:
+            cpu: '100m'
+            memory: '100Mi'
+          limits:
+            cpu: '500m'
+            memory: '500Mi'
+      volumes:
+      - name: html-root
+        persistentVolumeClaim:
+          claimName: piraeus-demo-pvc
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: piraeus/node
+                operator: In
+                values:
+                - "true"
+              - key: piraeus/demo
+                operator: In
+                values:
+                - "true"
+      tolerations:
+      - operator: "Exists"
+        effect: "NoSchedule"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: piraeus-demo-app
+  namespace: default
+  labels:
+    dce.daocloud.io/app: piraeus-demo
+spec:
+  type: NodePort
+  ports:
+    - name: piraeus-demo-app-80
+      protocol: TCP
+      targetPort: 80
+      port: 80
+      nodePort: 31279
+  selector:
+    dce.daocloud.io/component: piraeus-demo-app
