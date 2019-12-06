@@ -1,20 +1,21 @@
+#@ load("funcs.lib.yml", "name", "etcd", "initimage")
 ---
 kind: Namespace
 apiVersion: v1
 metadata:
-  name: piraeus
+  name: #@ name()
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: piraeus-etcd
-  namespace: piraeus
+  name: #@ etcd()
+  namespace: #@ name()
   labels:
-    app.kubernetes.io/name: piraeus
-    app.kubernetes.io/component: piraeus-etcd
+    app.kubernetes.io/name: #@ name()
+    app.kubernetes.io/component: #@ etcd()
   annotations:
-    #create endpoints also if the related pod isn't ready
-    # service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+    #! create endpoints also if the related pod isn't ready
+    #! service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 spec:
   type: ClusterIP
   publishNotReadyAddresses: true
@@ -26,46 +27,46 @@ spec:
       port: 2380
       targetPort: 2380
   selector:
-    app.kubernetes.io/name: piraeus
-    app.kubernetes.io/component: piraeus-etcd
+    app.kubernetes.io/name: #@ name()
+    app.kubernetes.io/component: #@ etcd()
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: piraeus-etcd
-  namespace: piraeus
+  name: #@ etcd()
+  namespace: #@ name()
   labels:
-    app.kubernetes.io/name: piraeus
-    app.kubernetes.io/component: piraeus-etcd
+    app.kubernetes.io/name: #@ name()
+    app.kubernetes.io/component: #@ etcd()
 spec:
-  serviceName: piraeus-etcd
+  serviceName: #@ etcd()
   updateStrategy:
     type: RollingUpdate
   selector:
     matchLabels:
-      app.kubernetes.io/name: piraeus
-      app.kubernetes.io/component: piraeus-etcd
+      app.kubernetes.io/name: #@ name()
+      app.kubernetes.io/component: #@ etcd()
   replicas: 3
   template:
     metadata:
-      name: piraeus-etcd
+      name: #@ etcd()
       labels:
-        app.kubernetes.io/name: piraeus
-        app.kubernetes.io/component: piraeus-etcd
+        app.kubernetes.io/name: #@ name()
+        app.kubernetes.io/component: #@ etcd()
     spec:
       priorityClassName: system-node-critical
       restartPolicy: Always
-      # dnsPolicy: ClusterFirst
+      #! dnsPolicy: ClusterFirst
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
         - name: init
-          image: alexzhc/piraeus-init
+          image: #@ initimage()
           imagePullPolicy: Always
           resources:
-            # requests:
-            #   cpu: 50m
-            #   memory: 50Mi
+            #! requests:
+            #!   cpu: 50m
+            #!   memory: 50Mi
             limits:
               cpu: 100m
               memory: 100Mi
@@ -73,19 +74,19 @@ spec:
             - name: THIS_POD_NAMESPACE
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.namespace 
+                  fieldPath: metadata.namespace
             - name: THIS_POD_NAME
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.name  
+                  fieldPath: metadata.name
             - name: THIS_POD_IP
               valueFrom:
                 fieldRef:
-                  fieldPath: status.podIP     
+                  fieldPath: status.podIP
             - name: THIS_NODE_NAME
               valueFrom:
                 fieldRef:
-                  fieldPath: spec.nodeName 
+                  fieldPath: spec.nodeName
             - name: THIS_NODE_IP
               valueFrom:
                 fieldRef:
@@ -102,9 +103,9 @@ spec:
           image: quay.io/coreos/etcd:v3.3.18
           imagePullPolicy: Always
           resources:
-            # requests:
-            #   cpu: 100m
-            #   memory: 100Mi
+            #! requests:
+            #!   cpu: 100m
+            #!   memory: 100Mi
             limits:
               cpu: 500m
               memory: 500Mi
@@ -116,9 +117,9 @@ spec:
           env:
             - name: ETCDCTL_API
               value: '3'
-          command: 
+          command:
             - etcd
-          args: 
+          args:
             - --config-file
             - /init/conf/etcd.conf
           lifecycle:
@@ -128,7 +129,7 @@ spec:
                     - /init/cmd/poststart-etcd.sh
               preStop:
                 exec:
-                  command: 
+                  command:
                     - /init/cmd/prestop-etcd.sh
           readinessProbe:
             successThreshold: 3
@@ -152,7 +153,7 @@ spec:
         - name: init
           emptyDir: {}
         - name: data
-          # emptyDir: {}
+          #! emptyDir: {}
           hostPath:
             path: /var/local/piraeus/etcd
       affinity:
@@ -163,20 +164,20 @@ spec:
                   - key: app.kubernetes.io/component
                     operator: In
                     values:
-                      - piraeus-etcd
+                      - #@ etcd()
               topologyKey: kubernetes.io/hostname
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                # - key: piraeus/etcd
-                #   operator: In
-                #   values:
-                #     - "true"
+                #! - key: piraeus/etcd
+                #!   operator: In
+                #!   values:
+                #!     - "true"
                 - key: node-role.kubernetes.io/master
                   operator: DoesNotExist
       tolerations:
         - operator: "Exists"
           effect: "NoSchedule"
-      # imagePullSecrets:
-      #   - name: piraeus-regcred
+      #! imagePullSecrets:
+      #!   - name: piraeus-regcred

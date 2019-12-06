@@ -1,0 +1,5 @@
+#@data/values
+---
+name: "piraeus"
+images:
+  init: "alexzhc/piraeus-init"
