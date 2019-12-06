@@ -160,10 +160,10 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                - key: piraeus/node
-                  operator: In
-                  values:
-                    - "true"
+                  # - key: piraeus/node
+                  #   operator: In
+                  #   values:
+                  #     - "true"
                 - key: node-role.kubernetes.io/master
                   operator: DoesNotExist
       tolerations:
