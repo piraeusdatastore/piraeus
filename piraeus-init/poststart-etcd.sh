@@ -1,4 +1,7 @@
 #!/bin/sh
+# save log 
+exec 2> /var/log/k8s-lifecycle.log
+echo POSTSTART:
 
 export ETCDCTL_ENDPOINTS=$( cat /init/conf/etcd_local_endpoint )
 

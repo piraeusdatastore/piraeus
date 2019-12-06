@@ -51,8 +51,6 @@ spec:
                   fieldPath: spec.nodeName 
             - name: LS_CONTROLLERS
               value: piraeus-controller.piraeus:3370
-            - name: DfltStorPool_Dir
-              value: /var/local/piraeus/pools/DfltStorPool
             - name: TIMEOUT
               value: '3600'
           args:
@@ -75,8 +73,22 @@ spec:
             limits:
               cpu: 1
               memory: 1Gi
+          env:
+            - name: THIS_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName 
+            - name: LS_CONTROLLERS
+              value: piraeus-controller.piraeus:3370
+            - name: DemoPool_Dir
+              value: /var/local/piraeus/pools/DemoPool
           args:
             - startSatellite
+          lifecycle:
+              postStart:
+                exec:
+                  command:
+                    - /init/cmd/poststart-node.sh
           readinessProbe:
             successThreshold: 3
             failureThreshold: 3

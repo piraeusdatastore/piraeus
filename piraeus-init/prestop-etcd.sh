@@ -1,4 +1,7 @@
 #!/bin/sh -x
+# save log 
+exec 2> /var/log/k8s-lifecycle.log
+echo PRESTOP:
 
 export ETCDCTL_ENDPOINTS=$( cat /init/conf/etcd_local_endpoint )
 MEMBER_ID=$( cat /init/conf/etcd_member_id )
