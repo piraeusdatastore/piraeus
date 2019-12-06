@@ -29,6 +29,8 @@ spec:
         - name: init
           image: alexzhc/piraeus-init
           imagePullPolicy: Always
+          securityContext:
+            privileged: true
           resources:
             # requests:
             #   cpu: 50m
@@ -53,6 +55,10 @@ spec:
               value: piraeus-controller.piraeus:3370
             - name: TIMEOUT
               value: '3600'
+            - name: REGISTRY
+              value: quay.io/piraeusdatastore
+            - name: IMAGE_PULL_POLICY
+              value: 'Always'
           args:
             - startSatellite
           volumeMounts:
@@ -60,6 +66,12 @@ spec:
               mountPath: /etc/localtime 
             - name: init
               mountPath: /init
+            - name: dockersock
+              mountPath: /var/run/docker.sock
+            - name: usr-src
+              mountPath: /usr/src
+            - name: lib-modules
+              mountPath: /lib/modules
       containers:
         - name: node
           image: quay.io/piraeusdatastore/piraeus-server:v1.3.1
@@ -125,6 +137,10 @@ spec:
             path: /etc/localtime
         - name: init
           emptyDir: {}
+        - name: dockersock
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket
         - name: log
           hostPath: 
             path: /var/log/piraeus/linstor-satellite
@@ -137,6 +153,9 @@ spec:
         - name: usr-sbin
           hostPath:
             path: /usr/sbin
+        - name: usr-src
+          hostPath:
+            path: /usr/src
         - name: lib-modules
           hostPath: 
             path: /lib/modules
@@ -160,10 +179,10 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  # - key: piraeus/node
-                  #   operator: In
-                  #   values:
-                  #     - "true"
+                - key: piraeus/node
+                  operator: In
+                  values:
+                    - "true"
                 - key: node-role.kubernetes.io/master
                   operator: DoesNotExist
       tolerations:

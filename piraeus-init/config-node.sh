@@ -1,4 +1,5 @@
 #!/bin/bash -ex
+source /init/cmd/tools.sh
 
 # load drbd modules
 # grep '^drbd ' /proc/modules || modinfo drbd && modprobe -v drbd
@@ -6,13 +7,14 @@
 
 # check if controller is up  
 SECONDS=0
-until curl -sS ${LS_CONTROLLERS} --connect-timeout 2 ; do
+until linstor node list -p; do
     sleep 0.5
     if [ "${SECONDS}" -ge  "${TIMEOUT}" ]; then
         echo ERR: Unable to reach controller 
         exit 1 
     fi
 done
+
 
 # register node to cluster
 THIS_POD_IF=$( ip a  | grep -B2 "inet ${THIS_POD_IP}" | head -1 | awk '{print $2}' | sed 's/://g' )
@@ -27,4 +29,28 @@ else
 fi
 
 linstor node list -p 
+
+# compile and install drbd kernel module
+
+if [[ "$( uname -r ) " =~ el7 ]]; then
+    DRBD_DRIVER_LOADER_IMAGE="$REGISTRY/drbd9-centos7"
+elif [[ "$( uname -r ) " =~ el8 ]]; then
+    DRBD_DRIVER_LOADER_IMAGE="$REGISTRY/drbd9-centos8"
+elif [[ "$( uname -a ) " =~ Ubuntu ]]; then
+    DRBD_DRIVER_LOADER_IMAGE="$REGISTRY/drbd9-bionic"
+fi
+
+if [[ "${IMAGE_PULL_POLICY}" == "Always" ]]; then
+    docker pull ${DRBD_DRIVER_LOADER_IMAGE}
+fi
+
+docker run --rm --privileged \
+-v /lib/modules:/lib/modules \
+-v /usr/lib:/usr/lib:ro \
+-v /usr/src:/usr/src:ro \
+-e "LB_INSTALL=yes" \
+${DRBD_DRIVER_LOADER_IMAGE}
+
+modinfo drbd
+
 
