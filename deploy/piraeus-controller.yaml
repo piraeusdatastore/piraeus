@@ -17,7 +17,7 @@ spec:
     app.kubernetes.io/name: piraeus
     app.kubernetes.io/component: piraeus-controller
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: piraeus-controller
@@ -41,7 +41,7 @@ spec:
         app.kubernetes.io/name: piraeus
         app.kubernetes.io/component: piraeus-controller
     spec:
-      priorityClassName: system-cluster-critical
+      priorityClassName: system-node-critical
       restartPolicy: Always
       terminationGracePeriodSeconds: 0
       dnsPolicy: ClusterFirst
@@ -49,8 +49,7 @@ spec:
       # - name: piraeus-regcred
       initContainers:
       - name: init
-        image: 192.168.176.151/piraeus/piraeus-init
-        # image: alexzhc/piraeus-init
+        image: alexzhc/piraeus-init
         imagePullPolicy: Always
         resources:
           # requests:
@@ -60,30 +59,26 @@ spec:
             cpu: 100m
             memory: 100Mi
         env:
-        - name: THIS_NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName 
-        - name: THIS_NODE_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
-        - name: ETCD_SVC
-          value: &etcd_svc 'http://piraeus-etcd.piraeus:2379'
-        - name: ETCDCTL_ENDPOINTS
-          value: *etcd_svc
-        - name: ETCD_CLUSTER_SIZE
-          value: '3'
-        - name: TIMEOUT
-          value: '3600'
+          - name: THIS_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name  
+          - name: ETCDCTL_ENDPOINTS
+            value: 'http://piraeus-etcd.piraeus:2379'
+          - name: ETCDCTL_API
+            value: '3'
+          - name: ETCD_CLUSTER_SIZE
+            value: '3'
+          - name: TIMEOUT
+            value: '3600'
         volumeMounts:
-        - name: localtime
-          mountPath: /etc/localtime 
-        - name: etc-linstor
-          mountPath: /etc/linstor 
+          - name: localtime
+            mountPath: /etc/localtime 
+          - name: etc-linstor
+            mountPath: /etc/linstor 
       containers:
       - name: controller
-        image: piraeusdatastore/piraeus-server:v1.3.1
+        image: quay.io/piraeusdatastore/piraeus-server:v1.3.1
         imagePullPolicy: Always
         resources:
           # requests:
@@ -93,15 +88,15 @@ spec:
             cpu: '1'
             memory: '1Gi'
         ports:
-        - name: rest-api
-          containerPort: 3370
-          hostPort: 3370
-        - name: plain
-          containerPort: 3376
-          hostPort: 3376
-        - name: ssl
-          containerPort: 3377
-          hostPort: 3377
+          - name: rest-api
+            containerPort: 3370
+            hostPort: 3370
+          - name: plain
+            containerPort: 3376
+            hostPort: 3376
+          - name: ssl
+            containerPort: 3377
+            hostPort: 3377
         args:
           - startController
         readinessProbe:
@@ -112,32 +107,34 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 1
         volumeMounts:
-        - name: localtime
-          mountPath: /etc/localtime
-        - name: etc-linstor
-          mountPath: /etc/linstor 
-        - name: log
-          mountPath: /var/log/linstor-controller
+          - name: localtime
+            mountPath: /etc/localtime
+          - name: etc-linstor
+            mountPath: /etc/linstor 
+          - name: log
+            mountPath: /var/log/linstor-controller
       volumes:
-      - name: localtime
-        hostPath:
-          path: /etc/localtime
-      - name: etc-linstor
-        emptyDir: {}
-      - name: log
-        hostPath:
-          path: /var/log/piraeus/linstor-controller
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+        - name: etc-linstor
+          emptyDir: {}
+        - name: log
+          hostPath:
+            path: /var/log/piraeus/linstor-controller
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-            - matchExpressions:
-                # - key: piraeus/controller
-                #   operator: In
-                #   values:
-                #   - "true"
-              - key: node-role.kubernetes.io/master
-                operator: DoesNotExist
-      # tolerations:
-      #   - operator: "Exists"
-      #     effect: "NoSchedule"
+              - matchExpressions:
+                  # - key: piraeus/controller
+                  #   operator: In
+                  #   values:
+                  #   - "true"
+                  - key: node-role.kubernetes.io/master
+                    operator: DoesNotExist
+      tolerations:
+        - operator: "Exists"
+          effect: "NoSchedule"
+      # imagePullSecrets:
+      #   - name: piraeus-regcred

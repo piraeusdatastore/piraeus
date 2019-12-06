@@ -29,7 +29,7 @@ spec:
     app.kubernetes.io/name: piraeus
     app.kubernetes.io/component: piraeus-etcd
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: piraeus-etcd
@@ -40,8 +40,11 @@ metadata:
 spec:
   serviceName: piraeus-etcd
   updateStrategy:
-    rollingUpdate:
     type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: piraeus
+      app.kubernetes.io/component: piraeus-etcd
   replicas: 3
   template:
     metadata:
@@ -50,15 +53,14 @@ spec:
         app.kubernetes.io/name: piraeus
         app.kubernetes.io/component: piraeus-etcd
     spec:
-      priorityClassName: system-cluster-critical
+      priorityClassName: system-node-critical
       restartPolicy: Always
       # dnsPolicy: ClusterFirst
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
         - name: init
-          image: 192.168.176.151/piraeus/piraeus-init
-          # image: alexzhc/piraeus-init
+          image: alexzhc/piraeus-init
           imagePullPolicy: Always
           resources:
             # requests:
@@ -79,7 +81,7 @@ spec:
             - name: THIS_POD_IP
               valueFrom:
                 fieldRef:
-                  fieldPath: status.podIP      
+                  fieldPath: status.podIP     
             - name: THIS_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -88,10 +90,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
-            - name: THIS_POD_UID
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.uid  
             - name: ETCDCTL_API
               value: '3'
           volumeMounts:
@@ -167,18 +165,18 @@ spec:
                     values:
                       - piraeus-etcd
               topologyKey: kubernetes.io/hostname
-        # nodeAffinity:
-        #   requiredDuringSchedulingIgnoredDuringExecution:
-        #     nodeSelectorTerms:
-        #       - matchExpressions:
-        #         - key: piraeus/etcd
-        #           operator: In
-        #           values:
-        #             - "true"
-                # - key: node-role.kubernetes.io/master
-                #   operator: DoesNotExist
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                # - key: piraeus/etcd
+                #   operator: In
+                #   values:
+                #     - "true"
+                - key: node-role.kubernetes.io/master
+                  operator: DoesNotExist
+      tolerations:
+        - operator: "Exists"
+          effect: "NoSchedule"
       # imagePullSecrets:
       #   - name: piraeus-regcred
-        # tolerations:
-        #   - operator: "Exists"
-        #     effect: "NoSchedule"

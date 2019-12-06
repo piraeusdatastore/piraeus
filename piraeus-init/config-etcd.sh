@@ -23,12 +23,12 @@ export ETCDCTL_ENDPOINTS="http://${PIRAEUS_ETCD_SERVICE_HOST}:${CLIENT_PORT}"
 # add to cluster and 
 if [ ! -f /init/conf/etcd.conf ]; then
     echo Adding node to the cluster
-    if [[ ${THIS_POD_NAME} =~ -etcd-0$ ]] && ! etcdctl endpoint status; then
+    if [[ ${THIS_POD_NAME} =~ -etcd-0$ ]] && ! _best-effort etcdctl endpoint status; then
         INI_STATE=new
-    elif _best_effort etcdctl member list; then 
+    elif _best-effort etcdctl member list; then 
         INI_STATE=existing
-        EXISTING_CLUSTER=$(_best_effort etcdctl member list | grep -v ${ETCD_ADDR} | sed 's/,//g' |  awk '{print ","$3"="$4}' )
-        _best_effort etcdctl member add etcd-${ETCD_ADDR} --peer-urls=http://${ETCD_ADDR}:${PEER_PORT}
+        EXISTING_CLUSTER=$( cat /init/.best_effort_ouput | grep -v ${ETCD_ADDR} | sed 's/,//g' |  awk ' /-etcd-[0-9]+/ {print ","$3"="$4}' )
+        _best-effort etcdctl member add etcd-${ETCD_ADDR} --peer-urls=http://${ETCD_ADDR}:${PEER_PORT}
     else
         exit 1
     fi

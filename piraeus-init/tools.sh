@@ -12,12 +12,12 @@ _curl()
 }
 
 # try until succeed
-_best_effort() {
+_best-effort() {
     i=0
-    until "$@" > ._best_effort_ouput; do
+    until "$@" > /init/.best_effort_ouput; do
         let "++i"
         [ "$i" -ge 5 ] && return 1 
     done
-    cat ._best_effort_ouput
+    cat /init/.best_effort_ouput
     return 0
 }

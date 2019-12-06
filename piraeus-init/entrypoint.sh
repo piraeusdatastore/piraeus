@@ -5,20 +5,17 @@ mkdir -p /init/conf
 cp -vfr /root/cmd /init/
 chmod +x -R /root/cmd
 
-# configure etcd
+# configure each component
 if [[ ${THIS_POD_NAME} =~ -etcd-[0-9]+$ ]]; then
+    echo Configure etcd
     /init/cmd/config-etcd.sh
-# wait on etcd and get etcd cluster
 elif [[ ${THIS_POD_NAME} =~ -controller-[0-9]+$ ]]; then
-    # Check if etcd is health  
-    SECONDS=0
-    until [ "$( etcdctl member list | wc -l )" -ge "${ETCD_CLUSTER_SIZE}" ]; do
-    sleep 2
-    if [ "${SECONDS}" -ge  "${TIMEOUT}" ]; then
-        echo ERR: Unable to reach etcd
-        exit 0 # 
-    fi
-    done
-    
+    echo Configure controller
     /init/cmd/config-controller.sh
+elif [[ ${THIS_POD_NAME} =~ -node-[0-9a-z]+$ ]]; then
+    echo Configure node
+    /init/cmd/config-node.sh
+else
+    echo Failed to identify the component 
+    exit 1
 fi

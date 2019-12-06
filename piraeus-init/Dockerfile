@@ -1,4 +1,4 @@
-FROM docker:18$Z as DOCKER
+FROM docker:18 as DOCKER
 
 FROM quay.io/coreos/etcd:v3.3.18 as ETCD
 

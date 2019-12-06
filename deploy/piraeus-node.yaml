@@ -1,5 +1,5 @@
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: piraeus-node
@@ -10,6 +10,10 @@ spec:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: piraeus
+      app.kubernetes.io/component: piraeus-node
   template:
     metadata:
       labels:
@@ -21,144 +25,135 @@ spec:
       terminationGracePeriodSeconds: 0
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
-      # imagePullSecrets:
-      # - name: piraeus-regcred
       initContainers:
-      - name: init
-        image: 192.168.176.151/piraeus/piraeus-init
-        # image: alexzhc/piraeus-init
-        imagePullPolicy: Always
-        resources:
-          # requests:
-          #   cpu: 100m
-           #   memory: 100Mi
-          limits:
-            cpu: 500m
-            memory: 500Mi
-        env:
-        - name: LS_CONTROLLERS
-          value: 'piraeus-controller.piraeus:3370'
-        - name: TIMEOUT
-          value: '3600'
-        args:
-          - startSatellite
-        volumeMounts:
-        - name: localtime
-          mountPath: /etc/localtime 
-        - name: usr-sbin
-          mountPath: /install/usr/sbin
+        - name: init
+          image: alexzhc/piraeus-init
+          imagePullPolicy: Always
+          resources:
+            # requests:
+            #   cpu: 50m
+            #   memory: 50Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          env:
+            - name: THIS_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name  
+            - name: THIS_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP     
+            - name: THIS_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName 
+            - name: LS_CONTROLLERS
+              value: piraeus-controller.piraeus:3370
+            - name: DfltStorPool_Dir
+              value: /var/local/piraeus/pools/DfltStorPool
+            - name: TIMEOUT
+              value: '3600'
+          args:
+            - startSatellite
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime 
+            - name: init
+              mountPath: /init
       containers:
-      - name: node
-        image: piraeusdatastore/piraeus-server:v1.3.1
-        imagePullPolicy: Always
-        securityContext:
-          privileged: true
-        resources:
-          # requests:
-          #   cpu: '500m'
-           #   memory: '500Mi'
-          limits:
-            cpu: 1
-            memory: 1Gi
-        env:
-        - name: LS_CONTROLLERS
-          value: piraeus-controller.piraeus:3370
-        - name: DfltStorPool_Dir
-          value: /var/local/piraeus/pools/DfltStorPool
-        args:
-          - startController 
-        readinessProbe:
-          successThreshold: 3
-          failureThreshold: 3
-          tcpSocket:
-            port: 3366
-          initialDelaySeconds: 5
-          periodSeconds: 1                 
-        volumeMounts:        
-        - name: localtime
-          mountPath: /etc/localtime
-        - name: log
-          mountPath: /var/log/linstor-satellite
-        - name: var-local-piraeus
-          mountPath: /var/local/piraeus
-        - name: dev
-          mountPath: /dev
-        - name: lib-modules
-          mountPath: /lib/modules
-        - name: etc-lvm
-          mountPath: /etc/lvm    
-        - name: run-lvm
-          mountPath: /run/lvm
-        - name: etc-drbd-d
-          mountPath: /etc/drbd.d
-        - name: var-lib-linstor-d
-          mountPath: /var/lib/linstor.d
-        - name: etc-linstor
-          mountPath: /etc/linstor
-
+        - name: node
+          image: quay.io/piraeusdatastore/piraeus-server:v1.3.1
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          resources:
+            # requests:
+            #   cpu: '500m'
+            #   memory: '500Mi'
+            limits:
+              cpu: 1
+              memory: 1Gi
+          args:
+            - startSatellite
+          readinessProbe:
+            successThreshold: 3
+            failureThreshold: 3
+            tcpSocket:
+              port: 3366
+            initialDelaySeconds: 5
+            periodSeconds: 1                 
+          volumeMounts:        
+            - name: localtime
+              mountPath: /etc/localtime
+            - name: init
+              mountPath: /init
+            - name: log
+              mountPath: /var/log/linstor-satellite
+            - name: var-local-piraeus
+              mountPath: /var/local/piraeus
+            - name: dev
+              mountPath: /dev
+            - name: lib-modules
+              mountPath: /lib/modules
+            - name: etc-lvm
+              mountPath: /etc/lvm    
+            - name: run-lvm
+              mountPath: /run/lvm
+            - name: etc-drbd-d
+              mountPath: /etc/drbd.d
+            - name: var-lib-linstor-d
+              mountPath: /var/lib/linstor.d
+            - name: etc-linstor
+              mountPath: /etc/linstor
       volumes:
-      # Host mounts for operaton container
-      - name: localtime
-        hostPath:
-          path: /etc/localtime
-      - name: log
-        hostPath: 
-          path: /var/log/piraeus/linstor-satellite
-      - name: var-local-piraeus
-        hostPath:
-          path: /var/local/piraeus
-      - name: dev
-        hostPath: 
-          path: /dev
-      - name: usr-sbin
-        hostPath:
-          path: /usr/sbin
-      - name: lib-modules
-        hostPath: 
-          path: /lib/modules
-      - name: etc-lvm
-        hostPath: 
-          path: /etc/lvm
-      - name: run-lvm
-        hostPath: 
-          path: /run/lvm
-      - name: etc-drbd-d
-        hostPath: 
-          path: /etc/drbd.d
-      - name: var-lib-linstor-d
-        hostPath: 
-          path: /var/lib/linstor.d
-      - name: etc-linstor
-        hostPath: 
-          path: /etc/linstor
-
-      # Host mounts for drop installation
-      - name: usr-src-kernels
-        hostPath: 
-          path: /usr/src/kernels
-      - name: etc
-        hostPath: 
-          path: /etc
-      - name: lib
-        hostPath: 
-          path: /lib
-      - name: usr
-        hostPath:
-          path: /usr
-      - name: var
-        hostPath: 
-          path: /var          
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+        - name: init
+          emptyDir: {}
+        - name: log
+          hostPath: 
+            path: /var/log/piraeus/linstor-satellite
+        - name: var-local-piraeus
+          hostPath:
+            path: /var/local/piraeus
+        - name: dev
+          hostPath: 
+            path: /dev
+        - name: usr-sbin
+          hostPath:
+            path: /usr/sbin
+        - name: lib-modules
+          hostPath: 
+            path: /lib/modules
+        - name: etc-lvm
+          hostPath: 
+            path: /etc/lvm
+        - name: run-lvm
+          hostPath: 
+            path: /run/lvm
+        - name: etc-drbd-d
+          hostPath: 
+            path: /etc/drbd.d
+        - name: var-lib-linstor-d
+          hostPath: 
+            path: /var/lib/linstor.d
+        - name: etc-linstor
+          hostPath: 
+            path: /etc/linstor      
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-            - matchExpressions:
-              - key: piraeus/node
-                operator: In
-                values:
-                - "true"
-              - key: node-role.kubernetes.io/master
-                operator: DoesNotExist
+              - matchExpressions:
+                - key: piraeus/node
+                  operator: In
+                  values:
+                    - "true"
+                - key: node-role.kubernetes.io/master
+                  operator: DoesNotExist
       tolerations:
         - operator: "Exists"
           effect: "NoSchedule"
