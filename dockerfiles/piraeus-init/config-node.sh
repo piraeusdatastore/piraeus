@@ -38,6 +38,7 @@ elif [[ "$( uname -r ) " =~ el8 ]]; then
     DRBD_DRIVER_LOADER_IMAGE="$REGISTRY/drbd9-centos8"
 elif [[ "$( uname -a ) " =~ Ubuntu ]]; then
     DRBD_DRIVER_LOADER_IMAGE="$REGISTRY/drbd9-bionic"
+    $MOUNT_USR_LIB='-v /usr/lib:/usr/lib:ro'
 fi
 
 if [[ "${IMAGE_PULL_POLICY}" == "Always" ]]; then
@@ -46,7 +47,7 @@ fi
 
 docker run --rm --privileged \
 -v /lib/modules:/lib/modules \
--v /usr/lib:/usr/lib:ro \
+${MOUNT_USR_LIB} \
 -v /usr/src:/usr/src:ro \
 -e "LB_INSTALL=yes" \
 ${DRBD_DRIVER_LOADER_IMAGE}
