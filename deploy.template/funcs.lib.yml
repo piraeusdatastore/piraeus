@@ -16,6 +16,14 @@
 #@   return name() + "-node"
 #@ end
 
+#@ def csinode():
+#@   return name() + "-csi-node"
+#@ end
+
+#@ def csicontroller():
+#@   return name() + "-csi-controller"
+#@ end
+
 #@ def controller():
 #@   return name() + "-controller"
 #@ end
@@ -32,14 +40,18 @@
 #@   return data.values.registry
 #@ end
 
-#@ def imageversion(img):
-#@   return registry() + "/" + img + ":v" + data.values.contsatversion
+#@ def imageversion(img, version):
+#@   return registry() + "/" + img + ":v" + version
 #@ end
 
 #@ def controllerimage():
-#@   return imageversion(data.values.images.controller)
+#@   return imageversion(data.values.images.controller, data.values.contsatversion)
 #@ end
 
 #@ def satelliteimage():
-#@   return imageversion(data.values.images.satellite)
+#@   return imageversion(data.values.images.satellite, data.values.contsatversion)
+#@ end
+
+#@ def csiimage():
+#@   return imageversion(data.values.images.csi, data.values.csiversion)
 #@ end

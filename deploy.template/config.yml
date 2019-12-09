@@ -3,7 +3,9 @@
 name: "piraeus"
 registry: "quay.io/piraeusdatastore"
 contsatversion: "1.3.1"
+csiversion: "0.7.2"
 images:
   init: "alexzhc/piraeus-init"
   controller: "piraeus-server"
   satellite: "piraeus-server"
+  csi: "piraeus-csi"
