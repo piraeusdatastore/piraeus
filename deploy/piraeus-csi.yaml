@@ -35,7 +35,7 @@ spec:
       # - name: piraeus-regcred
       containers:
       - name: csi-provisioner
-        image: piraeus/csi-provisioner:v1.2.0
+        image: quay.io/k8scsi/csi-provisioner:v1.2.0
         imagePullPolicy: "Always"
         resources:
           # requests:
@@ -56,7 +56,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-snapshotter
-        image: piraeus/csi-snapshotter:v1.1.0
+        image: quay.io/k8scsi/csi-snapshotter:v1.1.0
         imagePullPolicy: "Always"
         resources:
           # requests:
@@ -75,7 +75,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-cluster-driver-registrar
-        image: piraeus/csi-cluster-driver-registrar:v1.0.1
+        image: quay.io/k8scsi/csi-cluster-driver-registrar:v1.0.1
         imagePullPolicy: "Always"
         resources:
           # requests:
@@ -95,7 +95,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-attacher
-        image: piraeus/csi-attacher:v1.1.1
+        image: quay.io/k8scsi/csi-attacher:v1.1.1
         imagePullPolicy: "Always"
         resources:
           # requests:
@@ -115,7 +115,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: piraeus-csi-plugin
-        image: piraeus/piraeus-csi:v0.7.2
+        image: quay.io/piraeusdatastore/piraeus-csi:v0.7.2
         imagePullPolicy: "Always"
         resources:
           # requests:
@@ -294,7 +294,7 @@ spec:
       # - name: piraeus-regcred
       containers:
       - name: csi-node-driver-registrar
-        image: piraeus/csi-node-driver-registrar:v1.1.0
+        image: quay.io/k8scsi/csi-node-driver-registrar:v1.1.0
         imagePullPolicy: "Always"
         resources:
           # requests:
@@ -326,7 +326,7 @@ spec:
         - name: registration-dir
           mountPath: /registration/
       - name: piraeus-csi-plugin
-        image: piraeus/piraeus-csi:v0.7.2
+        image: quay.io/k8scsi/piraeus-csi:v0.7.2
         imagePullPolicy: "Always"
         resources:
           # requests:
