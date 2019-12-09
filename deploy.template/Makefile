@@ -1,4 +1,4 @@
 all: ../deploy/etcd.yaml
 
-../deploy/etcd.yaml: etcd.template.yaml
-	ytt -f config.yaml -f funcs.lib.yml -f $< > $@
+../deploy/etcd.yaml: etcd.yaml
+	ytt -f config.yml -f funcs.lib.yml -f $< > $@
