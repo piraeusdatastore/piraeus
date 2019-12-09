@@ -1,0 +1,183 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: piraeus-node
+  namespace: piraeus
+spec:
+  minReadySeconds: 0
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: piraeus
+      app.kubernetes.io/component: piraeus-node
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: piraeus
+        app.kubernetes.io/component: piraeus-node
+    spec:
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 0
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      initContainers:
+      - name: init
+        image: alexzhc/piraeus-init
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        env:
+        - name: THIS_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: THIS_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: THIS_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: LS_CONTROLLERS
+          value: piraeus-controller.piraeus:3370
+        - name: TIMEOUT
+          value: "3600"
+        - name: REGISTRY
+          value: quay.io/piraeusdatastore
+        - name: IMAGE_PULL_POLICY
+          value: Always
+        args:
+        - startSatellite
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+        - name: dockersock
+          mountPath: /var/run/docker.sock
+        - name: usr-src
+          mountPath: /usr/src
+        - name: lib-modules
+          mountPath: /lib/modules
+      containers:
+      - name: node
+        image: quay.io/piraeusdatastore/piraeus-server:1.3.1
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        resources:
+          limits:
+            cpu: 1
+            memory: 1Gi
+        env:
+        - name: THIS_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: LS_CONTROLLERS
+          value: piraeus-controller.piraeus:3370
+        - name: DemoPool_Dir
+          value: /var/local/piraeus/pools/DemoPool
+        args:
+        - startSatellite
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /init/cmd/poststart-node.sh
+        readinessProbe:
+          successThreshold: 3
+          failureThreshold: 3
+          tcpSocket:
+            port: 3366
+          initialDelaySeconds: 5
+          periodSeconds: 1
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+        - name: log
+          mountPath: /var/log/linstor-satellite
+        - name: var-local-piraeus
+          mountPath: /var/local/piraeus
+        - name: dev
+          mountPath: /dev
+        - name: lib-modules
+          mountPath: /lib/modules
+        - name: etc-lvm
+          mountPath: /etc/lvm
+        - name: run-lvm
+          mountPath: /run/lvm
+        - name: etc-drbd-d
+          mountPath: /etc/drbd.d
+        - name: var-lib-linstor-d
+          mountPath: /var/lib/linstor.d
+        - name: etc-linstor
+          mountPath: /etc/linstor
+      volumes:
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+      - name: init
+        emptyDir: {}
+      - name: dockersock
+        hostPath:
+          path: /var/run/docker.sock
+          type: Socket
+      - name: log
+        hostPath:
+          path: /var/log/piraeus/linstor-satellite
+      - name: var-local-piraeus
+        hostPath:
+          path: /var/local/piraeus
+      - name: dev
+        hostPath:
+          path: /dev
+      - name: usr-sbin
+        hostPath:
+          path: /usr/sbin
+      - name: usr-src
+        hostPath:
+          path: /usr/src
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+      - name: etc-lvm
+        hostPath:
+          path: /etc/lvm
+      - name: run-lvm
+        hostPath:
+          path: /run/lvm
+      - name: etc-drbd-d
+        hostPath:
+          path: /etc/drbd.d
+      - name: var-lib-linstor-d
+        hostPath:
+          path: /var/lib/linstor.d
+      - name: etc-linstor
+        hostPath:
+          path: /etc/linstor
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: piraeus/node
+                operator: In
+                values:
+                - "true"
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
