@@ -33,7 +33,7 @@
 #@ end
 
 #@ def imageversion(img):
-#@   return registry() + "/" + img + ":" + data.values.contsatversion
+#@   return registry() + "/" + img + ":v" + data.values.contsatversion
 #@ end
 
 #@ def controllerimage():
