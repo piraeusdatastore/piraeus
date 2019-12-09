@@ -8,6 +8,30 @@
 #@   return name() + "-etcd"
 #@ end
 
+#@ def node():
+#@   return name() + "-node"
+#@ end
+
+#@ def controllerhostport():
+#@   return name() + "-controller." + name() + ":3370"
+#@ end
+
 #@ def initimage():
 #@   return data.values.images.init
+#@ end
+
+#@ def registry():
+#@   return data.values.registry
+#@ end
+
+#@ def imageversion(img):
+#@   return registry() + "/" + img + ":" + data.values.contsatversion
+#@ end
+
+#@ def controllerimage():
+#@   return imageversion(data.values.images.controller)
+#@ end
+
+#@ def satelliteimage():
+#@   return imageversion(data.values.images.satellite)
 #@ end
