@@ -1,4 +1,7 @@
-all: ../deploy/etcd.yaml
+SRC=$(wildcard *.yaml)
+DST=$(addprefix ../deploy/,$(SRC))
 
-../deploy/etcd.yaml: etcd.yaml
+all: $(DST)
+
+../deploy/%: %
 	ytt -f config.yml -f funcs.lib.yml -f $< > $@
