@@ -8,8 +8,16 @@
 #@   return name() + "-etcd"
 #@ end
 
+#@ def etcdendpoint():
+#@   return "http://" + etcd() + name() + ":2379"
+#@ end
+
 #@ def node():
 #@   return name() + "-node"
+#@ end
+
+#@ def controller():
+#@   return name() + "-controller"
 #@ end
 
 #@ def controllerhostport():

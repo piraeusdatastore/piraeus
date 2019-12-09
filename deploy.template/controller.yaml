@@ -1,12 +1,13 @@
+#@ load("funcs.lib.yml", "name", "controller", "initimage", "etcdendpoint", "controllerimage")
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: piraeus-controller
-  namespace: piraeus
+  name: #@ controller()
+  namespace: #@ name()
   labels:
-    app.kubernetes.io/name: piraeus
-    app.kubernetes.io/component: piraeus-controller
+    app.kubernetes.io/name: #@ name()
+    app.kubernetes.io/component: #@ controller()
 spec:
   type: ClusterIP
   ports:
@@ -14,47 +15,47 @@ spec:
     name: rest-api
     targetPort: 3370
   selector:
-    app.kubernetes.io/name: piraeus
-    app.kubernetes.io/component: piraeus-controller
+    app.kubernetes.io/name: #@ name()
+    app.kubernetes.io/component: #@ controller()
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: piraeus-controller
-  namespace: piraeus
+  name: #@ controller()
+  namespace: #@ name()
   labels:
-    app.kubernetes.io/name: piraeus
-    app.kubernetes.io/component: piraeus-controller
+    app.kubernetes.io/name: #@ name()
+    app.kubernetes.io/component: #@ controller()
 spec:
-  serviceName: piraeus-controller
+  serviceName: #@ controller()
   podManagementPolicy: Parallel
   updateStrategy:
     type: RollingUpdate
   selector:
     matchLabels:
-      app.kubernetes.io/name: piraeus
-      app.kubernetes.io/component: piraeus-controller
+      app.kubernetes.io/name: #@ name()
+      app.kubernetes.io/component: #@ controller()
   replicas: 1
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: piraeus
-        app.kubernetes.io/component: piraeus-controller
+        app.kubernetes.io/name: #@ name()
+        app.kubernetes.io/component: #@ controller()
     spec:
       priorityClassName: system-node-critical
       restartPolicy: Always
       terminationGracePeriodSeconds: 0
       dnsPolicy: ClusterFirst
-      # imagePullSecrets:
-      # - name: piraeus-regcred
+      #! imagePullSecrets:
+      #! - name: piraeus-regcred
       initContainers:
       - name: init
-        image: alexzhc/piraeus-init
+        image: #@ initimage()
         imagePullPolicy: Always
         resources:
-          # requests:
-          #   cpu: 50m
-           #   memory: 50Mi
+          #! requests:
+          #!   cpu: 50m
+          #!   memory: 50Mi
           limits:
             cpu: 100m
             memory: 100Mi
@@ -62,9 +63,9 @@ spec:
           - name: THIS_POD_NAME
             valueFrom:
               fieldRef:
-                fieldPath: metadata.name  
+                fieldPath: metadata.name
           - name: ETCDCTL_ENDPOINTS
-            value: 'http://piraeus-etcd.piraeus:2379'
+            value: #@ etcdendpoint()
           - name: ETCDCTL_API
             value: '3'
           - name: ETCD_CLUSTER_SIZE
@@ -73,17 +74,17 @@ spec:
             value: '3600'
         volumeMounts:
           - name: localtime
-            mountPath: /etc/localtime 
+            mountPath: /etc/localtime
           - name: etc-linstor
-            mountPath: /etc/linstor 
+            mountPath: /etc/linstor
       containers:
       - name: controller
-        image: quay.io/piraeusdatastore/piraeus-server:v1.3.1
+        image: #@ controllerimage()
         imagePullPolicy: Always
         resources:
-          # requests:
-          #   cpu: '500m'
-          #   memory: '500Mi'
+          #! requests:
+          #!   cpu: '500m'
+          #!   memory: '500Mi'
           limits:
             cpu: '1'
             memory: '1Gi'
@@ -97,8 +98,10 @@ spec:
           - name: ssl
             containerPort: 3377
             hostPort: 3377
+        #@ if name() == "piraeus":
         args:
           - startController
+        #@ end
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3
@@ -110,7 +113,7 @@ spec:
           - name: localtime
             mountPath: /etc/localtime
           - name: etc-linstor
-            mountPath: /etc/linstor 
+            mountPath: /etc/linstor
           - name: log
             mountPath: /var/log/linstor-controller
       volumes:
@@ -121,20 +124,20 @@ spec:
           emptyDir: {}
         - name: log
           hostPath:
-            path: /var/log/piraeus/linstor-controller
+            path: #@ "/var/log/" + name() + "/linstor-controller"
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  # - key: piraeus/controller
-                  #   operator: In
-                  #   values:
-                  #   - "true"
+                  #! - key: #@ name() + "/controller"
+                  #!   operator: In
+                  #!   values:
+                  #!   - "true"
                   - key: node-role.kubernetes.io/master
                     operator: DoesNotExist
       tolerations:
         - operator: "Exists"
           effect: "NoSchedule"
-      # imagePullSecrets:
-      #   - name: piraeus-regcred
+      #! imagePullSecrets:
+      #!   - name: #@ name() + "-regcred"
