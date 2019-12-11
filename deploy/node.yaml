@@ -26,7 +26,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: alexzhc/piraeus-init
+        image: quay.io/piraeusdatastore/piraeus-init:latest
         imagePullPolicy: Always
         securityContext:
           privileged: true
