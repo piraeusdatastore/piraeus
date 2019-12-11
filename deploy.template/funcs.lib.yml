@@ -29,7 +29,7 @@
 #@ end
 
 #@ def controllerhostport():
-#@   return name() + "-controller." + name() + ":3370"
+#@   return name() + "-controller.kube-system" + ":3370"
 #@ end
 
 #@ def registry():

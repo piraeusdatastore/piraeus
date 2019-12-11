@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: piraeus-node
-  namespace: piraeus
+  namespace: kube-system
 spec:
   minReadySeconds: 0
   updateStrategy:
@@ -48,7 +48,7 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         - name: LS_CONTROLLERS
-          value: piraeus-controller.piraeus:3370
+          value: piraeus-controller.kube-system:3370
         - name: TIMEOUT
           value: "3600"
         - name: REGISTRY
@@ -84,7 +84,7 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         - name: LS_CONTROLLERS
-          value: piraeus-controller.piraeus:3370
+          value: piraeus-controller.kube-system:3370
         - name: DemoPool_Dir
           value: /var/local/piraeus/pools/DemoPool
         args:
