@@ -9,7 +9,7 @@
 #@ end
 
 #@ def etcdendpoint():
-#@   return "http://" + etcd() + name() + ":2379"
+#@   return "http://" + etcd() + ":2379"
 #@ end
 
 #@ def node():

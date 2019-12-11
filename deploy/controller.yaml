@@ -58,7 +58,7 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: ETCDCTL_ENDPOINTS
-          value: http://piraeus-etcdpiraeus:2379
+          value: http://piraeus-etcd:2379
         - name: ETCDCTL_API
           value: "3"
         - name: ETCD_CLUSTER_SIZE
