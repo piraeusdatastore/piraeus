@@ -30,7 +30,7 @@ docker run -it --rm --privileged \
 
 ## Installing the kernel objects to the host
 
-This feature will be available starting from version 9.0.20. One has to mark the bind mounted `/lib/modules`
+This feature is available since version 9.0.20. One has to mark the bind mounted `/lib/modules`
 directory writable (by removing the ':ro'), and set the environment variable "LB_INSTALL" to "yes". For
 RHEL/Centos this looks like this:
 
