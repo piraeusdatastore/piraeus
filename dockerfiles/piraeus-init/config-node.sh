@@ -51,7 +51,3 @@ ${MOUNT_USR_LIB} \
 -v /usr/src:/usr/src:ro \
 -e "LB_INSTALL=yes" \
 ${DRBD_DRIVER_LOADER_IMAGE}
-
-modinfo drbd
-
-
