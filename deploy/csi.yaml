@@ -116,7 +116,7 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         - name: LS_CONTROLLERS
-          value: piraeus-controller.piraeus:3370
+          value: http://piraeus-controller.piraeus:3370
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
@@ -375,7 +375,7 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         - name: LS_CONTROLLERS
-          value: piraeus-controller.piraeus:3370
+          value: http://piraeus-controller.piraeus:3370
         securityContext:
           privileged: true
           capabilities:
