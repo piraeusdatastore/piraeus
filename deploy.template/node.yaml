@@ -4,7 +4,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: #@ node()
-  namespace: #@ name()
+  namespace: kube-system
 spec:
   minReadySeconds: 0
   updateStrategy:

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: piraeus-controller
-  namespace: piraeus
+  namespace: kube-system
   labels:
     app.kubernetes.io/name: piraeus
     app.kubernetes.io/component: piraeus-controller
@@ -20,7 +20,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: piraeus-controller
-  namespace: piraeus
+  namespace: kube-system
   labels:
     app.kubernetes.io/name: piraeus
     app.kubernetes.io/component: piraeus-controller
