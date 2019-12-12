@@ -1,4 +1,4 @@
-#@ load("funcs.lib.yml", "name", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage")
+#@ load("funcs.lib.yml", "map_host_linstor", "name", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage")
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -130,12 +130,14 @@ spec:
               mountPath: /etc/lvm
             - name: run-lvm
               mountPath: /run/lvm
+            #@ if map_host_linstor():
             - name: etc-drbd-d
               mountPath: /etc/drbd.d
             - name: var-lib-linstor-d
               mountPath: /var/lib/linstor.d
             - name: etc-linstor
               mountPath: /etc/linstor
+            #@ end
       volumes:
         - name: localtime
           hostPath:
@@ -170,6 +172,7 @@ spec:
         - name: run-lvm
           hostPath:
             path: /run/lvm
+        #@ if map_host_linstor():
         - name: etc-drbd-d
           hostPath:
             path: /etc/drbd.d
@@ -179,6 +182,7 @@ spec:
         - name: etc-linstor
           hostPath:
             path: /etc/linstor
+        #@ end
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
