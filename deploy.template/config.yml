@@ -2,7 +2,7 @@
 ---
 name: "piraeus"
 registry: "quay.io/piraeusdatastore"
-initversion: "latest"
+initversion: "v0.1"
 contsatversion: "v1.3.1"
 csiversion: "v0.7.2"
 images:
