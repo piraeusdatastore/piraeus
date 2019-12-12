@@ -118,12 +118,6 @@ spec:
           mountPath: /etc/lvm
         - name: run-lvm
           mountPath: /run/lvm
-        - name: etc-drbd-d
-          mountPath: /etc/drbd.d
-        - name: var-lib-linstor-d
-          mountPath: /var/lib/linstor.d
-        - name: etc-linstor
-          mountPath: /etc/linstor
       volumes:
       - name: localtime
         hostPath:
@@ -158,15 +152,6 @@ spec:
       - name: run-lvm
         hostPath:
           path: /run/lvm
-      - name: etc-drbd-d
-        hostPath:
-          path: /etc/drbd.d
-      - name: var-lib-linstor-d
-        hostPath:
-          path: /var/lib/linstor.d
-      - name: etc-linstor
-        hostPath:
-          path: /etc/linstor
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

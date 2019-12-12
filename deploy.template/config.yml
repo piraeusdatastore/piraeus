@@ -1,6 +1,7 @@
 #@data/values
 ---
 name: "piraeus"
+map_host_linstor: false
 registry: "quay.io/piraeusdatastore"
 initversion: "latest"
 contsatversion: "v1.3.1"
