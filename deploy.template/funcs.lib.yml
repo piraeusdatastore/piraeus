@@ -32,16 +32,16 @@
 #@   return name() + "-controller." + name() + ":3370"
 #@ end
 
-#@ def initimage():
-#@   return data.values.images.init
-#@ end
-
 #@ def registry():
 #@   return data.values.registry
 #@ end
 
 #@ def imageversion(img, version):
-#@   return registry() + "/" + img + ":v" + version
+#@   return registry() + "/" + img + ":" + version
+#@ end
+
+#@ def initimage():
+#@   return imageversion(data.values.images.init, data.values.initversion)
 #@ end
 
 #@ def controllerimage():
