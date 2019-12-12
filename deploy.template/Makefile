@@ -5,4 +5,4 @@ DST=$(addprefix ../deploy/$(PREFIX),$(SRC))
 all: $(DST)
 
 ../deploy/$(PREFIX)%: % Makefile funcs.lib.yml config.yml
-	ytt -f config.yml -f funcs.lib.yml -f $< > $@
+	ytt -f $(PREFIX)config.yml -f funcs.lib.yml -f $< > $@
