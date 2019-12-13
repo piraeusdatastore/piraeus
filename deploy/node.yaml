@@ -114,10 +114,6 @@ spec:
           mountPath: /dev
         - name: lib-modules
           mountPath: /lib/modules
-        - name: etc-lvm
-          mountPath: /etc/lvm
-        - name: run-lvm
-          mountPath: /run/lvm
       volumes:
       - name: localtime
         hostPath:
@@ -146,12 +142,6 @@ spec:
       - name: lib-modules
         hostPath:
           path: /lib/modules
-      - name: etc-lvm
-        hostPath:
-          path: /etc/lvm
-      - name: run-lvm
-        hostPath:
-          path: /run/lvm
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

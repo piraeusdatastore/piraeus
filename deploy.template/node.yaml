@@ -1,4 +1,4 @@
-#@ load("funcs.lib.yml", "map_host_linstor", "name", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage")
+#@ load("funcs.lib.yml", "map_host_linstor", "map_host_lvm", "name", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage")
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -126,10 +126,12 @@ spec:
               mountPath: /dev
             - name: lib-modules
               mountPath: /lib/modules
+            #@ if map_host_lvm():
             - name: etc-lvm
               mountPath: /etc/lvm
             - name: run-lvm
               mountPath: /run/lvm
+            #@ end
             #@ if map_host_linstor():
             - name: etc-drbd-d
               mountPath: /etc/drbd.d
@@ -166,12 +168,14 @@ spec:
         - name: lib-modules
           hostPath:
             path: /lib/modules
+        #@ if map_host_lvm():
         - name: etc-lvm
           hostPath:
             path: /etc/lvm
         - name: run-lvm
           hostPath:
             path: /run/lvm
+        #@ end
         #@ if map_host_linstor():
         - name: etc-drbd-d
           hostPath:
