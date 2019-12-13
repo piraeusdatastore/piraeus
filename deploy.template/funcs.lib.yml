@@ -8,6 +8,10 @@
 #@   return data.values.map_host_linstor
 #@ end
 
+#@ def map_host_lvm():
+#@   return data.values.map_host_lvm
+#@ end
+
 #@ def etcd():
 #@   return name() + "-etcd"
 #@ end
