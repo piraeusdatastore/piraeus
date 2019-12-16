@@ -30,10 +30,7 @@ This is `kernel-devel` for CentOS based distributions and `` linux-headers-`unam
 Install as follows:
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/deploy/etcd.yaml
-kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/deploy/controller.yaml
-kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/deploy/node.yaml
-kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/deploy/csi.yaml
+kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/deploy/all.yaml
 ```
 
 This may take several minutes.
