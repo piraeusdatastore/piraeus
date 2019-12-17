@@ -56,7 +56,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.1
+        image: quay.io/piraeusdatastore/piraeus-init:v0.2
         imagePullPolicy: Always
         resources:
           limits:
@@ -212,7 +212,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.1
+        image: quay.io/piraeusdatastore/piraeus-init:v0.2
         imagePullPolicy: Always
         resources:
           limits:
@@ -318,7 +318,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.1
+        image: quay.io/piraeusdatastore/piraeus-init:v0.2
         imagePullPolicy: Always
         securityContext:
           privileged: true
