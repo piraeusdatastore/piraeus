@@ -11,7 +11,8 @@ metadata:
   labels:
     app.kubernetes.io/name: piraeus
     app.kubernetes.io/component: piraeus-etcd
-  annotations: null
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 spec:
   type: ClusterIP
   publishNotReadyAddresses: true
@@ -36,6 +37,7 @@ metadata:
     app.kubernetes.io/component: piraeus-etcd
 spec:
   serviceName: piraeus-etcd
+  podManagementPolicy: Parallel
   updateStrategy:
     type: RollingUpdate
   selector:
@@ -52,21 +54,16 @@ spec:
     spec:
       priorityClassName: system-node-critical
       restartPolicy: Always
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
+      dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.2
+        image: quay.io/piraeusdatastore/piraeus-init:v0.3
         imagePullPolicy: Always
         resources:
           limits:
             cpu: 100m
             memory: 100Mi
         env:
-        - name: THIS_POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
         - name: THIS_POD_NAME
           valueFrom:
             fieldRef:
@@ -75,16 +72,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: THIS_NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        - name: THIS_NODE_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
         - name: ETCDCTL_API
-          value: "3"
+          value: "2"
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
@@ -105,21 +94,12 @@ spec:
           containerPort: 2380
         env:
         - name: ETCDCTL_API
-          value: "3"
+          value: "2"
         command:
         - etcd
         args:
         - --config-file
         - /init/conf/etcd.conf
-        lifecycle:
-          postStart:
-            exec:
-              command:
-              - /init/cmd/poststart-etcd.sh
-          preStop:
-            exec:
-              command:
-              - /init/cmd/prestop-etcd.sh
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3
@@ -134,7 +114,7 @@ spec:
         - name: init
           mountPath: /init
         - name: data
-          mountPath: /var/run/etcd
+          mountPath: /.etcd/data
       volumes:
       - name: localtime
         hostPath:
@@ -142,8 +122,7 @@ spec:
       - name: init
         emptyDir: {}
       - name: data
-        hostPath:
-          path: /var/local/piraeus/etcd
+        emptyDir: {}
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -212,7 +191,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.2
+        image: quay.io/piraeusdatastore/piraeus-init:v0.3
         imagePullPolicy: Always
         resources:
           limits:
@@ -318,7 +297,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.2
+        image: quay.io/piraeusdatastore/piraeus-init:v0.3
         imagePullPolicy: Always
         securityContext:
           privileged: true

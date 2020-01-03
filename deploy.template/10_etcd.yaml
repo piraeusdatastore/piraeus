@@ -15,7 +15,7 @@ metadata:
     app.kubernetes.io/component: #@ etcd()
   annotations:
     #! create endpoints also if the related pod isn't ready
-    #! service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 spec:
   type: ClusterIP
   publishNotReadyAddresses: true
@@ -40,6 +40,7 @@ metadata:
     app.kubernetes.io/component: #@ etcd()
 spec:
   serviceName: #@ etcd()
+  podManagementPolicy: Parallel
   updateStrategy:
     type: RollingUpdate
   selector:
@@ -56,9 +57,7 @@ spec:
     spec:
       priorityClassName: system-node-critical
       restartPolicy: Always
-      #! dnsPolicy: ClusterFirst
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
+      dnsPolicy: ClusterFirst
       initContainers:
         - name: init
           image: #@ initimage()
@@ -71,10 +70,6 @@ spec:
               cpu: 100m
               memory: 100Mi
           env:
-            - name: THIS_POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
             - name: THIS_POD_NAME
               valueFrom:
                 fieldRef:
@@ -83,16 +78,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            - name: THIS_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: THIS_NODE_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
             - name: ETCDCTL_API
-              value: '3'
+              value: '2'
           volumeMounts:
             - name: localtime
               mountPath: /etc/localtime
@@ -116,21 +103,12 @@ spec:
               containerPort: 2380
           env:
             - name: ETCDCTL_API
-              value: '3'
+              value: '2'
           command:
             - etcd
           args:
             - --config-file
             - /init/conf/etcd.conf
-          lifecycle:
-              postStart:
-                exec:
-                  command:
-                    - /init/cmd/poststart-etcd.sh
-              preStop:
-                exec:
-                  command:
-                    - /init/cmd/prestop-etcd.sh
           readinessProbe:
             successThreshold: 3
             failureThreshold: 3
@@ -145,7 +123,7 @@ spec:
             - name: init
               mountPath: /init
             - name: data
-              mountPath: /var/run/etcd
+              mountPath: /.etcd/data
       volumes:
         - name: localtime
           hostPath:
@@ -153,9 +131,7 @@ spec:
         - name: init
           emptyDir: {}
         - name: data
-          #! emptyDir: {}
-          hostPath:
-            path: /var/local/piraeus/etcd
+          emptyDir: {}
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
