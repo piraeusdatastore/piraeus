@@ -1,22 +1,27 @@
 #!/bin/bash -ex
-source /init/cmd/tools.sh
 
-# check if etcd is healthy
+# wait until etcd is healthy
+ETCD_IS_HEALTHY=false
 SECONDS=0
-until [ "$( _best-effort etcdctl member list | grep -E '-etcd-[0-9]+' | wc -l )" -ge "${ETCD_CLUSTER_SIZE}" ]; do
-    sleep 1
+until ${ETCD_IS_HEALTHY};  do
     if [ "${SECONDS}" -ge  "${TIMEOUT}" ]; then
-        echo ERR: Unable to reach etcd
-        exit 0 
-    fi
-done
+        echo Timed Out !
+        exit 1
+    fi 
+    for i in $( echo $ETCD_URLS | tr ',' '\n' ); do
+        if curl -s --connect-timeout 2 $ETCD_URLS/health | grep -w 'true'; then
+            ETCD_IS_HEALTHY=true
+            break
+        fi
+    done  
+done 
 
-ETCD_CLUSTER=$( cat /init/.best_effort_ouput | sed 's/,//g' |  awk '/-etcd-[0-9]+/{print $5}' | paste -d, - - - )
-
-    cat > /etc/linstor/linstor.toml <<EOF
+# configure controller
+cat > /etc/linstor/linstor.toml <<EOF
 [db]
 user = "linstor"
 password = "linstor"
-connection_url = "etcd://${ETCD_CLUSTER}"
+connection_url = "etcd://${ETCD_URLS}"
 EOF
-    cat /etc/linstor/linstor.toml
+
+cat /etc/linstor/linstor.toml

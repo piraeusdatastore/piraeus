@@ -1,5 +1,4 @@
 #!/bin/bash -ex
-source /init/cmd/tools.sh
 
 # assemble etcd urls
 THIS_POD_SET=${THIS_POD_NAME/-[0-9]*/}

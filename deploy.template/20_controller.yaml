@@ -64,12 +64,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          - name: ETCDCTL_ENDPOINTS
+          - name: ETCD_URLS
             value: #@ etcdendpoint()
-          - name: ETCDCTL_API
-            value: '3'
-          - name: ETCD_CLUSTER_SIZE
-            value: '3'
           - name: TIMEOUT
             value: '3600'
         volumeMounts:
