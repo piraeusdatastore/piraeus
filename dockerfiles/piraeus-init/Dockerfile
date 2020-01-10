@@ -1,5 +1,6 @@
 FROM debian:buster
 
+RUN { echo 'APT::Install-Recommends "false";' ; echo 'APT::Install-Suggests "false";' ; } > /etc/apt/apt.conf.d/99_piraeus
 RUN set -x && \
     apt-get update -y && \
     apt-get install -y jq curl && \
