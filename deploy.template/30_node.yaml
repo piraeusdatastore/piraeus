@@ -52,14 +52,12 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-            - name: LS_CONTROLLERS
-              value: #@ controllerhostport()
-            - name: TIMEOUT
-              value: '3600'
-            - name: REGISTRY
+            - name: DRBD_IMG_REPO
               value: #@ registry()
-            - name: IMAGE_PULL_POLICY
-              value: 'Always'
+            - name: DRBD_IMG_TAG
+              value: latest
+            - name: DRBD_IMG_PULL_POLICY
+              value: Always
           #@ if name() == "piraeus":
           args:
             - startSatellite
@@ -89,12 +87,14 @@ spec:
               cpu: 1
               memory: 1Gi
           env:
+            - name: THIS_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: THIS_NODE_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-            - name: LS_CONTROLLERS
-              value: #@ controllerhostport()
             - name: DemoPool_Dir
               value: #@ "/var/local/" + name() + "/pools/DemoPool"
           #@ if name() == "piraeus":

@@ -1,8 +1,9 @@
 #!/bin/bash -ex
 
 # drop scripts
-mkdir -p /init/conf
-cp -vfr /root/cmd /init/
+mkdir -p /init/conf /init/cmd
+cp -vf /root/cmd/*.sh /init/cmd/
+cp -vf /root/cmd/gojq /init/cmd/
 chmod +x -R /root/cmd
 
 # configure each component

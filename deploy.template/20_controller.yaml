@@ -64,10 +64,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          - name: ETCD_URLS
-            value: #@ etcdendpoint()
-          - name: TIMEOUT
-            value: '3600'
+          - name: ETCD_ENDPOINTS
+            value: 'default'
         volumeMounts:
           - name: localtime
             mountPath: /etc/localtime
@@ -87,7 +85,6 @@ spec:
         ports:
           - name: rest-api
             containerPort: 3370
-            hostPort: 3370
           - name: plain
             containerPort: 3376
             hostPort: 3376

@@ -47,13 +47,11 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        - name: LS_CONTROLLERS
-          value: piraeus-controller.kube-system:3370
-        - name: TIMEOUT
-          value: "3600"
-        - name: REGISTRY
+        - name: DRBD_IMG_REPO
           value: quay.io/piraeusdatastore
-        - name: IMAGE_PULL_POLICY
+        - name: DRBD_IMG_TAG
+          value: latest
+        - name: DRBD_IMG_PULL_POLICY
           value: Always
         args:
         - startSatellite
@@ -79,12 +77,14 @@ spec:
             cpu: 1
             memory: 1Gi
         env:
+        - name: THIS_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         - name: THIS_NODE_NAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        - name: LS_CONTROLLERS
-          value: piraeus-controller.kube-system:3370
         - name: DemoPool_Dir
           value: /var/local/piraeus/pools/DemoPool
         args:

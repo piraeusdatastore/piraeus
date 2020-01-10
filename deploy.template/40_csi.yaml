@@ -488,7 +488,7 @@ parameters:
   disklessOnRemaining: "false"
   fs: ext4
   mountOpts: noatime,discard
-  storagePool: DfltStorPool
+  storagePool: DemoPool
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -504,7 +504,7 @@ parameters:
   disklessOnRemaining: "false"
   fs: ext4
   mountOpts: noatime,discard
-  storagePool: DfltStorPool
+  storagePool: DemoPool
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -520,4 +520,4 @@ parameters:
   disklessOnRemaining: "false"
   fs: ext4
   mountOpts: noatime,discard
-  storagePool: DfltStorPool
+  storagePool: DemoPool

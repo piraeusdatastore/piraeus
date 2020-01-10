@@ -54,6 +54,7 @@ spec:
     spec:
       priorityClassName: system-node-critical
       restartPolicy: Always
+      terminationGracePeriodSeconds: 0
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
@@ -202,10 +203,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: ETCD_URLS
-          value: http://piraeus-etcd:2379
-        - name: TIMEOUT
-          value: "3600"
+        - name: ETCD_ENDPOINTS
+          value: default
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
@@ -222,7 +221,6 @@ spec:
         ports:
         - name: rest-api
           containerPort: 3370
-          hostPort: 3370
         - name: plain
           containerPort: 3376
           hostPort: 3376
@@ -314,13 +312,11 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        - name: LS_CONTROLLERS
-          value: piraeus-controller.kube-system:3370
-        - name: TIMEOUT
-          value: "3600"
-        - name: REGISTRY
+        - name: DRBD_IMG_REPO
           value: quay.io/piraeusdatastore
-        - name: IMAGE_PULL_POLICY
+        - name: DRBD_IMG_TAG
+          value: latest
+        - name: DRBD_IMG_PULL_POLICY
           value: Always
         args:
         - startSatellite
@@ -346,12 +342,14 @@ spec:
             cpu: 1
             memory: 1Gi
         env:
+        - name: THIS_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         - name: THIS_NODE_NAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        - name: LS_CONTROLLERS
-          value: piraeus-controller.kube-system:3370
         - name: DemoPool_Dir
           value: /var/local/piraeus/pools/DemoPool
         args:
@@ -998,7 +996,7 @@ parameters:
   disklessOnRemaining: "false"
   fs: ext4
   mountOpts: noatime,discard
-  storagePool: DfltStorPool
+  storagePool: DemoPool
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -1014,7 +1012,7 @@ parameters:
   disklessOnRemaining: "false"
   fs: ext4
   mountOpts: noatime,discard
-  storagePool: DfltStorPool
+  storagePool: DemoPool
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -1030,4 +1028,4 @@ parameters:
   disklessOnRemaining: "false"
   fs: ext4
   mountOpts: noatime,discard
-  storagePool: DfltStorPool
+  storagePool: DemoPool

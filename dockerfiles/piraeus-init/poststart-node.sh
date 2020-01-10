@@ -1,19 +1,35 @@
 #!/bin/bash -x
 # save log 
-exec 2> /var/log/k8s-lifecycle.log
-echo POSTSTART:
+exec 2>> /var/log/k8s-lifecycle.log
+echo POSTSTART: ${THIS_POD_NAME} $( date +%Y-%m-%d_%H-%M-%S )
 
-# wait until node is online
-until linstor node list -p | grep -w "${THIS_NODE_NAME}" | grep -w Online; do
+# get controller endpoint
+# CONTROLLER_ENDPOINT=$( awk '/controllers / {print $3}' /init/conf/linstor-client.conf )
+
+# configure linstor cli
+cp -vf /init/conf/linstor-client.conf /etc/linstor/
+
+# install gojq for now
+cp -v /init/cmd/gojq /usr/local/bin/gojq
+
+# wait until node is up for at least 5 sec
+SECONDS=0
+TIMEOUT=3600
+NODE_HEALTH_COUNT=0
+until [ "${NODE_HEALTH_COUNT}" -ge  '5' ];  do
+    if [ "${SECONDS}" -ge  "${TIMEOUT}" ]; then
+        echo Timed Out !
+        exit 1
+    elif [[ "$( linstor --machine node list --node ${THIS_NODE_NAME} \
+            | gojq '.[0].nodes[0].connection_status' )" == '2' ]]  ; then
+        let 'NODE_HEALTH_COUNT+=1'
+    fi 
     sleep 1
-    if [ "${SECONDS}" -ge 60 ]; then
-        echo ERR: Satellite online-check timed out
-        exit 0 # Don't block node readiness
-    fi
-done
+done 
 
-mkdir -vp ${DemoPool_Dir} || true
+mkdir -vp ${DemoPool_Dir} 
 
-if ! ( linstor storage-pool list -p | grep -w "${THIS_NODE_NAME}" | grep -w DemoPool ) ; then 
+if [[ $( linstor --machine storage-pool list --node ${THIS_NODE_NAME} --storage-pools DemPool \
+      | gojq '.[0].stor_pools[0]' ) == 'null' ]] ; then 
     linstor storage-pool create filethin ${THIS_NODE_NAME} DemoPool ${DemoPool_Dir} 
 fi 
