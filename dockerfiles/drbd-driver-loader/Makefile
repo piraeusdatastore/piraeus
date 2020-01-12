@@ -1,5 +1,5 @@
 PROJECT ?= drbd9
-DF = Dockerfile.centos7 Dockerfile.centos8 Dockerfile.bionic
+DF = Dockerfile.centos8
 CENTOS = Dockerfile.centos7
 REGISTRY ?= piraeusdatastore
 TAG ?= latest

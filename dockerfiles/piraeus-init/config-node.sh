@@ -5,10 +5,12 @@ source /init/cmd/func.lib.sh
 # grep '^drbd ' /proc/modules || modinfo drbd && modprobe -v drbd
 # grep '^drbd_transport_tcp ' /proc/modules || modinfo drbd_transport_tcp && modprobe -v drbd_transport_tcp
 
-APP_NAME=${THIS_POD_NAME/-*/}
-CONTROLLER_ENDPOINT_IP_VAR="${APP_NAME^^}_CONTROLLER_SERVICE_HOST"
-CONTROLLER_ENDPOINT_PORT_VAR="${APP_NAME^^}_CONTROLLER_SERVICE_PORT_REST_API"
-CONTROLLER_ENDPOINT="http://${!CONTROLLER_ENDPOINT_IP_VAR}:${!CONTROLLER_ENDPOINT_PORT_VAR}"
+if [[ ${CONTROLLER_ENDPOINTS} == 'default' ]]; then
+    APP_NAME=${THIS_POD_NAME/-*/}
+    CONTROLLER_ENDPOINTS_IP_VAR="${APP_NAME^^}_CONTROLLER_SERVICE_HOST"
+    CONTROLLER_ENDPOINTS_PORT_VAR="${APP_NAME^^}_CONTROLLER_SERVICE_PORT_REST_API"
+    CONTROLLER_ENDPOINTS="http://${!CONTROLLER_ENDPOINTS_IP_VAR}:${!CONTROLLER_ENDPOINTS_PORT_VAR}"
+fi 
 
 # wait until controller is up for at least 5 sec
 SECONDS=0
@@ -18,9 +20,13 @@ until [ "${CONTROLLER_HEALTH_COUNT}" -ge  '5' ];  do
     if [ "${SECONDS}" -ge  "${TIMEOUT}" ]; then
         echo Timed Out !
         exit 1
-    elif curl -Ss --connect-timeout 2 ${CONTROLLER_ENDPOINT}; then
-        let 'CONTROLLER_HEALTH_COUNT+=1'
-    fi 
+    fi
+    for i in $( echo ${CONTROLLER_ENDPOINTS} | tr ',' '\n' ); do
+        if curl -Ss --connect-timeout 2 $i; then
+            export CONTROLLER_ENDPOINT=$i
+            let 'CONTROLLER_HEALTH_COUNT+=1'
+        fi
+    done 
     sleep 1
 done 
 
@@ -40,7 +46,7 @@ _linstor_node_list
 # configure linstor cli
 cat > /init/conf/linstor-client.conf << EOF
 [global]
-controllers = ${CONTROLLER_ENDPOINT}
+controllers = ${CONTROLLER_ENDPOINTS}
 EOF
 
 cat /init/conf/linstor-client.conf

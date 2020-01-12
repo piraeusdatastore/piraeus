@@ -52,6 +52,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+            - name: CONTROLLER_ENDPOINTS
+              value: 'default'
             - name: DRBD_IMG_REPO
               value: #@ registry()
             - name: DRBD_IMG_TAG
