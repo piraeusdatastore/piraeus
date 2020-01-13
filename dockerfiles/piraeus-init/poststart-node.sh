@@ -33,3 +33,8 @@ if [[ $( linstor --machine storage-pool list --node ${THIS_NODE_NAME} --storage-
       | gojq '.[0].stor_pools[0]' ) == 'null' ]] ; then 
     linstor storage-pool create filethin ${THIS_NODE_NAME} DemoPool ${DemoPool_Dir} 
 fi 
+
+if [[ $( linstor --machine storage-pool list --node ${THIS_NODE_NAME} --storage-pools DemPool- \
+      | gojq '.[0].stor_pools[0]' ) == 'null' ]] ; then 
+    linstor storage-pool create diskless ${THIS_NODE_NAME} DemoPool-
+fi 

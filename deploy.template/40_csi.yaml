@@ -301,8 +301,8 @@ spec:
           #!   cpu: '500m'
           #!   memory: '500Mi'
           limits:
-            cpu: 500m
-            memory: 500Mi
+            cpu: 100m
+            memory: 100Mi
         args:
         - "--v=5"
         - "--csi-address=$(ADDRESS)"
@@ -333,8 +333,8 @@ spec:
           #!   cpu: '500m'
           #!   memory: '500Mi'
           limits:
-            cpu: 500m
-            memory: 500Mi
+            cpu: 100m
+            memory: 100Mi
         args:
         - "--csi-endpoint=$(CSI_ENDPOINT)"
         - "--node=$(KUBE_NODE_NAME)"
@@ -477,7 +477,7 @@ roleRef:
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: #@ name() + "-default-r1"
+  name: #@ name() + "-demo-r1"
 provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
@@ -489,11 +489,12 @@ parameters:
   fs: ext4
   mountOpts: noatime,discard
   storagePool: DemoPool
+  disklessStoragePool: DemoPool-
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: #@ name() + "-default-r2"
+  name: #@ name() + "-demo-r2"
 provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
@@ -505,11 +506,12 @@ parameters:
   fs: ext4
   mountOpts: noatime,discard
   storagePool: DemoPool
+  disklessStoragePool: DemoPool-
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: #@ name() + "-default-r3"
+  name: #@ name() + "-demo-r3"
 provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
@@ -521,3 +523,4 @@ parameters:
   fs: ext4
   mountOpts: noatime,discard
   storagePool: DemoPool
+  disklessStoragePool: DemoPool-

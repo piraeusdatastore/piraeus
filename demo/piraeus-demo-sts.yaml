@@ -1,39 +1,42 @@
-apiVersion: apps/v1
-kind: Deployment
+kind: Namespace
+apiVersion: v1
 metadata:
-  name: piraeus-demo-app
-  namespace: default
+  name: piraeus-demo
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: piraeus-demo-sts
+  namespace: piraeus-demo
   labels:
-    dce.daocloud.io/component: piraeus-demo-app
+    dce.daocloud.io/component: piraeus-demo-sts
     dce.daocloud.io/app: piraeus-demo
 spec:
-  strategy:
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
-    type: RollingUpdate
-  replicas: 1
+  serviceName: piraeus-demo-sts
+  replicas: 3
+  podManagementPolicy: Parallel
   selector:
     matchLabels:
-      dce.daocloud.io/component: piraeus-demo-app
+      dce.daocloud.io/component: piraeus-demo-sts
   template:
     metadata:
       labels:
-        dce.daocloud.io/component: piraeus-demo-app
+        dce.daocloud.io/component: piraeus-demo-sts
         dce.daocloud.io/app: piraeus-demo
-      name: piraeus-demo-app
+      name: piraeus-demo-sts
     spec:
       restartPolicy: Always
       terminationGracePeriodSeconds: 0
       initContainers:
       - image: nginx:alpine
         imagePullPolicy: IfNotPresent
-        name: piraeus-demo-app-init
-        command: [
-          'sh',
-          '-c',
-          'echo "<center><h1>Demo volume $( df | grep -E drbd )</h1></center>" > /usr/share/nginx/html/index.html'
-          ]
+        name: init
+        command: 
+        - sh
+        - -xc
+        - | 
+          echo "<center><h1>Demo volume $( df | grep -E drbd )</h1></center>" \
+          > /usr/share/nginx/html/index.html
         volumeMounts:
         - name: html-root
           mountPath: /usr/share/nginx/html
@@ -47,7 +50,7 @@ spec:
       containers:
       - image: nginx:alpine
         imagePullPolicy: IfNotPresent
-        name: piraeus-demo-app
+        name: piraeus-demo-sts
         ports:
         - containerPort: 80
         volumeMounts:
@@ -60,10 +63,6 @@ spec:
           limits:
             cpu: '500m'
             memory: '500Mi'
-      volumes:
-      - name: html-root
-        persistentVolumeClaim:
-          claimName: piraeus-demo-pvc
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -73,28 +72,33 @@ spec:
                 operator: In
                 values:
                 - "true"
-              - key: piraeus/demo
-                operator: In
-                values:
-                - "true"
       tolerations:
       - operator: "Exists"
         effect: "NoSchedule"
+  volumeClaimTemplates:
+  - metadata:
+      name: html-root
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: piraeus-demo-r2
+      resources:
+        requests:
+          storage: 1Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: piraeus-demo-app
-  namespace: default
+  name: piraeus-demo-sts
+  namespace: piraeus-demo
   labels:
     dce.daocloud.io/app: piraeus-demo
 spec:
   type: NodePort
   ports:
-    - name: piraeus-demo-app-80
+    - name: piraeus-demo-sts-80
       protocol: TCP
       targetPort: 80
       port: 80
-      nodePort: 31279
+      nodePort: 31280
   selector:
-    dce.daocloud.io/component: piraeus-demo-app
+    dce.daocloud.io/component: piraeus-demo-sts

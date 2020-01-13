@@ -1,10 +1,6 @@
 #!/bin/bash -ex
 source /init/cmd/func.lib.sh
 
-# load drbd modules
-# grep '^drbd ' /proc/modules || modinfo drbd && modprobe -v drbd
-# grep '^drbd_transport_tcp ' /proc/modules || modinfo drbd_transport_tcp && modprobe -v drbd_transport_tcp
-
 if [[ ${CONTROLLER_ENDPOINTS} == 'default' ]]; then
     APP_NAME=${THIS_POD_NAME/-*/}
     CONTROLLER_ENDPOINTS_IP_VAR="${APP_NAME^^}_CONTROLLER_SERVICE_HOST"
@@ -48,13 +44,16 @@ cat > /init/conf/linstor-client.conf << EOF
 [global]
 controllers = ${CONTROLLER_ENDPOINTS}
 EOF
-
 cat /init/conf/linstor-client.conf
 
+# compile and install drbd kernel module
 
-# # compile and install drbd kernel module
-
-if [[ ${DRBD_IMG_TAG} != 'NoInstall' ]]; then
+if grep -q '^drbd' /proc/modules; then 
+    echo "DRBD module is already loaded:"
+    cat /proc/drbd
+elif [[ ${DRBD_IMG_TAG} == 'NoInstall' ]]; then
+    echo "Skip loading drbd module"
+else
     if [[ "$( uname -r ) " =~ el7 ]]; then
         DRBD_IMG_NAME=drbd9-centos7
     elif [[ "$( uname -r ) " =~ el8 ]]; then
@@ -63,14 +62,11 @@ if [[ ${DRBD_IMG_TAG} != 'NoInstall' ]]; then
         DRBD_IMG_NAME=drbd9-bionic
         MOUNT_USR_LIB=/usr/lib:/usr/lib:ro
     fi
-
     DRBD_IMG_URL=${DRBD_IMG_REPO}/${DRBD_IMG_NAME}:${DRBD_IMG_TAG}
-
-    echo $DRBD_IMG_URL
+    echo Pulling from $DRBD_IMG_URL
 
     if [[ "${DRBD_IMG_PULL_POLICY}" == "Always" ]] || [[ "$( _docker_image_inspect ${DRBD_IMG_URL} | jq '.Id' )" == "null" ]]; then
         _docker_pull ${DRBD_IMG_URL}
     fi
-
     _docker_run ${DRBD_IMG_URL}
 fi

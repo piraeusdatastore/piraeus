@@ -1,10 +1,15 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: piraeus-demo
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: piraeus-demo-pvc
-  namespace: default
+  namespace: piraeus-demo
 spec:
-  storageClassName: piraeus-default-r3
+  storageClassName: piraeus-demo-r3
   accessModes:
     - ReadWriteOnce
   resources:
