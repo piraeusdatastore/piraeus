@@ -1,5 +1,5 @@
 PROJECT ?= piraeus-init
-REGISTRY ?= piraeusdatastore
+REGISTRY ?= piraeusdatastore quay.io/piraeusdatastore daocloud.io/piraeus
 TAG ?= latest
 NOCACHE ?= false
 

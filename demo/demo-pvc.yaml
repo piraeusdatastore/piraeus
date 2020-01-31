@@ -1,0 +1,44 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: piraeus-demo
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: demo-rwo-r1
+  namespace: piraeus-demo
+spec:
+  storageClassName: piraeus-default-r1
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 11Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: demo-rwo-r2
+  namespace: piraeus-demo
+spec:
+  storageClassName: piraeus-default-r2
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 12Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: demo-rwo-r3
+  namespace: piraeus-demo
+spec:
+  storageClassName: piraeus-default-r3
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 13Gi
+    

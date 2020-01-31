@@ -1,5 +1,20 @@
 #@ load("funcs.lib.yml", "map_host_linstor", "map_host_lvm", "name", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage")
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: #@ name() + "-node"
+  namespace: kube-system
+data:
+  INIT_DEBUG: 'false'
+  MIN_WAIT: '5'
+  MAX_WAIT: '3600'
+  LS_CONTROLLERS: #@ "http://" + name() + "-controller.kube-system:3370"
+  DRBD_IMG_REPO: #@ registry()
+  DRBD_IMG_TAG: v9.0.21 #! "none" will skip drbd installation
+  DRBD_IMG_PULL_POLICY: Always
+  POOL_BASE_DIR: #@ "/var/local/" + name() + "/storagepools"
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -27,179 +42,173 @@ spec:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
-        - name: init
-          image: #@ initimage()
-          imagePullPolicy: Always
-          securityContext:
-            privileged: true
-          resources:
-            #! requests:
-            #!   cpu: 50m
-            #!   memory: 50Mi
-            limits:
-              cpu: 100m
-              memory: 100Mi
-          env:
-            - name: THIS_POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: THIS_POD_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
-            - name: THIS_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: CONTROLLER_ENDPOINTS
-              value: 'default'
-            - name: DRBD_IMG_REPO
-              value: #@ registry()
-            - name: DRBD_IMG_TAG
-              value: latest
-            - name: DRBD_IMG_PULL_POLICY
-              value: Always
-          #@ if name() == "piraeus":
-          args:
-            - startSatellite
-          #@ end
-          volumeMounts:
-            - name: localtime
-              mountPath: /etc/localtime
-            - name: init
-              mountPath: /init
-            - name: dockersock
-              mountPath: /var/run/docker.sock
-            - name: usr-src
-              mountPath: /usr/src
-            - name: lib-modules
-              mountPath: /lib/modules
-      containers:
-        - name: node
-          image: #@ satelliteimage()
-          imagePullPolicy: Always
-          securityContext:
-            privileged: true
-          resources:
-            #! requests:
-            #!   cpu: '500m'
-            #!   memory: '500Mi'
-            limits:
-              cpu: 1
-              memory: 1Gi
-          env:
-            - name: THIS_POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: THIS_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: DemoPool_Dir
-              value: #@ "/var/local/" + name() + "/pools/DemoPool"
-          #@ if name() == "piraeus":
-          args:
-            - startSatellite
-          #@ end
-          lifecycle:
-              postStart:
-                exec:
-                  command:
-                    - /init/cmd/poststart-node.sh
-          readinessProbe:
-            successThreshold: 3
-            failureThreshold: 3
-            tcpSocket:
-              port: 3366
-            initialDelaySeconds: 5
-            periodSeconds: 1
-          volumeMounts:
-            - name: localtime
-              mountPath: /etc/localtime
-            - name: init
-              mountPath: /init
-            - name: log
-              mountPath: /var/log/linstor-satellite
-            - name: #@ "var-local-" + name()
-              mountPath: #@ "/var/local/" + name()
-            - name: dev
-              mountPath: /dev
-            - name: lib-modules
-              mountPath: /lib/modules
-            #@ if map_host_lvm():
-            - name: etc-lvm
-              mountPath: /etc/lvm
-            - name: run-lvm
-              mountPath: /run/lvm
-            #@ end
-            #@ if map_host_linstor():
-            - name: etc-drbd-d
-              mountPath: /etc/drbd.d
-            - name: var-lib-linstor-d
-              mountPath: /var/lib/linstor.d
-            - name: etc-linstor
-              mountPath: /etc/linstor
-            #@ end
-      volumes:
+      - name: init
+        image: #@ initimage()
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        resources:
+          #! requests:
+          #!   cpu: 50m
+          #!   memory: 50Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        envFrom:
+        - configMapRef:
+            name: #@ name() + "-node"
+        env:
+        - name: THIS_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: THIS_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: THIS_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
         - name: localtime
-          hostPath:
-            path: /etc/localtime
+          mountPath: /etc/localtime
         - name: init
-          emptyDir: {}
+          mountPath: /init
         - name: dockersock
-          hostPath:
-            path: /var/run/docker.sock
-            type: Socket
-        - name: log
-          hostPath:
-            path: #@ "/var/log/"+ name() + "/linstor-satellite"
-        - name: #@ "var-local-" + name()
-          hostPath:
-            path: #@ "/var/local/" + name()
-        - name: dev
-          hostPath:
-            path: /dev
-        - name: usr-sbin
-          hostPath:
-            path: /usr/sbin
+          mountPath: /var/run/docker.sock
         - name: usr-src
-          hostPath:
-            path: /usr/src
+          mountPath: /usr/src
         - name: lib-modules
-          hostPath:
-            path: /lib/modules
+          mountPath: /lib/modules
+      containers:
+      - name: node
+        image: #@ satelliteimage()
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        resources:
+          #! requests:
+          #!   cpu: '500m'
+          #!   memory: '500Mi'
+          limits:
+            cpu: 1
+            memory: 1Gi
+        envFrom:
+        - configMapRef:
+            name: #@ name() + "-node"
+        env:
+        - name: THIS_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: THIS_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        #@ if name() == "piraeus":
+        args:
+        - startSatellite
+        #@ end
+        lifecycle:
+            postStart:
+              exec:
+                command:
+                - /init/cmd/poststart-node.sh
+        readinessProbe:
+          successThreshold: 3
+          failureThreshold: 3
+          tcpSocket:
+            port: 3366
+          initialDelaySeconds: 5
+          periodSeconds: 1
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+        - name: log
+          mountPath: /var/log/linstor-satellite
+        - name: #@ "var-local-" + name()
+          mountPath: #@ "/var/local/" + name()
+        - name: dev
+          mountPath: /dev
+        - name: lib-modules
+          mountPath: /lib/modules
         #@ if map_host_lvm():
-        - name: etc-lvm
-          hostPath:
-            path: /etc/lvm
+        #! - name: etc-lvm
+        #!   mountPath: /etc/lvm
         - name: run-lvm
-          hostPath:
-            path: /run/lvm
+          mountPath: /run/lvm
         #@ end
         #@ if map_host_linstor():
         - name: etc-drbd-d
-          hostPath:
-            path: /etc/drbd.d
+          mountPath: /etc/drbd.d
         - name: var-lib-linstor-d
-          hostPath:
-            path: /var/lib/linstor.d
+          mountPath: /var/lib/linstor.d
         - name: etc-linstor
-          hostPath:
-            path: /etc/linstor
+          mountPath: /etc/linstor
         #@ end
+      volumes:
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+      - name: init
+        emptyDir: {}
+      - name: dockersock
+        hostPath:
+          path: /var/run/docker.sock
+          type: Socket
+      - name: log
+        hostPath:
+          path: #@ "/var/log/"+ name() + "/linstor-satellite"
+      - name: #@ "var-local-" + name()
+        hostPath:
+          path: #@ "/var/local/" + name()
+      - name: dev
+        hostPath:
+          path: /dev
+      - name: usr-sbin
+        hostPath:
+          path: /usr/sbin
+      - name: usr-src
+        hostPath:
+          path: /usr/src
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+      #@ if map_host_lvm():
+      #! - name: etc-lvm
+      #!   hostPath:
+      #!     path: /etc/lvm
+      - name: run-lvm
+        hostPath:
+          path: /run/lvm
+      #@ end
+      #@ if map_host_linstor():
+      - name: etc-drbd-d
+        hostPath:
+          path: /etc/drbd.d
+      - name: var-lib-linstor-d
+        hostPath:
+          path: /var/lib/linstor.d
+      - name: etc-linstor
+        hostPath:
+          path: /etc/linstor
+      #@ end
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-              - matchExpressions:
-                - key: #@ name() + "/node"
-                  operator: In
-                  values:
-                    - "true"
-                - key: node-role.kubernetes.io/master
-                  operator: DoesNotExist
+            - matchExpressions:
+              - key: #@ name() + "/node"
+                operator: In
+                values:
+                  - "true"
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
       tolerations:
-        - operator: "Exists"
-          effect: "NoSchedule"
+      - operator: Exists
+        effect: NoSchedule
+      #! imagePullSecrets:
+      #! - name: piraeus-regcred

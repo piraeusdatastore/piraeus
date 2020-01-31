@@ -150,20 +150,20 @@ spec:
           path: /etc/localtime
       - name: socket-dir
         emptyDir: {}
-      #! affinity:
-      #!   nodeAffinity:
-      #!     requiredDuringSchedulingIgnoredDuringExecution:
-      #!       nodeSelectorTerms:
-      #!       - matchExpressions:
-      #!        - key: piraeus/controller
-      #!          operator: In
-      #!          values:
-      #!          - "true"
-      #!         - key: node-role.kubernetes.io/master
-      #!           operator: Exists
-      #! tolerations:
-      #!   - operator: "Exists"
-      #!     effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              #! - key: piraeus/controller
+              #!   operator: In
+              #!   values:
+              #!   - "true"
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
 ---
 kind: ServiceAccount
 apiVersion: v1
@@ -393,8 +393,8 @@ spec:
                 operator: In
                 values:
                 - "true"
-              #! - key: node-role.kubernetes.io/master
-              #!   operator: DoesNotExist
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
       tolerations:
         - operator: "Exists"
           effect: "NoSchedule"
@@ -477,7 +477,7 @@ roleRef:
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: #@ name() + "-demo-r1"
+  name: #@ name() + "-default-r1"
 provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
@@ -486,15 +486,13 @@ parameters:
   placementPolicy: AutoPlace
   allowRemoteVolumeAccess: "true"
   disklessOnRemaining: "false"
-  fs: ext4
   mountOpts: noatime,discard
-  storagePool: DemoPool
-  disklessStoragePool: DemoPool-
+  storagePool: DfltStorPool
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: #@ name() + "-demo-r2"
+  name: #@ name() + "-default-r2"
 provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
@@ -503,15 +501,13 @@ parameters:
   placementPolicy: AutoPlace
   allowRemoteVolumeAccess: "true"
   disklessOnRemaining: "false"
-  fs: ext4
   mountOpts: noatime,discard
-  storagePool: DemoPool
-  disklessStoragePool: DemoPool-
+  storagePool: DfltStorPool
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: #@ name() + "-demo-r3"
+  name: #@ name() + "-default-r3"
 provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
@@ -520,7 +516,5 @@ parameters:
   placementPolicy: AutoPlace
   allowRemoteVolumeAccess: "true"
   disklessOnRemaining: "false"
-  fs: ext4
   mountOpts: noatime,discard
-  storagePool: DemoPool
-  disklessStoragePool: DemoPool-
+  storagePool: DfltStorPool

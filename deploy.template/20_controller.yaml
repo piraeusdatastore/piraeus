@@ -1,6 +1,17 @@
 #@ load("funcs.lib.yml", "name", "controller", "initimage", "etcdendpoint", "controllerimage")
 ---
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: #@ name() + "-controller"
+  namespace: kube-system
+data:
+  INIT_DEBUG: 'false'
+  MIN_WAIT: '5'
+  MAX_WAIT: '3600'
+  LINSTOR_TOML: #@ "[db]\nconnection_url = \"etcd://http://{}-etcd.kube-system:2379\"".format( name() )
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: #@ controller()
@@ -46,8 +57,6 @@ spec:
       restartPolicy: Always
       terminationGracePeriodSeconds: 0
       dnsPolicy: ClusterFirst
-      #! imagePullSecrets:
-      #! - name: piraeus-regcred
       initContainers:
       - name: init
         image: #@ initimage()
@@ -59,18 +68,19 @@ spec:
           limits:
             cpu: 100m
             memory: 100Mi
+        envFrom:
+            - configMapRef:
+                name: #@ name() + "-controller"
         env:
-          - name: THIS_POD_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          - name: ETCD_ENDPOINTS
-            value: 'default'
+        - name: THIS_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         volumeMounts:
-          - name: localtime
-            mountPath: /etc/localtime
-          - name: etc-linstor
-            mountPath: /etc/linstor
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: etc-linstor
+          mountPath: /etc/linstor
       containers:
       - name: controller
         image: #@ controllerimage()
@@ -83,17 +93,18 @@ spec:
             cpu: '1'
             memory: '1Gi'
         ports:
-          - name: rest-api
-            containerPort: 3370
-          - name: plain
-            containerPort: 3376
-            hostPort: 3376
-          - name: ssl
-            containerPort: 3377
-            hostPort: 3377
+        - name: rest-api
+          containerPort: 3370
+          hostPort: 3370
+        - name: plain
+          containerPort: 3376
+          hostPort: 3376
+        - name: ssl
+          containerPort: 3377
+          hostPort: 3377
         #@ if name() == "piraeus":
         args:
-          - startController
+        - startController
         #@ end
         readinessProbe:
           successThreshold: 3
@@ -103,34 +114,38 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 1
         volumeMounts:
-          - name: localtime
-            mountPath: /etc/localtime
-          - name: etc-linstor
-            mountPath: /etc/linstor
-          - name: log
-            mountPath: /var/log/linstor-controller
-      volumes:
         - name: localtime
-          hostPath:
-            path: /etc/localtime
+          mountPath: /etc/localtime
         - name: etc-linstor
-          emptyDir: {}
+          mountPath: /etc/linstor
         - name: log
-          hostPath:
-            path: #@ "/var/log/" + name() + "/linstor-controller"
+          mountPath: /var/log/linstor-controller
+      volumes:
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+      - name: etc-linstor
+        configMap:
+          name: #@ name() + "-controller"
+          items:
+          - key: LINSTOR_TOML
+            path: linstor.toml
+      - name: log
+        hostPath:
+          path: #@ "/var/log/" + name() + "/linstor-controller"
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-              - matchExpressions:
-                  #! - key: #@ name() + "/controller"
-                  #!   operator: In
-                  #!   values:
-                  #!   - "true"
-                  - key: node-role.kubernetes.io/master
-                    operator: DoesNotExist
+            - matchExpressions:
+              #! - key: #@ name() + "/controller"
+              #!   operator: In
+              #!   values:
+              #!   - "true"
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
       tolerations:
-        - operator: "Exists"
-          effect: "NoSchedule"
+      - operator: Exists
+        effect: NoSchedule
       #! imagePullSecrets:
-      #!   - name: #@ name() + "-regcred"
+      #! - name: piraeus-regcred

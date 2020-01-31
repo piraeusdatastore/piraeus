@@ -1,3 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: piraeus-node
+  namespace: kube-system
+data:
+  INIT_DEBUG: "false"
+  MIN_WAIT: "5"
+  MAX_WAIT: "3600"
+  LS_CONTROLLERS: http://piraeus-controller.kube-system:3370
+  DRBD_IMG_REPO: quay.io/piraeusdatastore
+  DRBD_IMG_TAG: v9.0.21
+  DRBD_IMG_PULL_POLICY: Always
+  POOL_BASE_DIR: /var/local/piraeus/storagepools
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -26,7 +41,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.4
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5
         imagePullPolicy: Always
         securityContext:
           privileged: true
@@ -34,6 +49,9 @@ spec:
           limits:
             cpu: 100m
             memory: 100Mi
+        envFrom:
+        - configMapRef:
+            name: piraeus-node
         env:
         - name: THIS_POD_NAME
           valueFrom:
@@ -47,16 +65,6 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        - name: CONTROLLER_ENDPOINTS
-          value: default
-        - name: DRBD_IMG_REPO
-          value: quay.io/piraeusdatastore
-        - name: DRBD_IMG_TAG
-          value: latest
-        - name: DRBD_IMG_PULL_POLICY
-          value: Always
-        args:
-        - startSatellite
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
@@ -70,7 +78,7 @@ spec:
           mountPath: /lib/modules
       containers:
       - name: node
-        image: quay.io/piraeusdatastore/piraeus-server:v1.3.1
+        image: quay.io/piraeusdatastore/piraeus-server:v1.4.2
         imagePullPolicy: Always
         securityContext:
           privileged: true
@@ -78,6 +86,9 @@ spec:
           limits:
             cpu: 1
             memory: 1Gi
+        envFrom:
+        - configMapRef:
+            name: piraeus-node
         env:
         - name: THIS_POD_NAME
           valueFrom:
@@ -87,8 +98,6 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        - name: DemoPool_Dir
-          value: /var/local/piraeus/pools/DemoPool
         args:
         - startSatellite
         lifecycle:
@@ -116,6 +125,8 @@ spec:
           mountPath: /dev
         - name: lib-modules
           mountPath: /lib/modules
+        - name: run-lvm
+          mountPath: /run/lvm
       volumes:
       - name: localtime
         hostPath:
@@ -144,6 +155,9 @@ spec:
       - name: lib-modules
         hostPath:
           path: /lib/modules
+      - name: run-lvm
+        hostPath:
+          path: /run/lvm
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

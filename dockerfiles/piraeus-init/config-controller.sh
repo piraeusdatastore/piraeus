@@ -1,36 +1,32 @@
-#!/bin/bash -ex
+#!/bin/bash -e
+${INIT_DEBUG,,} && set -x
 
-# use built-in etcd url if no other is provided
-if [[ "${ETCD_ENDPOINTS}" == 'default' ]]; then
-    APP_NAME=${THIS_POD_NAME/-*/}
-    ETCD_ENDPOINTS_IP_VAR="${APP_NAME^^}_ETCD_SERVICE_HOST"
-    ETCD_ENDPOINTS_PORT_VAR="${APP_NAME^^}_ETCD_SERVICE_PORT_CLIENT"
-    ETCD_ENDPOINTS="http://${!ETCD_ENDPOINTS_IP_VAR}:${!ETCD_ENDPOINTS_PORT_VAR}"
-fi 
+# get etcd endpoints from linstor.toml
+ETCD_ENDPOINTS=$( cat /etc/linstor/linstor.toml \
+                  | sed 's#etcd://##g; s#"##g;' \
+                  | awk '/connection_url/ {print $3}' )
+echo Etcd endpoints are: 
+echo -e ${ETCD_ENDPOINTS/,/\n}
 
-# wait until etcd is healthy for at least 5 sec
+# wait until etcd is healthy, at least consecutive ${MIN_WAIT}
 SECONDS=0
-TIMEOUT=3600
 ETCD_HEALTH_COUNT=0
-until [ "${ETCD_HEALTH_COUNT}" -ge  '5' ];  do
-    if [ "${SECONDS}" -ge  "${TIMEOUT}" ]; then
-        echo Timed Out !
+until [ "${ETCD_HEALTH_COUNT}" -ge  "${MIN_WAIT}" ];  do
+    if [ "${SECONDS}" -ge "${MAX_WAIT}" ]; then
+        echo ${MAX_WAIT} seconds have timed out !
         exit 1
     fi
-    for i in $( echo ${ETCD_ENDPOINTS} | tr ',' '\n' ); do
+    PREV_ETCD_HEALTH_COUNT="${ETCD_HEALTH_COUNT}"
+    for i in $( echo "${ETCD_ENDPOINTS}" | tr ',' '\n' ); do
+        echo "${SECONDS}: Trying to reach etcd by curl $i/health"
         if [[ "$( curl -Ss --connect-timeout 2 $i/health | jq -r '.health' )" == 'true' ]] ; then
-            let 'ETCD_HEALTH_COUNT+=1'
-        fi 
+            echo ...etcd is healthy
+            let "ETCD_HEALTH_COUNT+=1"
+            break
+        else
+            echo ...etcd is NOT healthy
+        fi
     done 
-    sleep 1
+    [[ "${ETCD_HEALTH_COUNT}" -eq "${PREV_ETCD_HEALTH_COUNT}" ]] && ETCD_HEALTH_COUNT=0
+    sleep 0.5
 done 
-
-# configure controller
-cat > /etc/linstor/linstor.toml <<EOF
-[db]
-user = "linstor"
-password = "linstor"
-connection_url = "etcd://${ETCD_ENDPOINTS}"
-EOF
-
-cat /etc/linstor/linstor.toml

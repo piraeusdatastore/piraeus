@@ -1,20 +1,17 @@
-#!/bin/bash -ex
+#!/bin/bash -e
+${INIT_DEBUG,,} && set -x
 
 # drop scripts
 mkdir -p /init/conf /init/cmd
-cp -vf /root/cmd/*.sh /init/cmd/
-cp -vf /root/cmd/gojq /init/cmd/
+cp -f /root/cmd/*.sh /init/cmd/
 chmod +x -R /root/cmd
 
 # configure each component
 if [[ ${THIS_POD_NAME} =~ -etcd-[0-9]+$ ]]; then
-    echo Configure etcd
     /init/cmd/config-etcd.sh
 elif [[ ${THIS_POD_NAME} =~ -controller-[0-9]+$ ]]; then
-    echo Configure controller
     /init/cmd/config-controller.sh
 elif [[ ${THIS_POD_NAME} =~ -node-[0-9a-z]+$ ]]; then
-    echo Configure node
     /init/cmd/config-node.sh
 else
     echo Failed to identify the component 

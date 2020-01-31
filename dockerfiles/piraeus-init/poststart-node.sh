@@ -1,40 +1,37 @@
-#!/bin/bash -x
+#!/bin/bash
+${INIT_DEBUG,,} && set -x
+
 # save log 
-exec 2>> /var/log/k8s-lifecycle.log
-echo POSTSTART: ${THIS_POD_NAME} $( date +%Y-%m-%d_%H-%M-%S )
+exec 1>> /var/log/linstor-satellite/k8s-lifecycle.log 2>&1
+echo -e "\n\n#########"
+echo "POSTSTART: $( date '+%Y-%m-%d %H:%M:%S' ) ${THIS_POD_NAME}"
 
-# get controller endpoint
-# CONTROLLER_ENDPOINT=$( awk '/controllers / {print $3}' /init/conf/linstor-client.conf )
+source /init/cmd/func.lib.sh
 
-# configure linstor cli
-cp -vf /init/conf/linstor-client.conf /etc/linstor/
-
-# install gojq for now
-cp -v /init/cmd/gojq /usr/local/bin/gojq
-
-# wait until node is up for at least 5 sec
+# wait until node is up, at least consecutive ${MIN_WAIT}
 SECONDS=0
-TIMEOUT=3600
 NODE_HEALTH_COUNT=0
-until [ "${NODE_HEALTH_COUNT}" -ge  '5' ];  do
-    if [ "${SECONDS}" -ge  "${TIMEOUT}" ]; then
+until [ "${NODE_HEALTH_COUNT}" -ge "${MIN_WAIT}" ];  do
+    if [ "${SECONDS}" -ge  "${MAX_WAIT}" ]; then
         echo Timed Out !
         exit 1
-    elif [[ "$( linstor --machine node list --node ${THIS_NODE_NAME} \
-            | gojq '.[0].nodes[0].connection_status' )" == '2' ]]  ; then
+    fi
+    echo "Wait for node \"${THIS_NODE_NAME}\" to come up"
+    if linstor_node_is_online ${THIS_NODE_NAME}; then
+        echo '... this node is ONLINE'
         let 'NODE_HEALTH_COUNT+=1'
-    fi 
+    else
+        echo '... this node is OFFLINE'
+    fi
     sleep 1
 done 
 
-mkdir -vp ${DemoPool_Dir} 
-
-if [[ $( linstor --machine storage-pool list --node ${THIS_NODE_NAME} --storage-pools DemPool \
-      | gojq '.[0].stor_pools[0]' ) == 'null' ]] ; then 
-    linstor storage-pool create filethin ${THIS_NODE_NAME} DemoPool ${DemoPool_Dir} 
-fi 
-
-if [[ $( linstor --machine storage-pool list --node ${THIS_NODE_NAME} --storage-pools DemPool- \
-      | gojq '.[0].stor_pools[0]' ) == 'null' ]] ; then 
-    linstor storage-pool create diskless ${THIS_NODE_NAME} DemoPool-
-fi 
+# add to DfltStorPool by filethin backend
+POOL_NAME='DfltStorPool'
+mkdir -vp ${POOL_BASE_DIR}/${POOL_NAME}
+if ! linstor_has_storage_pool ${THIS_NODE_NAME} ${POOL_NAME}; then
+    echo "TASK: add storagepool \"${POOL_NAME}\" on node \"${THIS_NODE_NAME}\""
+    linstor storage-pool create filethin ${THIS_NODE_NAME} ${POOL_NAME} ${POOL_BASE_DIR}/${POOL_NAME} 
+else
+    echo "StoragePool \"${POOL_NAME}\" is already created on ${THIS_NODE_NAME}"
+fi

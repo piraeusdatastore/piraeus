@@ -1,4 +1,17 @@
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: piraeus-controller
+  namespace: kube-system
+data:
+  INIT_DEBUG: "false"
+  MIN_WAIT: "5"
+  MAX_WAIT: "3600"
+  LINSTOR_TOML: |-
+    [db]
+    connection_url = "etcd://http://piraeus-etcd.kube-system:2379"
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: piraeus-controller
@@ -46,19 +59,20 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.4
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5
         imagePullPolicy: Always
         resources:
           limits:
             cpu: 100m
             memory: 100Mi
+        envFrom:
+        - configMapRef:
+            name: piraeus-controller
         env:
         - name: THIS_POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: ETCD_ENDPOINTS
-          value: default
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
@@ -66,7 +80,7 @@ spec:
           mountPath: /etc/linstor
       containers:
       - name: controller
-        image: quay.io/piraeusdatastore/piraeus-server:v1.3.1
+        image: quay.io/piraeusdatastore/piraeus-server:v1.4.2
         imagePullPolicy: Always
         resources:
           limits:
@@ -75,6 +89,7 @@ spec:
         ports:
         - name: rest-api
           containerPort: 3370
+          hostPort: 3370
         - name: plain
           containerPort: 3376
           hostPort: 3376
@@ -102,7 +117,11 @@ spec:
         hostPath:
           path: /etc/localtime
       - name: etc-linstor
-        emptyDir: {}
+        configMap:
+          name: piraeus-controller
+          items:
+          - key: LINSTOR_TOML
+            path: linstor.toml
       - name: log
         hostPath:
           path: /var/log/piraeus/linstor-controller

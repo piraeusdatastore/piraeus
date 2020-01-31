@@ -1,7 +1,21 @@
-kind: Namespace
 apiVersion: v1
+kind: Service
 metadata:
-  name: piraeus
+  name: piraeus-etcd-dns
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: piraeus
+    app.kubernetes.io/component: piraeus-etcd-dns
+spec:
+  ports:
+  - name: client
+    port: 2379
+  - name: peer
+    port: 2380
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: piraeus
+    app.kubernetes.io/component: piraeus-etcd-dns
 ---
 apiVersion: v1
 kind: Service
@@ -58,13 +72,15 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.4
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5
         imagePullPolicy: Always
         resources:
           limits:
             cpu: 100m
             memory: 100Mi
         env:
+        - name: ETCDCTL_API
+          value: "2"
         - name: THIS_POD_NAME
           valueFrom:
             fieldRef:
@@ -73,8 +89,6 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: ETCDCTL_API
-          value: "2"
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
@@ -82,12 +96,12 @@ spec:
           mountPath: /init
       containers:
       - name: etcd
-        image: quay.io/coreos/etcd:v3.3.18
+        image: quay.io/coreos/etcd:v3.4.3
         imagePullPolicy: Always
         resources:
           limits:
-            cpu: 500m
-            memory: 500Mi
+            cpu: 200m
+            memory: 200Mi
         ports:
         - name: client
           containerPort: 2379

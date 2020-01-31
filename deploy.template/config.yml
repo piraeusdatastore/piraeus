@@ -2,11 +2,11 @@
 ---
 name: "piraeus"
 map_host_linstor: false
-map_host_lvm: false
+map_host_lvm: true
 registry: "quay.io/piraeusdatastore"
-initversion: "v0.4"
-contsatversion: "v1.3.1"
-csiversion: "v0.7.2"
+initversion: "v0.5"
+contsatversion: "v1.4.2"
+csiversion: "v0.7.3"
 images:
   init: "piraeus-init"
   controller: "piraeus-server"
