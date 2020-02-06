@@ -1,6 +1,6 @@
 #@ load("funcs.lib.yml", "name", "csicontroller", "csiimage", "controllerhostport", "csinode", "controller")
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: #@ csicontroller()
@@ -267,7 +267,7 @@ roleRef:
   name: csi-cluster-driver-registrar-role
   apiGroup: rbac.authorization.k8s.io
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: #@ csinode()
@@ -278,6 +278,10 @@ spec:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: #@ name()
+      app.kubernetes.io/component: #@ csinode()
   template:
     metadata:
       labels:

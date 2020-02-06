@@ -9,7 +9,7 @@ linstor-satellite](https://github.com/LINBIT/linstor-server) components, as well
 
 # How to use
 ## As a controller
-```sh
+```
 docker run -d --name=piraeus-controller -p 3370:3370 piraeusdatastore/piraeus-server startController
 ```
 

@@ -1,15 +1,10 @@
 # MySQL statefulset example from https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/
- 
-kind: Namespace
-apiVersion: v1
-metadata:
-  name: piraeus-demo
----
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: mysql
-  namespace: piraeus-demo
+  namespace: piraeus
   labels:
     app: mysql
 data:
@@ -27,7 +22,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql
-  namespace: piraeus-demo
+  namespace: piraeus
   labels:
     app: mysql
 spec:
@@ -44,7 +39,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql-read
-  namespace: piraeus-demo
+  namespace: piraeus
   labels:
     app: mysql
 spec:
@@ -58,7 +53,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql
-  namespace: piraeus-demo
+  namespace: piraeus
 spec:
   selector:
     matchLabels:
@@ -108,7 +103,7 @@ spec:
         - name: config-map
           mountPath: /mnt/config-map
       - name: clone-mysql
-        image: gcr.azk8s.cn/google-samples/xtrabackup:1.0
+        image: gcr.io/google-samples/xtrabackup:1.0
         resources:
           limits:
             cpu: '100m'
@@ -167,7 +162,7 @@ spec:
           periodSeconds: 2
           timeoutSeconds: 1
       - name: xtrabackup
-        image: gcr.azk8s.cn/google-samples/xtrabackup:1.0
+        image: gcr.io/google-samples/xtrabackup:1.0
         resources:
           limits:
             cpu: '100m'
@@ -250,7 +245,7 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: data
-      namespace: piraeus-demo
+      namespace: piraeus
     spec:
       accessModes: 
       - ReadWriteOnce

@@ -72,7 +72,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5
+        image: quay.io/piraeusdatastore/piraeus-init:v0.6
         imagePullPolicy: Always
         resources:
           limits:
@@ -110,6 +110,8 @@ spec:
         env:
         - name: ETCDCTL_API
           value: "2"
+        - name: CLUSTER_SIZE
+          value: "3"
         command:
         - etcd
         args:
@@ -157,6 +159,11 @@ spec:
       tolerations:
       - operator: Exists
         effect: NoSchedule
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: piraeus
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -219,7 +226,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5
+        image: quay.io/piraeusdatastore/piraeus-init:v0.6
         imagePullPolicy: Always
         resources:
           limits:
@@ -339,7 +346,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5
+        image: quay.io/piraeusdatastore/piraeus-init:v0.6
         imagePullPolicy: Always
         securityContext:
           privileged: true
@@ -471,7 +478,7 @@ spec:
       - operator: Exists
         effect: NoSchedule
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: piraeus-csi-controller
@@ -782,7 +789,7 @@ roleRef:
   name: csi-cluster-driver-registrar-role
   apiGroup: rbac.authorization.k8s.io
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: piraeus-csi-node
@@ -793,6 +800,10 @@ spec:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: piraeus
+      app.kubernetes.io/component: piraeus-csi-node
   template:
     metadata:
       labels:

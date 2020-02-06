@@ -121,6 +121,8 @@ spec:
         env:
         - name: ETCDCTL_API
           value: '2'
+        - name: CLUSTER_SIZE
+          value: '3'
         command:
         - etcd
         args:

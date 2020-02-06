@@ -72,7 +72,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5
+        image: quay.io/piraeusdatastore/piraeus-init:v0.6
         imagePullPolicy: Always
         resources:
           limits:
@@ -110,6 +110,8 @@ spec:
         env:
         - name: ETCDCTL_API
           value: "2"
+        - name: CLUSTER_SIZE
+          value: "3"
         command:
         - etcd
         args:

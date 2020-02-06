@@ -7,12 +7,15 @@ data store for Kubernetes.
 
 ### Requirements
 
-Using a Kubernetes cluster with at least 4 nodes is recommended.
-The hosts should use Docker as their container runtime and be running one of the following distributions to enable automatic DRBD kernel module injection:
+Using a Kubernetes cluster with at least 4 worker nodes is recommended. Due to CSI compatibility, kubelet version must be one of `v1.14, v1.15, v1.16, v1.17.`
 
+The hosts should use Docker as their container runtime and be running one of the following distributions to enable automatic DRBD kernel module injection:
+```
 * CentOS/RHEL 7
 * CentOS/RHEL 8
-* Ubuntu 18.04 
+* Ubuntu 16
+* Ubuntu 18 
+```
 
 ### Node selection
 
@@ -42,6 +45,19 @@ kubectl -n kube-system exec piraeus-controller-0 -- linstor node list
 
 This should show that the selected nodes are `Online` at the LINSTOR level.
 
+### Using storage
+
+Piraeus preconfigures a `DfltStorPool` by using LINSTOR's `FileThin` backend, which is ready to use after yaml deployment.   
+
+The [demo](demo) directory contains examples of how to use `DfltStorPool`.
+For instance:
+
+```
+kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/demo/demo-sts.yaml
+```
+
+This demo statefulset is a 3-node MySQL cluster. Demo pods and pvcs are under `piraeus` namespace.
+
 ### Storage configuration
 
 Piraeus can use storage that is local to the application as well as storage on other nodes.
@@ -59,19 +75,6 @@ Use the following steps for each node:
 kubectl -n kube-system exec piraeus-controller-0 -- linstor physical-storage create-device-pool --pool-name pool0 LVM $NODE_NAME /dev/$DEVICE
 kubectl -n kube-system exec piraeus-controller-0 -- linstor storage-pool create lvm $NODE_NAME DfltStorPool pool0
 ```
-
-### Using storage
-
-The [demo](demo) directory contains examples of how to use the newly configured storage.
-For instance:
-
-```
-kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/demo/piraeus-demo-pvc.yaml
-kubectl label nodes $NODE_NAME piraeus/demo=true
-kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/demo/piraeus-demo-app.yaml
-```
-
-This demo app exposes some stats about the new volume as an HTTP page available on port 31279 of its host.
 
 ## Components
 

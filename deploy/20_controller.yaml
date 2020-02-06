@@ -1,3 +1,8 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: piraeus
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -59,7 +64,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5
+        image: quay.io/piraeusdatastore/piraeus-init:v0.6
         imagePullPolicy: Always
         resources:
           limits:

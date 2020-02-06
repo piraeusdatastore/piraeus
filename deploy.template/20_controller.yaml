@@ -1,4 +1,8 @@
 #@ load("funcs.lib.yml", "name", "controller", "initimage", "etcdendpoint", "controllerimage")
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: piraeus
 ---
 apiVersion: v1
 kind: ConfigMap
