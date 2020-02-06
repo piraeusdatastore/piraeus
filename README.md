@@ -50,7 +50,7 @@ kubectl -n kube-system exec piraeus-controller-0 -- linstor node list
 
 This should show that the selected nodes are `Online` at the LINSTOR level.
 
-### Using storage
+### Using storage (demo)
 
 Piraeus preconfigures a `DfltStorPool` by using LINSTOR's `FileThin` backend, which is ready to use after yaml deployment.   
 
