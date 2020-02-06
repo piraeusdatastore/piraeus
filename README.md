@@ -7,15 +7,20 @@ data store for Kubernetes.
 
 ### Requirements
 
-Using a Kubernetes cluster with at least 4 worker nodes is recommended. Due to CSI compatibility, kubelet version must be one of `v1.14, v1.15, v1.16, v1.17.`
+Using a Kubernetes cluster with at least 4 worker nodes is recommended. Due to CSI compatibility, kubelet version must be one of:
+
+ * v1.14.x
+ * v1.15.x
+ * v1.16.x
+ * v1.17.x
 
 The hosts should use Docker as their container runtime and be running one of the following distributions to enable automatic DRBD kernel module injection:
-```
+
 * CentOS/RHEL 7
 * CentOS/RHEL 8
 * Ubuntu 16
 * Ubuntu 18 
-```
+
 
 ### Node selection
 

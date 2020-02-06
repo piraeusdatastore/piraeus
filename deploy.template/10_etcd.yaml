@@ -87,6 +87,8 @@ spec:
             cpu: 100m
             memory: 100Mi
         env:
+        - name: CLUSTER_SIZE
+          value: '3'
         - name: ETCDCTL_API
           value: '2'
         - name: THIS_POD_NAME
@@ -121,8 +123,6 @@ spec:
         env:
         - name: ETCDCTL_API
           value: '2'
-        - name: CLUSTER_SIZE
-          value: '3'
         command:
         - etcd
         args:

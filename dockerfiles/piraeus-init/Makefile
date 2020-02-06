@@ -10,7 +10,7 @@ all: update upload
 
 .PHONY: update
 update:
-	docker build --no-cache=$(NOCACHE) -t $(PROJECT):$(TAG) .
+	docker build --no-cache=$(NOCACHE) --build-arg http_proxy=$(PROXY) --build-arg https_proxy=$(PROXY) -t $(PROJECT):$(TAG) .
 	docker tag $(PROJECT):$(TAG) $(PROJECT):latest
 
 .PHONY: upload
