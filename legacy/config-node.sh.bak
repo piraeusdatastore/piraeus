@@ -25,11 +25,11 @@ until [ "${CONTROLLER_HEALTH_COUNT}" -ge "${MIN_WAIT}" ];  do
             break
         else
             echo '... controller is DOWN'
-        fi
+        fi 
     done
     [ "${CONTROLLER_HEALTH_COUNT}" -eq ${PREV_CONTROLLER_HEALTH_COUNT} ] && CONTROLLER_HEALTH_COUNT=0
     sleep 0.5
-done
+done 
 
 # register node to cluster
 THIS_POD_IF=$( _get_if_by_ip ${THIS_POD_IP} )
@@ -54,7 +54,7 @@ lsmod | grep -q ^dm_thin_pool || modprobe dm_thin_pool
 lsmod | grep -E '^dm_thin_pool|^Module'
 
 # compile and install drbd kernel module
-if lsmod | grep -q drbd ; then
+if lsmod | grep -q drbd ; then 
     echo 'DRBD module is already loaded'
     lsmod | grep -E '^drbd|^Module'
     modinfo drbd

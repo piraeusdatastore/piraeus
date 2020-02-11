@@ -96,7 +96,7 @@ spec:
           else
             cp /mnt/config-map/slave.cnf /mnt/conf.d/
           fi
-          echo 
+          echo
         volumeMounts:
         - name: conf
           mountPath: /mnt/conf.d
@@ -247,7 +247,7 @@ spec:
       name: data
       namespace: piraeus
     spec:
-      accessModes: 
+      accessModes:
       - ReadWriteOnce
       resources:
         requests:

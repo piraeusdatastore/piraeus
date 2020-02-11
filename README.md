@@ -19,7 +19,7 @@ The hosts should use Docker as their container runtime and be running one of the
 * CentOS/RHEL 7
 * CentOS/RHEL 8
 * Ubuntu 16
-* Ubuntu 18 
+* Ubuntu 18
 
 
 ### Node selection
@@ -52,7 +52,7 @@ This should show that the selected nodes are `Online` at the LINSTOR level.
 
 ### Using storage (demo)
 
-Piraeus preconfigures a `DfltStorPool` by using LINSTOR's `FileThin` backend, which is ready to use after yaml deployment.   
+Piraeus preconfigures a `DfltStorPool` by using LINSTOR's `FileThin` backend, which is ready to use after yaml deployment.
 
 The [demo](demo) directory contains examples of how to use `DfltStorPool`.
 For instance:

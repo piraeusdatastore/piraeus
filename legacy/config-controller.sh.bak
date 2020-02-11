@@ -5,7 +5,7 @@ ${INIT_DEBUG,,} && set -x
 ETCD_ENDPOINTS=$( cat /etc/linstor/linstor.toml \
                   | sed 's#etcd://##g; s#"##g;' \
                   | awk '/connection_url/ {print $3}' )
-echo Etcd endpoints are:
+echo Etcd endpoints are: 
 echo -e ${ETCD_ENDPOINTS/,/\n}
 
 # wait until etcd is healthy, at least consecutive ${MIN_WAIT}
@@ -26,7 +26,7 @@ until [ "${ETCD_HEALTH_COUNT}" -ge  "${MIN_WAIT}" ];  do
         else
             echo ...etcd is NOT healthy
         fi
-    done
+    done 
     [[ "${ETCD_HEALTH_COUNT}" -eq "${PREV_ETCD_HEALTH_COUNT}" ]] && ETCD_HEALTH_COUNT=0
     sleep 0.5
-done
+done 

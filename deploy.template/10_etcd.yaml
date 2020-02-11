@@ -158,7 +158,7 @@ spec:
               matchExpressions:
               - key: app.kubernetes.io/component
                 operator: In
-                values: 
+                values:
                 - #@ etcd()
             topologyKey: kubernetes.io/hostname
         nodeAffinity:

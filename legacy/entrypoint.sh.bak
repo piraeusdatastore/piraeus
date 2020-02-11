@@ -14,6 +14,6 @@ elif [[ ${THIS_POD_NAME} =~ -controller-[0-9]+$ ]]; then
 elif [[ ${THIS_POD_NAME} =~ -node-[0-9a-z]+$ ]]; then
     /init/cmd/config-node.sh
 else
-    echo Failed to identify the component
+    echo Failed to identify the component 
     exit 1
 fi

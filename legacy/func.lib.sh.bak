@@ -17,7 +17,7 @@ _linstor_has_node_ip() {
 
 _linstor_node_create() {
     cat > /init/conf/.create_node.json <<EOF
-{
+{ 
     "name": "$1",
     "type": "SATELLITE",
     "net_interfaces": [
@@ -45,7 +45,7 @@ EOF
 
 _linstor_node_interface_create() {
     cat > /init/conf/.create_node_interface.json <<EOF
-{
+{ 
     "name": "$2",
     "address": "$3",
     "satellite_encryption_type": "$4"
@@ -63,7 +63,7 @@ EOF
 }
 
 _linstor_node_delete() {
-    curl -Ss --connect-timeout 2
+    curl -Ss --connect-timeout 2 
          -X DELETE "${CONTROLLER_ENDPOINT}/v1/nodes/k8s-node-1" \
          -H "Content-Type: application/json" \
         | jq '.'
@@ -85,7 +85,7 @@ linstor_has_storage_pool() {
     [[ "$( linstor --machine storage-pool list --node $1 --storage-pools $2 \
         | jq '.[0].stor_pools[0]' )" != 'null' ]]
 }
-
+ 
 _curl_docker() {
     curl -Ss --connect-timeout 2 \
          --unix-socket /var/run/docker.sock \
@@ -144,7 +144,7 @@ _docker_run() {
 EOF
 
     DATA=$( cat /init/conf/.create_container.json | awk -v ORS= -v OFS= '{$1=$1}1' )
-    if [[ ! -z $2 ]]; then
+    if [[ ! -z $2 ]]; then 
         DATA=$( echo ${DATA} | jq ".HostConfig.Binds += [\"$2\"]" )
     fi
 
@@ -152,12 +152,12 @@ EOF
             -X POST "http://localhost/containers/create" \
             -d "${DATA}" \
             | jq -r '.Id' )
-
+    
     if [[ ! -z ${ID} ]]; then
         _docker_start ${ID}
         _docker_logs ${ID}
     else
-        echo ERROR: Failed to create container
+        echo ERROR: Failed to create container 
     fi
 }
 

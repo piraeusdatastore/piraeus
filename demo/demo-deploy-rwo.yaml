@@ -27,10 +27,10 @@ spec:
       - image: nginx:alpine
         imagePullPolicy: IfNotPresent
         name: init
-        command: 
+        command:
         - sh
         - -xc
-        - | 
+        - |
           echo "<center><h1>Demo volume $( df | grep -E drbd )</h1></center>" \
           > /usr/share/nginx/html/index.html
         volumeMounts:

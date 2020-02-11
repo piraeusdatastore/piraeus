@@ -1,11 +1,11 @@
 #!/bin/sh
-# save log
+# save log 
 exec 2> /var/log/k8s-lifecycle.log
 echo POSTSTART:
 
 export ETCDCTL_ENDPOINTS=$( cat /init/conf/etcd_local_endpoint )
 
-# default api is v3, so add a shortcut for api v2
+# default api is v3, so add a shortcut for api v2              
 cat > /usr/local/bin/etcdctl2 <<EOF
 #!/bin/sh
 export ETCDCTL_API=2

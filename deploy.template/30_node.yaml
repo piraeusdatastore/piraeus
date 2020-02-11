@@ -136,18 +136,12 @@ spec:
         - name: lib-modules
           mountPath: /lib/modules
         #@ if map_host_lvm():
-        #! - name: etc-lvm
-        #!   mountPath: /etc/lvm
         - name: run-lvm
           mountPath: /run/lvm
         #@ end
         #@ if map_host_linstor():
-        - name: etc-drbd-d
-          mountPath: /etc/drbd.d
         - name: var-lib-linstor-d
           mountPath: /var/lib/linstor.d
-        - name: etc-linstor
-          mountPath: /etc/linstor
         #@ end
       volumes:
       - name: localtime

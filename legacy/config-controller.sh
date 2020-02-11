@@ -7,7 +7,7 @@ until [ "$( _best-effort etcdctl member list | grep -E '-etcd-[0-9]+' | wc -l )"
     sleep 1
     if [ "${SECONDS}" -ge  "${TIMEOUT}" ]; then
         echo ERR: Unable to reach etcd
-        exit 0 
+        exit 0
     fi
 done
 
