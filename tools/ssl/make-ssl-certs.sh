@@ -1,3 +1,6 @@
+#!/bin/bash
+# for generating demo ssl certifications and permits
+
 docker run --rm -it -w /drop -v $(pwd):/drop openjdk:alpine \
     keytool -keyalg rsa -keysize 2048 -genkey -keystore keystore_linstor.jks \
             -storepass linstor -keypass linstor \

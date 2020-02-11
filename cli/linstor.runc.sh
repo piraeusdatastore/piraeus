@@ -1,15 +1,20 @@
 #!/bin/sh
+# this method is experimental
+: ${CLIENT_DIR:=/opt/piraeus/client}
 
 if [ "$1" = "INSTALL" ]; then
-    : ${ROOTFS_DIR:=/opt/piraeus/client/oci/rootfs}
-    [ -z $2 ] && IMG=quay.io/piraeusdatastore/piraeus-client || IMG=$2
-    echo Extracting image \"${IMG}\" to ${ROOTFS_DIR}
-    rm -fr ${ROOTFS_DIR} && \
-    mkdir -p ${ROOTFS_DIR} && \
+
+    rm -fr ${CLIENT_DIR}/oci
+    mkdir -p ${CLIENT_DIR}/oci/rootfs
+    cd ${CLIENT_DIR}/oci
+    [ -z $2 ] && IMG=daocloud.io/piraeus/piraeus-client || IMG=$2
+    echo Extracting image \"${IMG}\" to ${CLIENT_DIR}/oci/rootfs 
     docker export $( docker create --rm ${IMG} ) \
-        | tar -xf - -C ${ROOTFS_DIR}
+        | tar -xf - -C rootfs
+    mv rootfs/runc ./
+    mv rootfs/config.json.template ./
 else
-    cd /opt/piraeus/client/oci
+    cd ${CLIENT_DIR}/oci
     CMD=$( echo \"linstor\",\"--no-utf8\",\"$@\" | sed 's/ /","/g' )
     cat config.json.template \
         | sed "s/_COMMAND_/${CMD}/; s#LS_CONTROLLERS=#&${LS_CONTROLLERS}#" \
