@@ -362,6 +362,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+        - name: THIS_POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
         - name: THIS_POD_IP
           valueFrom:
             fieldRef:
@@ -375,6 +379,8 @@ spec:
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
+        - name: opt-piraeus
+          mountPath: /opt/piraeus
         - name: dockersock
           mountPath: /var/run/docker.sock
         - name: usr-src
@@ -382,7 +388,7 @@ spec:
         - name: lib-modules
           mountPath: /lib/modules
       containers:
-      - name: node
+      - name: satellite
         image: quay.io/piraeusdatastore/piraeus-server:v1.4.2
         imagePullPolicy: Always
         securityContext:
@@ -442,12 +448,15 @@ spec:
         hostPath:
           path: /var/run/docker.sock
           type: Socket
-      - name: log
+      - name: opt-piraeus
         hostPath:
-          path: /var/log/piraeus/linstor-satellite
+          path: /opt/piraeus
       - name: var-local-piraeus
         hostPath:
           path: /var/local/piraeus
+      - name: log
+        hostPath:
+          path: /var/log/piraeus/linstor-satellite
       - name: dev
         hostPath:
           path: /dev

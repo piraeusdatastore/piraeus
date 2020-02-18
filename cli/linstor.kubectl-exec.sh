@@ -1,0 +1,1 @@
+kubectl -n kube-system exec -it piraeus-controller-0 -- linstor $@

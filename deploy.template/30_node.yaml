@@ -61,7 +61,11 @@ spec:
         - name: THIS_POD_NAME
           valueFrom:
             fieldRef:
-              fieldPath: metadata.name
+              fieldPath: metadata.name 
+        - name: THIS_POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid         
         - name: THIS_POD_IP
           valueFrom:
             fieldRef:
@@ -75,6 +79,8 @@ spec:
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
+        - name: #@ "opt-" + name()
+          mountPath: #@ "/opt/" + name()
         - name: dockersock
           mountPath: /var/run/docker.sock
         - name: usr-src
@@ -82,7 +88,7 @@ spec:
         - name: lib-modules
           mountPath: /lib/modules
       containers:
-      - name: node
+      - name: satellite
         image: #@ satelliteimage()
         imagePullPolicy: Always
         securityContext:
@@ -153,12 +159,15 @@ spec:
         hostPath:
           path: /var/run/docker.sock
           type: Socket
-      - name: log
+      - name: #@ "opt-" + name()
         hostPath:
-          path: #@ "/var/log/"+ name() + "/linstor-satellite"
+          path: #@ "/opt/" + name()
       - name: #@ "var-local-" + name()
         hostPath:
           path: #@ "/var/local/" + name()
+      - name: log
+        hostPath:
+          path: #@ "/var/log/"+ name() + "/linstor-satellite"
       - name: dev
         hostPath:
           path: /dev

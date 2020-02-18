@@ -5,7 +5,7 @@ ${INIT_DEBUG,,} && set -x
 source /init/cmd/func.lib.sh
 
 # wait until controller, at least consecutive ${MIN_WAIT}
-echo 'Controller endpoints are:'
+echo '* Controller endpoints are:'
 echo -e ${LS_CONTROLLERS/,/\n}
 
 SECONDS=0
@@ -41,7 +41,7 @@ if _linstor_has_node ${THIS_NODE_NAME} ; then
 elif _linstor_has_node_ip ${THIS_POD_IP}; then
     echo "WARN: This node ip \"${THIS_POD_IP}\" is already registered"
 else
-    echo "TASK: add node \"${THIS_NODE_NAME}\" to the cluster"
+    echo "* Add node \"${THIS_NODE_NAME}\" to the cluster"
      _linstor_node_create ${THIS_NODE_NAME} ${THIS_POD_IF} ${THIS_POD_IP} 3366 plain true
 fi
 
@@ -49,7 +49,7 @@ echo 'Now cluster has nodes:'
 _linstor_node_list ${THIS_NODE_NAME}
 
 # enable devicemapper thin-provisioning
-echo 'TASK: enable dm_thin_pool'
+echo '* Enable dm_thin_pool'
 lsmod | grep -q ^dm_thin_pool || modprobe dm_thin_pool
 lsmod | grep -E '^dm_thin_pool|^Module'
 
@@ -59,13 +59,13 @@ if lsmod | grep -q drbd ; then
     lsmod | grep -E '^drbd|^Module'
     modinfo drbd
 elif [[ "v$( modinfo drbd | awk '/^version: / {print $2}' )" == "${DRBD_IMG_TAG}-1" ]]; then
-    echo "TASK: load drbd module version \"${DRBD_IMG_TAG}\""
+    echo "* Load drbd module version \"${DRBD_IMG_TAG}\""
     modprobe drbd
     modprobe drbd_transport_tcp
     lsmod | grep -E '^drbd|^Module'
     modinfo drbd
 elif [[ ${DRBD_IMG_TAG,,} == 'none' ]]; then
-    echo 'TASK: skip drbd installation'
+    echo '* Skip drbd installation'
 else
     if [[ "$( uname -r ) " =~ el7 ]]; then
         DRBD_IMG_NAME=drbd9-centos7
@@ -76,7 +76,7 @@ else
         MOUNT_USR_LIB=/usr/lib:/usr/lib:ro
     fi
     DRBD_IMG_URL=${DRBD_IMG_REPO}/${DRBD_IMG_NAME}:${DRBD_IMG_TAG}
-    echo "TASK: compile and load drbd module by image \"${DRBD_IMG_URL}\""
+    echo "* Compile and load drbd module by image \"${DRBD_IMG_URL}\""
 
     if [[ "${DRBD_IMG_PULL_POLICY}" == "Always" ]] || [[ "$( _docker_image_inspect ${DRBD_IMG_URL} | jq '.Id' )" == "null" ]]; then
         _docker_pull "${DRBD_IMG_URL}"
