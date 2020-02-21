@@ -1,0 +1,1 @@
+docker run --rm --net host -it quay.io/piraeusdatastore/piraeus-client $@

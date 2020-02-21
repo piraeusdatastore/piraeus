@@ -73,7 +73,6 @@ spec:
     spec:
       priorityClassName: system-node-critical
       restartPolicy: Always
-      terminationGracePeriodSeconds: 0
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
@@ -89,8 +88,6 @@ spec:
         env:
         - name: CLUSTER_SIZE
           value: '3'
-        - name: ETCDCTL_API
-          value: '2'
         - name: THIS_POD_NAME
           valueFrom:
             fieldRef:
@@ -120,14 +117,11 @@ spec:
           containerPort: 2379
         - name: peer
           containerPort: 2380
-        env:
-        - name: ETCDCTL_API
-          value: '2'
         command:
         - etcd
         args:
         - --config-file
-        - /init/conf/etcd.conf
+        - /etc/etcd/etcd.conf
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3
@@ -140,7 +134,8 @@ spec:
         - name: localtime
           mountPath: /etc/localtime
         - name: init
-          mountPath: /init
+          mountPath: /etc/etcd
+          subPath: etc/etcd
         - name: data
           mountPath: /.etcd/data
       volumes:

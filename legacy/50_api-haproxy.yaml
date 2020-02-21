@@ -1,0 +1,104 @@
+#@ load( "funcs.lib.yml", "name" )
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: #@ name() + "-api"
+  namespace: kube-system
+data:
+  LS_CONTROLLERS: piraeus-controller.kube-system.svc.cluster.local:3370
+  HAPROXY_CONF: |
+    frontend node
+      mode tcp
+      bind *:3370
+      default_backend controllers
+    resolvers hostdns
+      parse-resolv-conf
+      accepted_payload_size 1024
+      hold valid 10s
+    backend controllers
+      mode tcp
+      balance roundrobin
+      server-template controller 3 ${LS_CONTROLLERS} check resolvers hostdns init-addr none
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: #@ name() + "-api"
+  namespace: kube-system
+spec:
+  minReadySeconds: 0
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: #@ name()
+      app.kubernetes.io/component: #@ name() + "-api"
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: #@ name()
+        app.kubernetes.io/component: #@ name() + "-api"
+    spec:
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 0
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: proxy
+        image: haproxy:alpine
+        imagePullPolicy: Always
+        resources:
+          #! requests:
+          #!   cpu: '100m'
+          #!   memory: '100Mi'
+          limits:
+            cpu: 200m
+            memory: 200Mi
+        ports:
+        - name: rest-api
+          containerPort: 3370
+        envFrom:
+        - configMapRef:
+            name: #@ name() + "-api"
+        readinessProbe:
+          successThreshold: 3
+          failureThreshold: 3
+          httpGet:
+            port: 3370
+          initialDelaySeconds: 1
+          periodSeconds: 1
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: haproxy-conf
+          mountPath: /usr/local/etc/haproxy
+      volumes:
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+      - name: haproxy-conf
+        configMap:
+          name: #@ name() + "-api"
+          items:
+          - key: HAPROXY_CONF
+            path: haproxy.cfg 
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: #@ name() + "/enabled"
+                operator: In
+                values:
+                  - "true"
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      #! imagePullSecrets:
+      #! - name: piraeus-regcred

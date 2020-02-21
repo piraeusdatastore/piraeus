@@ -7,8 +7,7 @@ data:
   INIT_DEBUG: "false"
   MIN_WAIT: "5"
   MAX_WAIT: "3600"
-  LS_CONTROLLERS: http://piraeus-controller.kube-system:3370
-  DRBD_IMG_REPO: quay.io/piraeusdatastore
+  LS_CONTROLLERS: piraeus-controller.kube-system:3370
   DRBD_IMG_TAG: v9.0.21
   DRBD_IMG_PULL_POLICY: Always
   POOL_BASE_DIR: /var/local/piraeus/storagepools
@@ -36,12 +35,11 @@ spec:
     spec:
       priorityClassName: system-node-critical
       restartPolicy: Always
-      terminationGracePeriodSeconds: 0
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.1
         imagePullPolicy: Always
         securityContext:
           privileged: true
@@ -76,6 +74,8 @@ spec:
           mountPath: /init
         - name: opt-piraeus
           mountPath: /opt/piraeus
+        - name: usr-local-bin
+          mountPath: /usr/local/bin
         - name: dockersock
           mountPath: /var/run/docker.sock
         - name: usr-src
@@ -110,7 +110,7 @@ spec:
           postStart:
             exec:
               command:
-              - /init/cmd/poststart-node.sh
+              - /init/bin/poststart-node.sh
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3
@@ -133,6 +133,30 @@ spec:
           mountPath: /lib/modules
         - name: run-lvm
           mountPath: /run/lvm
+      - name: proxy
+        image: haproxy:2.1.3
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+        envFrom:
+        - configMapRef:
+            name: piraeus-node
+        readinessProbe:
+          successThreshold: 3
+          failureThreshold: 3
+          httpGet:
+            host: 127.0.0.1
+            port: 3370
+          initialDelaySeconds: 1
+          periodSeconds: 1
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /usr/local/etc/haproxy
+          subPath: etc/haproxy
       volumes:
       - name: localtime
         hostPath:
@@ -155,9 +179,9 @@ spec:
       - name: dev
         hostPath:
           path: /dev
-      - name: usr-sbin
+      - name: usr-local-bin
         hostPath:
-          path: /usr/sbin
+          path: /usr/local/bin
       - name: usr-src
         hostPath:
           path: /usr/src

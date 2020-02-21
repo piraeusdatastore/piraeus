@@ -3,7 +3,11 @@
 ## Method 1: kubectl exec
 
 ```
-kubectl -n kube-system exec -it piraeus-controller-0 -- linstor $@
+kubectl -n kube-system exec -it \
+"$( kubectl -n kube-system get pod \
+--selector app.kubernetes.io/component=piraeus-controller \
+--field-selector status.phase=Running -o name )" \
+-- linstor $@
 ```
 
 > This method only works where kubectl is set up.
@@ -11,7 +15,7 @@ kubectl -n kube-system exec -it piraeus-controller-0 -- linstor $@
 ## Method 2: docker run
 
 ```
-docker run --rm -it \
+docker run --rm -it --net host \
     -e LS_CONTROLLERS=${LS_CONTROLLERS} \
     -v /etc/linstor:/etc/linstor:ro \
     quay.io/piraeusdatastore/piraeus-client \

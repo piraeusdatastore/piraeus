@@ -2,9 +2,6 @@
 ${INIT_DEBUG,,} && set -x
 
 # get etcd endpoints from linstor.toml
-ETCD_ENDPOINTS=$( cat /etc/linstor/linstor.toml \
-                  | sed 's#etcd://##g; s#"##g;' \
-                  | awk '/connection_url/ {print $3}' )
 echo Etcd endpoints are:
 echo -e ${ETCD_ENDPOINTS/,/\n}
 
@@ -30,3 +27,8 @@ until [ "${ETCD_HEALTH_COUNT}" -ge  "${MIN_WAIT}" ];  do
     [[ "${ETCD_HEALTH_COUNT}" -eq "${PREV_ETCD_HEALTH_COUNT}" ]] && ETCD_HEALTH_COUNT=0
     sleep 0.5
 done
+
+# set up etcd
+echo "* Set up etcd in /etc/linstor/linstor.toml:"
+sed -i "s/_ETCD_ENDPOINTS_/${ETCD_ENDPOINTS}/" /init/etc/linstor/linstor.toml
+cat /init/etc/linstor/linstor.toml

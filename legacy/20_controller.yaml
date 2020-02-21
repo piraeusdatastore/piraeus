@@ -13,7 +13,7 @@ data:
   INIT_DEBUG: 'false'
   MIN_WAIT: '5'
   MAX_WAIT: '3600'
-  ETCD_ENDPOINTS: #@ name() + "-etcd.kube-system:2379"
+  LINSTOR_TOML: #@ "[db]\nconnection_url = \"etcd://{}-etcd.kube-system:2379\"".format( name() )
 ---
 apiVersion: v1
 kind: Service
@@ -34,7 +34,7 @@ spec:
     app.kubernetes.io/component: #@ controller()
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: #@ controller()
   namespace: kube-system
@@ -42,12 +42,14 @@ metadata:
     app.kubernetes.io/name: #@ name()
     app.kubernetes.io/component: #@ controller()
 spec:
+  serviceName: #@ controller()
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
   selector:
     matchLabels:
       app.kubernetes.io/name: #@ name()
       app.kubernetes.io/component: #@ controller()
-  strategy:
-    type: Recreate
   replicas: 1
   template:
     metadata:
@@ -57,8 +59,8 @@ spec:
     spec:
       priorityClassName: system-node-critical
       restartPolicy: Always
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
+      terminationGracePeriodSeconds: 0
+      dnsPolicy: ClusterFirst
       initContainers:
       - name: init
         image: #@ initimage()
@@ -78,11 +80,15 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+        - name: THIS_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
-        - name: init
-          mountPath: /init
+        - name: etc-linstor
+          mountPath: /etc/linstor
       containers:
       - name: controller
         image: #@ controllerimage()
@@ -97,19 +103,14 @@ spec:
         ports:
         - name: rest-api
           containerPort: 3370
+          hostPort: 13370
         - name: plain
           containerPort: 3376
         - name: ssl
           containerPort: 3377
-        env:
-        - name: THIS_POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
         #@ if name() == "piraeus":
         args:
         - startController
-        - --rest-bind=$(THIS_POD_IP):3370
         #@ end
         readinessProbe:
           successThreshold: 3
@@ -121,17 +122,20 @@ spec:
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
-        - name: init
+        - name: etc-linstor
           mountPath: /etc/linstor
-          subPath: etc/linstor
         - name: log
           mountPath: /var/log/linstor-controller
       volumes:
       - name: localtime
         hostPath:
           path: /etc/localtime
-      - name: init
-        emptyDir: {}
+      - name: etc-linstor
+        configMap:
+          name: #@ name() + "-controller"
+          items:
+          - key: LINSTOR_TOML
+            path: linstor.toml
       - name: log
         hostPath:
           path: #@ "/var/log/" + name() + "/linstor-controller"
@@ -140,7 +144,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: #@ name() + "/node"
+              - key: #@ name() + "/enabled"
                 operator: In
                 values:
                 - "true"

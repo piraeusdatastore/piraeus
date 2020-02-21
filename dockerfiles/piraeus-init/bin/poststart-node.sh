@@ -6,7 +6,8 @@ exec 1>> /var/log/linstor-satellite/k8s-lifecycle.log 2>&1
 echo -e "\n\n#########"
 echo "POSTSTART: $( date '+%Y-%m-%d %H:%M:%S' ) ${THIS_POD_NAME}"
 
-source /init/cmd/func.lib.sh
+source /init/bin/lib.linstor.sh
+source /init/bin/lib.tools.sh
 
 # wait until node is up, at least consecutive ${MIN_WAIT}
 SECONDS=0

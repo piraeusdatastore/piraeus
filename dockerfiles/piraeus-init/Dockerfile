@@ -7,8 +7,13 @@ RUN set -x && \
     apt-get install -y jq curl kmod && \
     apt-get clean -y 
 
-ADD * /root/cmd/
+ADD . /files/
 
-RUN mv /root/cmd/entrypoint.sh /; chmod +x entrypoint.sh; ls -1 /root/cmd
+RUN set -x && \
+    mkdir /init && \
+    cd /files && \
+    ls -1 && \
+    chmod -vR +x bin && \
+    for i in entry.sh Makefile README.md; do mv -v $i /; done
 
-ENTRYPOINT [ "/entrypoint.sh" ]
+ENTRYPOINT [ "/entry.sh" ]
