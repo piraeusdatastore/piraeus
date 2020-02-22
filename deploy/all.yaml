@@ -274,6 +274,7 @@ spec:
           subPath: etc/linstor
         - name: log
           mountPath: /var/log/linstor-controller
+          subPath: linstor-controller
       volumes:
       - name: localtime
         hostPath:
@@ -282,7 +283,7 @@ spec:
         emptyDir: {}
       - name: log
         hostPath:
-          path: /var/log/piraeus/linstor-controller
+          path: /var/log/piraeus
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -424,7 +425,8 @@ spec:
         - name: init
           mountPath: /init
         - name: log
-          mountPath: /var/log/linstor-satellite
+          mountPath: /var/log
+          subPath: linstor-satellite
         - name: var-local-piraeus
           mountPath: /var/local/piraeus
         - name: dev
@@ -475,7 +477,7 @@ spec:
           path: /var/local/piraeus
       - name: log
         hostPath:
-          path: /var/log/piraeus/linstor-satellite
+          path: /var/log/piraeus
       - name: dev
         hostPath:
           path: /dev
@@ -1090,6 +1092,7 @@ provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
 parameters:
+  layerlist: drbd
   placementCount: "1"
   placementPolicy: AutoPlace
   allowRemoteVolumeAccess: "true"
@@ -1105,6 +1108,7 @@ provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
 parameters:
+  layerlist: drbd
   placementCount: "2"
   placementPolicy: AutoPlace
   allowRemoteVolumeAccess: "true"
@@ -1120,7 +1124,24 @@ provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
 parameters:
+  layerlist: drbd
   placementCount: "3"
+  placementPolicy: AutoPlace
+  allowRemoteVolumeAccess: "true"
+  disklessOnRemaining: "false"
+  mountOpts: noatime,discard
+  storagePool: DfltStorPool
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: piraeus-default-local
+provisioner: linstor.csi.linbit.com
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+parameters:
+  layerlist: storage
+  placementCount: "1"
   placementPolicy: AutoPlace
   allowRemoteVolumeAccess: "true"
   disklessOnRemaining: "false"

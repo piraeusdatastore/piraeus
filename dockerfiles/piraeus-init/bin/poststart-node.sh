@@ -1,5 +1,5 @@
 #!/bin/bash
-${INIT_DEBUG,,} && set -x
+${INIT_DEBUG,,} && set -ex
 
 # save log
 exec 1>> /var/log/linstor-satellite/k8s-lifecycle.log 2>&1
@@ -35,7 +35,7 @@ if ! linstor_has_storage_pool ${THIS_NODE_NAME} ${POOL_NAME}; then
     mkdir -vp ${POOL_DIR}
     linstor storage-pool create filethin ${THIS_NODE_NAME} ${POOL_NAME} ${POOL_DIR}
 else
-    echo "StoragePool \"${POOL_NAME}\" is already created on ${THIS_NODE_NAME}"
+    echo "* StoragePool \"${POOL_NAME}\" is already created on ${THIS_NODE_NAME}"
 fi
 
 # don't block pod readiness

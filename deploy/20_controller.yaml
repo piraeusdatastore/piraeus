@@ -117,6 +117,7 @@ spec:
           subPath: etc/linstor
         - name: log
           mountPath: /var/log/linstor-controller
+          subPath: linstor-controller
       volumes:
       - name: localtime
         hostPath:
@@ -125,7 +126,7 @@ spec:
         emptyDir: {}
       - name: log
         hostPath:
-          path: /var/log/piraeus/linstor-controller
+          path: /var/log/piraeus
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

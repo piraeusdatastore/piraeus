@@ -4,14 +4,13 @@
 Linstor CLI is available in both piraeus-server and piraeus-client images: the former for deployment; the latter for standalone usage.
 
 ## On Kubernetes masters
-On a kubernetes node where `kubectl` works, usually a master node
+Or anywhere `kubectl` works
 ```
-$ cat > /usr/local/bin/linstor << 'EOF'
-kubectl -n kube-system exec -it \
-"$( kubectl -n kube-system get pod \
---selector app.kubernetes.io/component=piraeus-controller \
---field-selector status.phase=Running -o name )" \
--- linstor $@
+POD="$( kubectl -n kube-system get pod \
+-l app.kubernetes.io/component=piraeus-controller \
+--field-selector status.phase=Running -o name )" 
+
+kubectl -n kube-system exec -it "${POD}" -- linstor node list
 EOF
 $ chmod +x /usr/local/bin/linstor
 ```

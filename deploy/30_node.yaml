@@ -124,7 +124,8 @@ spec:
         - name: init
           mountPath: /init
         - name: log
-          mountPath: /var/log/linstor-satellite
+          mountPath: /var/log
+          subPath: linstor-satellite
         - name: var-local-piraeus
           mountPath: /var/local/piraeus
         - name: dev
@@ -175,7 +176,7 @@ spec:
           path: /var/local/piraeus
       - name: log
         hostPath:
-          path: /var/log/piraeus/linstor-satellite
+          path: /var/log/piraeus
       - name: dev
         hostPath:
           path: /dev
