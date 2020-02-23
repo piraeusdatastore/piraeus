@@ -239,7 +239,7 @@ spec:
                 operator: In
                 values:
                 - "true"
-              # - key: piraeus/demo-sts
+              # - key: piraeus/demo
               #   operator: In
               #   values:
               #   - "true"

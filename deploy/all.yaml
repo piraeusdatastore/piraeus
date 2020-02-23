@@ -1092,7 +1092,7 @@ provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
 parameters:
-  layerlist: drbd
+  layerlist: drbd storage
   placementCount: "1"
   placementPolicy: AutoPlace
   allowRemoteVolumeAccess: "true"
@@ -1108,7 +1108,7 @@ provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
 parameters:
-  layerlist: drbd
+  layerlist: drbd storage
   placementCount: "2"
   placementPolicy: AutoPlace
   allowRemoteVolumeAccess: "true"
@@ -1124,7 +1124,7 @@ provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
 parameters:
-  layerlist: drbd
+  layerlist: drbd storage
   placementCount: "3"
   placementPolicy: AutoPlace
   allowRemoteVolumeAccess: "true"
