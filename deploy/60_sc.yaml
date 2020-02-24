@@ -61,3 +61,10 @@ parameters:
   disklessOnRemaining: "false"
   mountOpts: noatime,discard
   storagePool: DfltStorPool
+---
+kind: VolumeSnapshotClass
+apiVersion: snapshot.storage.k8s.io/v1alpha1
+metadata:
+  name: piraeus-snapshot
+  namespace: kube-system
+snapshotter: io.drbd.linstor-csi

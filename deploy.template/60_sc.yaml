@@ -1,8 +1,9 @@
+#@ load("funcs.lib.yml", "name")
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: piraeus-default-r1
+  name: #@ name() + "-default-r1"
 provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
@@ -18,7 +19,7 @@ parameters:
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: piraeus-default-r2
+  name: #@ name() + "-default-r2"
 provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
@@ -34,7 +35,7 @@ parameters:
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: piraeus-default-r3
+  name: #@ name() + "-default-r3"
 provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
@@ -50,7 +51,7 @@ parameters:
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: piraeus-default-local
+  name: #@ name() + "-default-local"
 provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
@@ -62,3 +63,10 @@ parameters:
   disklessOnRemaining: "false"
   mountOpts: noatime,discard
   storagePool: DfltStorPool
+---
+kind: VolumeSnapshotClass
+apiVersion: snapshot.storage.k8s.io/v1alpha1
+metadata:
+  name: #@ name() + "-snapshot"
+  namespace: kube-system
+snapshotter: io.drbd.linstor-csi
