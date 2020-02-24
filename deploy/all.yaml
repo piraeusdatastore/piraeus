@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: piraeus-etcd-dns
+  name: piraeus-etcd-headless
   namespace: kube-system
   labels:
     app.kubernetes.io/name: piraeus
-    app.kubernetes.io/component: piraeus-etcd-dns
+    app.kubernetes.io/component: piraeus-etcd
 spec:
   ports:
   - name: client
@@ -15,7 +15,7 @@ spec:
   clusterIP: None
   selector:
     app.kubernetes.io/name: piraeus
-    app.kubernetes.io/component: piraeus-etcd-dns
+    app.kubernetes.io/component: piraeus-etcd
 ---
 apiVersion: v1
 kind: Service
@@ -52,13 +52,13 @@ metadata:
 spec:
   serviceName: piraeus-etcd
   podManagementPolicy: Parallel
+  replicas: 3
   updateStrategy:
     type: RollingUpdate
   selector:
     matchLabels:
       app.kubernetes.io/name: piraeus
       app.kubernetes.io/component: piraeus-etcd
-  replicas: 3
   template:
     metadata:
       name: piraeus-etcd
@@ -71,7 +71,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.1
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.2
         imagePullPolicy: Always
         resources:
           limits:
@@ -213,11 +213,10 @@ spec:
     spec:
       priorityClassName: system-node-critical
       restartPolicy: Always
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
+      dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.1
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.2
         imagePullPolicy: Always
         resources:
           limits:
@@ -258,7 +257,6 @@ spec:
               fieldPath: status.podIP
         args:
         - startController
-        - --rest-bind=$(THIS_POD_IP):3370
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3
@@ -340,7 +338,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.1
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.2
         imagePullPolicy: Always
         securityContext:
           privileged: true
@@ -445,6 +443,9 @@ spec:
         envFrom:
         - configMapRef:
             name: piraeus-node
+        env:
+        - name: FRONTEND_IP
+          value: 127.0.0.1
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3
@@ -494,6 +495,122 @@ spec:
         hostPath:
           path: /run/lvm
       affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: piraeus/node
+                operator: In
+                values:
+                - "true"
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: piraeus-api
+  namespace: kube-system
+data:
+  LS_CONTROLLERS: piraeus-controller.kube-system:3370
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: piraeus-api
+  namespace: kube-system
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: piraeus
+      app.kubernetes.io/component: piraeus-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: piraeus
+        app.kubernetes.io/component: piraeus-api
+    spec:
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      initContainers:
+      - name: init
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.2
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        envFrom:
+        - configMapRef:
+            name: piraeus-api
+        env:
+        - name: THIS_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+      containers:
+      - name: proxy
+        image: haproxy:2.1.3
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+        envFrom:
+        - configMapRef:
+            name: piraeus-api
+        env:
+        - name: FRONTEND_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        readinessProbe:
+          successThreshold: 3
+          failureThreshold: 3
+          httpGet:
+            port: 3370
+          initialDelaySeconds: 1
+          periodSeconds: 1
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /usr/local/etc/haproxy
+          subPath: etc/haproxy
+      volumes:
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+      - name: init
+        emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: In
+                values:
+                - piraeus-api
+            topologyKey: kubernetes.io/hostname
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:

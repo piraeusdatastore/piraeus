@@ -1,4 +1,5 @@
 #@ load("funcs.lib.yml", "name", "controller", "initimage", "etcdendpoint", "controllerimage")
+---
 kind: Namespace
 apiVersion: v1
 metadata:
@@ -7,13 +8,13 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: #@ name() + "-controller"
+  name: #@ controller()
   namespace: kube-system
 data:
   INIT_DEBUG: 'false'
   MIN_WAIT: '5'
   MAX_WAIT: '3600'
-  LINSTOR_TOML: #@ "[db]\nconnection_url = \"etcd://{}-etcd.kube-system:2379\"".format( name() )
+  ETCD_ENDPOINTS: #@ name() + "-etcd.kube-system:2379"
 ---
 apiVersion: v1
 kind: Service
@@ -34,7 +35,7 @@ spec:
     app.kubernetes.io/component: #@ controller()
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: #@ controller()
   namespace: kube-system
@@ -42,14 +43,12 @@ metadata:
     app.kubernetes.io/name: #@ name()
     app.kubernetes.io/component: #@ controller()
 spec:
-  serviceName: #@ controller()
-  podManagementPolicy: Parallel
-  updateStrategy:
-    type: RollingUpdate
   selector:
     matchLabels:
       app.kubernetes.io/name: #@ name()
       app.kubernetes.io/component: #@ controller()
+  strategy:
+    type: Recreate
   replicas: 1
   template:
     metadata:
@@ -59,8 +58,8 @@ spec:
     spec:
       priorityClassName: system-node-critical
       restartPolicy: Always
-      terminationGracePeriodSeconds: 0
-      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
         image: #@ initimage()
@@ -74,21 +73,17 @@ spec:
             memory: 100Mi
         envFrom:
             - configMapRef:
-                name: #@ name() + "-controller"
+                name: #@ controller()
         env:
         - name: THIS_POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: THIS_POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
-        - name: etc-linstor
-          mountPath: /etc/linstor
+        - name: init
+          mountPath: /init
       containers:
       - name: controller
         image: #@ controllerimage()
@@ -103,14 +98,19 @@ spec:
         ports:
         - name: rest-api
           containerPort: 3370
-          hostPort: 13370
         - name: plain
           containerPort: 3376
         - name: ssl
           containerPort: 3377
+        env:
+        - name: THIS_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         #@ if name() == "piraeus":
         args:
         - startController
+        - --rest-bind=$(THIS_POD_IP):3370
         #@ end
         readinessProbe:
           successThreshold: 3
@@ -122,29 +122,27 @@ spec:
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
-        - name: etc-linstor
+        - name: init
           mountPath: /etc/linstor
+          subPath: etc/linstor
         - name: log
           mountPath: /var/log/linstor-controller
+          subPath: linstor-controller
       volumes:
       - name: localtime
         hostPath:
           path: /etc/localtime
-      - name: etc-linstor
-        configMap:
-          name: #@ name() + "-controller"
-          items:
-          - key: LINSTOR_TOML
-            path: linstor.toml
+      - name: init
+        emptyDir: {}
       - name: log
         hostPath:
-          path: #@ "/var/log/" + name() + "/linstor-controller"
+          path: #@ "/var/log/" + name()
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: #@ name() + "/enabled"
+              - key: #@ name() + "/node"
                 operator: In
                 values:
                 - "true"

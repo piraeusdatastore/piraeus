@@ -3,6 +3,7 @@ ${INIT_DEBUG,,} && set -x
 
 # drop files to /init
 cp -r /files/* /init
+mkdir -v /init/tmp # for storing temp data for curl
 
 # configure each component
 echo "* This pod name is ${THIS_POD_NAME}"
@@ -12,6 +13,9 @@ if [[ "${THIS_POD_NAME}" =~ -etcd-[0-9]+$ ]]; then
 elif [[ "${THIS_POD_NAME}" =~ -controller-[0-9a-z]+-[0-9a-z]+$ ]]; then
     echo "* Initialize controller"
     /init/bin/init-controller.sh
+elif [[ "${THIS_POD_NAME}" =~ -api-[0-9a-z]+-[0-9a-z]+$ ]]; then
+    echo "* Initialize api"
+    /init/bin/init-api.sh
 elif [[ "${THIS_POD_NAME}" =~ -node-[0-9a-z]+$ ]]; then
     echo "* Initialize node"
     /init/bin/init-node.sh

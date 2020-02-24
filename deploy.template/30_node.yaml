@@ -163,6 +163,9 @@ spec:
         envFrom:
         - configMapRef:
             name:  #@ node()
+        env:
+        - name: FRONTEND_IP
+          value: 127.0.0.1
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3

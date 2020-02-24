@@ -5,11 +5,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: #@ etcd() + "-dns"
+  name: #@ etcd() + "-headless"
   namespace: kube-system
   labels:
     app.kubernetes.io/name: #@ name()
-    app.kubernetes.io/component: #@ etcd() + "-dns"
+    app.kubernetes.io/component: #@ etcd()
 spec:
   ports:
   - name: client
@@ -19,7 +19,7 @@ spec:
   clusterIP: None
   selector:
     app.kubernetes.io/name: #@ name()
-    app.kubernetes.io/component: #@ etcd() + "-dns"
+    app.kubernetes.io/component: #@ etcd()
 ---
 apiVersion: v1
 kind: Service
@@ -57,13 +57,13 @@ metadata:
 spec:
   serviceName: #@ etcd()
   podManagementPolicy: Parallel
+  replicas: 3
   updateStrategy:
     type: RollingUpdate
   selector:
     matchLabels:
       app.kubernetes.io/name: #@ name()
       app.kubernetes.io/component: #@ etcd()
-  replicas: 3
   template:
     metadata:
       name: #@ etcd()

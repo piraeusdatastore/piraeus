@@ -10,7 +10,7 @@ RUN set -x && \
 ADD . /files/
 
 RUN set -x && \
-    mkdir /init && \
+    mkdir -vp /init && \
     cd /files && \
     ls -1 && \
     chmod -vR +x bin && \

@@ -1,7 +1,9 @@
+# this service is optional because it will expose linstor api on host network of non-piraeus nodes. Ref: https://oteemo.com/2017/12/12/think-nodeport-kubernetes/
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: piraeus-api
+  name: piraeus-api-nodeport
   namespace: kube-system
   labels:
     app.kubernetes.io/name: piraeus

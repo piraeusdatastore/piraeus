@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: piraeus-etcd-dns
+  name: piraeus-etcd-headless
   namespace: kube-system
   labels:
     app.kubernetes.io/name: piraeus
-    app.kubernetes.io/component: piraeus-etcd-dns
+    app.kubernetes.io/component: piraeus-etcd
 spec:
   ports:
   - name: client
@@ -15,7 +15,7 @@ spec:
   clusterIP: None
   selector:
     app.kubernetes.io/name: piraeus
-    app.kubernetes.io/component: piraeus-etcd-dns
+    app.kubernetes.io/component: piraeus-etcd
 ---
 apiVersion: v1
 kind: Service
@@ -52,13 +52,13 @@ metadata:
 spec:
   serviceName: piraeus-etcd
   podManagementPolicy: Parallel
+  replicas: 3
   updateStrategy:
     type: RollingUpdate
   selector:
     matchLabels:
       app.kubernetes.io/name: piraeus
       app.kubernetes.io/component: piraeus-etcd
-  replicas: 3
   template:
     metadata:
       name: piraeus-etcd
@@ -71,7 +71,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.1
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.2
         imagePullPolicy: Always
         resources:
           limits:
