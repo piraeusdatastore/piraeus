@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: #@ name() + "-node"
+  name: #@ node()
   namespace: kube-system
 data:
   INIT_DEBUG: 'false'
@@ -54,7 +54,7 @@ spec:
             memory: 100Mi
         envFrom:
         - configMapRef:
-            name: #@ name() + "-node"
+            name:  #@ node()
         env:
         - name: THIS_POD_NAME
           valueFrom:
@@ -102,7 +102,7 @@ spec:
             memory: 1Gi
         envFrom:
         - configMapRef:
-            name: #@ name() + "-node"
+            name:  #@ node()
         env:
         - name: THIS_POD_NAME
           valueFrom:
@@ -162,7 +162,7 @@ spec:
             memory: 200Mi
         envFrom:
         - configMapRef:
-            name: #@ name() + "-node"
+            name:  #@ node()
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3

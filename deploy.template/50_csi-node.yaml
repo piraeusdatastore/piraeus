@@ -1,0 +1,167 @@
+#@ load("funcs.lib.yml", "name", "csiimage", "controllerhostport", "csinode", "controller")
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: #@ csinode()
+  namespace: kube-system
+spec:
+  minReadySeconds: 0
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: #@ name()
+      app.kubernetes.io/component: #@ csinode()
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: #@ name()
+        app.kubernetes.io/component: #@ csinode()
+    spec:
+      priorityClassName: system-node-critical
+      serviceAccount: #@ csinode() + "-sa"
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 0
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      #! imagePullSecrets:
+      #! - name: piraeus-regcred
+      containers:
+      - name: csi-node-driver-registrar
+        image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
+        imagePullPolicy: "Always"
+        resources:
+          #! requests:
+          #!   cpu: '100m'
+          #!   memory: '100Mi'
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        args:
+        - "--v=5"
+        - "--csi-address=$(ADDRESS)"
+        - "--kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)"
+        lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "rm -rf /registration/linstor.csi.linbit.com /registration/linstor.csi.linbit.com-reg.sock"]
+        env:
+        - name: ADDRESS
+          value: /csi/csi.sock
+        - name: DRIVER_REG_SOCK_PATH
+          value: /var/lib/kubelet/plugins/linstor.csi.linbit.com/csi.sock
+        - name: KUBE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: plugin-dir
+          mountPath: /csi/
+        - name: registration-dir
+          mountPath: /registration/
+      - name: #@ name() + "-csi-plugin"
+        image: #@ csiimage()
+        imagePullPolicy: "Always"
+        resources:
+          #! requests:
+          #!   cpu: '100m'
+          #!   memory: '100Mi'
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        args:
+        - "--csi-endpoint=$(CSI_ENDPOINT)"
+        - "--node=$(KUBE_NODE_NAME)"
+        - "--linstor-endpoint=$(LS_CONTROLLERS)"
+        - "--log-level=debug"
+        env:
+        - name: CSI_ENDPOINT
+          value: unix:///csi/csi.sock
+        - name: KUBE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: LS_CONTROLLERS
+          value: #@ "http://" + controllerhostport()
+        securityContext:
+          privileged: true
+          capabilities:
+            add: ["SYS_ADMIN"]
+          allowPrivilegeEscalation: true
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: plugin-dir
+          mountPath: /csi
+        - name: pods-mount-dir
+          mountPath: /var/lib/kubelet
+          mountPropagation: "Bidirectional"
+        - name: device-dir
+          mountPath: /dev
+      volumes:
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+      - name: registration-dir
+        hostPath:
+          path: /var/lib/kubelet/plugins_registry/
+          type: DirectoryOrCreate
+      - name: plugin-dir
+        hostPath:
+          path: /var/lib/kubelet/plugins/linstor.csi.linbit.com/
+          type: DirectoryOrCreate
+      - name: pods-mount-dir
+        hostPath:
+          path: /var/lib/kubelet
+          type: Directory
+      - name: device-dir
+        hostPath:
+          path: /dev
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: #@ name() + "/node"
+                operator: In
+                values:
+                - "true"
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
+      tolerations:
+        - operator: "Exists"
+          effect: "NoSchedule"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: #@ csinode() + "-sa"
+  namespace: kube-system
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: #@ csinode() + "-driver-registrar-role"
+  namespace: kube-system
+rules:
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: #@ csinode() + "-driver-registrar-binding"
+subjects:
+- kind: ServiceAccount
+  name: #@ csinode() + "-sa"
+  namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: #@ csinode() + "-driver-registrar-role"
+  apiGroup: rbac.authorization.k8s.io

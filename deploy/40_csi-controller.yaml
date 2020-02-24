@@ -29,7 +29,7 @@ spec:
       dnsPolicy: ClusterFirst
       containers:
       - name: csi-provisioner
-        image: quay.io/k8scsi/csi-provisioner:v1.2.0
+        image: quay.io/k8scsi/csi-provisioner:v1.5.0
         imagePullPolicy: Always
         resources:
           limits:
@@ -44,10 +44,31 @@ spec:
         - name: ADDRESS
           value: /var/lib/csi/sockets/pluginproxy/csi.sock
         volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: socket-dir
+          mountPath: /var/lib/csi/sockets/pluginproxy/
+      - name: csi-attacher
+        image: quay.io/k8scsi/csi-attacher:v2.1.1
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        args:
+        - --v=5
+        - --csi-address=$(ADDRESS)
+        - --timeout=120s
+        env:
+        - name: ADDRESS
+          value: /var/lib/csi/sockets/pluginproxy/csi.sock
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-snapshotter
-        image: quay.io/k8scsi/csi-snapshotter:v1.1.0
+        image: quay.io/k8scsi/csi-snapshotter:v2.0.1
         imagePullPolicy: Always
         resources:
           limits:
@@ -60,6 +81,8 @@ spec:
         - name: ADDRESS
           value: /var/lib/csi/sockets/pluginproxy/csi.sock
         volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-cluster-driver-registrar
@@ -77,23 +100,8 @@ spec:
         - name: ADDRESS
           value: /var/lib/csi/sockets/pluginproxy/csi.sock
         volumeMounts:
-        - name: socket-dir
-          mountPath: /var/lib/csi/sockets/pluginproxy/
-      - name: csi-attacher
-        image: quay.io/k8scsi/csi-attacher:v1.1.1
-        imagePullPolicy: Always
-        resources:
-          limits:
-            cpu: 500m
-            memory: 500Mi
-        args:
-        - --v=5
-        - --csi-address=$(ADDRESS)
-        - --timeout=120s
-        env:
-        - name: ADDRESS
-          value: /var/lib/csi/sockets/pluginproxy/csi.sock
-        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: piraeus-csi-plugin
@@ -148,7 +156,7 @@ metadata:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-provisioner-role
+  name: piraeus-csi-controller-provisioner-role
 rules:
 - apiGroups:
   - ""
@@ -212,20 +220,20 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-provisioner-binding
+  name: piraeus-csi-controller-provisioner-binding
 subjects:
 - kind: ServiceAccount
   name: piraeus-csi-controller-sa
   namespace: kube-system
 roleRef:
   kind: ClusterRole
-  name: csi-provisioner-role
+  name: piraeus-csi-controller-provisioner-role
   apiGroup: rbac.authorization.k8s.io
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-attacher-role
+  name: piraeus-csi-controller-attacher-role
 rules:
 - apiGroups:
   - ""
@@ -236,6 +244,7 @@ rules:
   - list
   - watch
   - update
+  - patch
 - apiGroups:
   - ""
   resources:
@@ -261,24 +270,25 @@ rules:
   - list
   - watch
   - update
+  - patch
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-attacher-binding
+  name: piraeus-csi-controller-attacher-binding
 subjects:
 - kind: ServiceAccount
   name: piraeus-csi-controller-sa
   namespace: kube-system
 roleRef:
   kind: ClusterRole
-  name: csi-attacher-role
+  name: piraeus-csi-controller-attacher-role
   apiGroup: rbac.authorization.k8s.io
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-cluster-driver-registrar-role
+  name: piraeus-csi-controller-cluster-driver-registrar-role
 rules:
 - apiGroups:
   - csi.storage.k8s.io
@@ -299,188 +309,20 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-cluster-driver-registrar-binding
+  name: piraeus-csi-controller-cluster-driver-registrar-binding
 subjects:
 - kind: ServiceAccount
   name: piraeus-csi-controller-sa
   namespace: kube-system
 roleRef:
   kind: ClusterRole
-  name: csi-cluster-driver-registrar-role
-  apiGroup: rbac.authorization.k8s.io
----
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: piraeus-csi-node
-  namespace: kube-system
-spec:
-  minReadySeconds: 0
-  updateStrategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: piraeus
-      app.kubernetes.io/component: piraeus-csi-node
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: piraeus
-        app.kubernetes.io/component: piraeus-csi-node
-    spec:
-      priorityClassName: system-node-critical
-      serviceAccount: piraeus-csi-node-sa
-      restartPolicy: Always
-      terminationGracePeriodSeconds: 0
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
-      containers:
-      - name: csi-node-driver-registrar
-        image: quay.io/k8scsi/csi-node-driver-registrar:v1.1.0
-        imagePullPolicy: Always
-        resources:
-          limits:
-            cpu: 100m
-            memory: 100Mi
-        args:
-        - --v=5
-        - --csi-address=$(ADDRESS)
-        - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
-        lifecycle:
-          preStop:
-            exec:
-              command:
-              - /bin/sh
-              - -c
-              - rm -rf /registration/linstor.csi.linbit.com /registration/linstor.csi.linbit.com-reg.sock
-        env:
-        - name: ADDRESS
-          value: /csi/csi.sock
-        - name: DRIVER_REG_SOCK_PATH
-          value: /var/lib/kubelet/plugins/linstor.csi.linbit.com/csi.sock
-        - name: KUBE_NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        volumeMounts:
-        - name: plugin-dir
-          mountPath: /csi/
-        - name: registration-dir
-          mountPath: /registration/
-      - name: piraeus-csi-plugin
-        image: quay.io/piraeusdatastore/piraeus-csi:v0.7.3
-        imagePullPolicy: Always
-        resources:
-          limits:
-            cpu: 100m
-            memory: 100Mi
-        args:
-        - --csi-endpoint=$(CSI_ENDPOINT)
-        - --node=$(KUBE_NODE_NAME)
-        - --linstor-endpoint=$(LS_CONTROLLERS)
-        - --log-level=debug
-        env:
-        - name: CSI_ENDPOINT
-          value: unix:///csi/csi.sock
-        - name: KUBE_NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        - name: LS_CONTROLLERS
-          value: http://piraeus-controller.kube-system:3370
-        securityContext:
-          privileged: true
-          capabilities:
-            add:
-            - SYS_ADMIN
-          allowPrivilegeEscalation: true
-        volumeMounts:
-        - name: localtime
-          mountPath: /etc/localtime
-        - name: plugin-dir
-          mountPath: /csi
-        - name: pods-mount-dir
-          mountPath: /var/lib/kubelet
-          mountPropagation: Bidirectional
-        - name: device-dir
-          mountPath: /dev
-      volumes:
-      - name: localtime
-        hostPath:
-          path: /etc/localtime
-      - name: registration-dir
-        hostPath:
-          path: /var/lib/kubelet/plugins_registry/
-          type: DirectoryOrCreate
-      - name: plugin-dir
-        hostPath:
-          path: /var/lib/kubelet/plugins/linstor.csi.linbit.com/
-          type: DirectoryOrCreate
-      - name: pods-mount-dir
-        hostPath:
-          path: /var/lib/kubelet
-          type: Directory
-      - name: device-dir
-        hostPath:
-          path: /dev
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: piraeus/node
-                operator: In
-                values:
-                - "true"
-              - key: node-role.kubernetes.io/master
-                operator: DoesNotExist
-      tolerations:
-      - operator: Exists
-        effect: NoSchedule
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: piraeus-csi-node-sa
-  namespace: kube-system
----
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: csi-driver-registrar-role
-  namespace: kube-system
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: csi-driver-registrar-binding
-subjects:
-- kind: ServiceAccount
-  name: piraeus-csi-node-sa
-  namespace: kube-system
-roleRef:
-  kind: ClusterRole
-  name: csi-driver-registrar-role
+  name: piraeus-csi-controller-cluster-driver-registrar-role
   apiGroup: rbac.authorization.k8s.io
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-snapshotter-role
+  name: piraeus-csi-controller-snapshotter-role
 rules:
 - apiGroups:
   - ""
@@ -560,16 +402,30 @@ rules:
   - list
   - watch
   - delete
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshots/status
+  verbs:
+  - update
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-snapshotter-binding
+  name: piraeus-csi-controller-snapshotter-binding
 subjects:
 - kind: ServiceAccount
   name: piraeus-controller-sa
   namespace: kube-system
 roleRef:
   kind: ClusterRole
-  name: csi-snapshotter-role
+  name: piraeus-csi-controller-snapshotter-role
   apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: storage.k8s.io/v1beta1
+kind: CSIDriver
+metadata:
+  name: linstor.csi.linbit.com
+spec:
+  attachRequired: true
+  podInfoOnMount: true

@@ -539,7 +539,7 @@ spec:
       dnsPolicy: ClusterFirst
       containers:
       - name: csi-provisioner
-        image: quay.io/k8scsi/csi-provisioner:v1.2.0
+        image: quay.io/k8scsi/csi-provisioner:v1.5.0
         imagePullPolicy: Always
         resources:
           limits:
@@ -554,10 +554,31 @@ spec:
         - name: ADDRESS
           value: /var/lib/csi/sockets/pluginproxy/csi.sock
         volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: socket-dir
+          mountPath: /var/lib/csi/sockets/pluginproxy/
+      - name: csi-attacher
+        image: quay.io/k8scsi/csi-attacher:v2.1.1
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        args:
+        - --v=5
+        - --csi-address=$(ADDRESS)
+        - --timeout=120s
+        env:
+        - name: ADDRESS
+          value: /var/lib/csi/sockets/pluginproxy/csi.sock
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-snapshotter
-        image: quay.io/k8scsi/csi-snapshotter:v1.1.0
+        image: quay.io/k8scsi/csi-snapshotter:v2.0.1
         imagePullPolicy: Always
         resources:
           limits:
@@ -570,6 +591,8 @@ spec:
         - name: ADDRESS
           value: /var/lib/csi/sockets/pluginproxy/csi.sock
         volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-cluster-driver-registrar
@@ -587,23 +610,8 @@ spec:
         - name: ADDRESS
           value: /var/lib/csi/sockets/pluginproxy/csi.sock
         volumeMounts:
-        - name: socket-dir
-          mountPath: /var/lib/csi/sockets/pluginproxy/
-      - name: csi-attacher
-        image: quay.io/k8scsi/csi-attacher:v1.1.1
-        imagePullPolicy: Always
-        resources:
-          limits:
-            cpu: 500m
-            memory: 500Mi
-        args:
-        - --v=5
-        - --csi-address=$(ADDRESS)
-        - --timeout=120s
-        env:
-        - name: ADDRESS
-          value: /var/lib/csi/sockets/pluginproxy/csi.sock
-        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: piraeus-csi-plugin
@@ -658,7 +666,7 @@ metadata:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-provisioner-role
+  name: piraeus-csi-controller-provisioner-role
 rules:
 - apiGroups:
   - ""
@@ -722,20 +730,20 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-provisioner-binding
+  name: piraeus-csi-controller-provisioner-binding
 subjects:
 - kind: ServiceAccount
   name: piraeus-csi-controller-sa
   namespace: kube-system
 roleRef:
   kind: ClusterRole
-  name: csi-provisioner-role
+  name: piraeus-csi-controller-provisioner-role
   apiGroup: rbac.authorization.k8s.io
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-attacher-role
+  name: piraeus-csi-controller-attacher-role
 rules:
 - apiGroups:
   - ""
@@ -746,6 +754,7 @@ rules:
   - list
   - watch
   - update
+  - patch
 - apiGroups:
   - ""
   resources:
@@ -771,24 +780,25 @@ rules:
   - list
   - watch
   - update
+  - patch
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-attacher-binding
+  name: piraeus-csi-controller-attacher-binding
 subjects:
 - kind: ServiceAccount
   name: piraeus-csi-controller-sa
   namespace: kube-system
 roleRef:
   kind: ClusterRole
-  name: csi-attacher-role
+  name: piraeus-csi-controller-attacher-role
   apiGroup: rbac.authorization.k8s.io
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-cluster-driver-registrar-role
+  name: piraeus-csi-controller-cluster-driver-registrar-role
 rules:
 - apiGroups:
   - csi.storage.k8s.io
@@ -809,15 +819,126 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-cluster-driver-registrar-binding
+  name: piraeus-csi-controller-cluster-driver-registrar-binding
 subjects:
 - kind: ServiceAccount
   name: piraeus-csi-controller-sa
   namespace: kube-system
 roleRef:
   kind: ClusterRole
-  name: csi-cluster-driver-registrar-role
+  name: piraeus-csi-controller-cluster-driver-registrar-role
   apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: piraeus-csi-controller-snapshotter-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - list
+  - watch
+  - create
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshotclasses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshotcontents
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - delete
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshots
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - create
+  - list
+  - watch
+  - delete
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshots/status
+  verbs:
+  - update
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: piraeus-csi-controller-snapshotter-binding
+subjects:
+- kind: ServiceAccount
+  name: piraeus-controller-sa
+  namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: piraeus-csi-controller-snapshotter-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: storage.k8s.io/v1beta1
+kind: CSIDriver
+metadata:
+  name: linstor.csi.linbit.com
+spec:
+  attachRequired: true
+  podInfoOnMount: true
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -848,7 +969,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: csi-node-driver-registrar
-        image: quay.io/k8scsi/csi-node-driver-registrar:v1.1.0
+        image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
         imagePullPolicy: Always
         resources:
           limits:
@@ -875,6 +996,8 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
         - name: plugin-dir
           mountPath: /csi/
         - name: registration-dir
@@ -959,7 +1082,7 @@ metadata:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-driver-registrar-role
+  name: piraeus-csi-node-driver-registrar-role
   namespace: kube-system
 rules:
 - apiGroups:
@@ -977,111 +1100,14 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-driver-registrar-binding
+  name: piraeus-csi-node-driver-registrar-binding
 subjects:
 - kind: ServiceAccount
   name: piraeus-csi-node-sa
   namespace: kube-system
 roleRef:
   kind: ClusterRole
-  name: csi-driver-registrar-role
-  apiGroup: rbac.authorization.k8s.io
----
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: csi-snapshotter-role
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - persistentvolumes
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - persistentvolumeclaims
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - storage.k8s.io
-  resources:
-  - storageclasses
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - list
-  - watch
-  - create
-  - update
-  - patch
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
-- apiGroups:
-  - snapshot.storage.k8s.io
-  resources:
-  - volumesnapshotclasses
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - snapshot.storage.k8s.io
-  resources:
-  - volumesnapshotcontents
-  verbs:
-  - create
-  - get
-  - list
-  - watch
-  - update
-  - delete
-- apiGroups:
-  - snapshot.storage.k8s.io
-  resources:
-  - volumesnapshots
-  verbs:
-  - get
-  - list
-  - watch
-  - update
-- apiGroups:
-  - apiextensions.k8s.io
-  resources:
-  - customresourcedefinitions
-  verbs:
-  - create
-  - list
-  - watch
-  - delete
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: csi-snapshotter-binding
-subjects:
-- kind: ServiceAccount
-  name: piraeus-controller-sa
-  namespace: kube-system
-roleRef:
-  kind: ClusterRole
-  name: csi-snapshotter-role
+  name: piraeus-csi-node-driver-registrar-role
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: storage.k8s.io/v1

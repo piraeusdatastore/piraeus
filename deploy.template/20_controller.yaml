@@ -1,4 +1,5 @@
 #@ load("funcs.lib.yml", "name", "controller", "initimage", "etcdendpoint", "controllerimage")
+---
 kind: Namespace
 apiVersion: v1
 metadata:
@@ -7,7 +8,7 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: #@ name() + "-controller"
+  name: #@ controller()
   namespace: kube-system
 data:
   INIT_DEBUG: 'false'
@@ -72,7 +73,7 @@ spec:
             memory: 100Mi
         envFrom:
             - configMapRef:
-                name: #@ name() + "-controller"
+                name: #@ controller()
         env:
         - name: THIS_POD_NAME
           valueFrom:
