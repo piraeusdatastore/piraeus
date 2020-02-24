@@ -40,6 +40,12 @@ _docker_start() {
         | jq '.'
 }
 
+_docker_remove() {
+    _curl_docker \
+        -X DELETE "http://localhost/containers/$1" \
+        | jq '.'
+}
+
 _docker_logs() {
     _curl_docker \
         -X GET "http://localhost/containers/$1/logs?stderr=1&stdout=1&follow=1"
@@ -75,6 +81,7 @@ EOF
     if [[ ! -z "${ID}" ]]; then
         _docker_start "${ID}"
         _docker_logs "${ID}"
+        _docker_remove "${ID}"
     else
         echo "ERROR: Failed to create container"
     fi

@@ -2,8 +2,8 @@
 ${INIT_DEBUG,,} && set -x
 
 # drop files to /init
-cp -r /files/* /init
-mkdir -v /init/tmp # for storing temp data for curl
+cp -fr /files/* /init
+[[ -d /init/tmp ]] || mkdir -v /init/tmp # for storing temp data for curl
 
 # configure each component
 echo "* This pod name is ${THIS_POD_NAME}"

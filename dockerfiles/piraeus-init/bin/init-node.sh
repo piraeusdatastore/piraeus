@@ -66,7 +66,7 @@ lsmod | grep -E '^dm_thin_pool|^Module'
 if lsmod | grep -q drbd ; then
     echo 'DRBD module is already loaded'
     lsmod | grep -E '^drbd|^Module'
-    modinfo drbd
+    modinfo drbd || echo "* WARN: DRBD binary is missing"
 elif [[ "v$( modinfo drbd | awk '/^version: / {print $2}' )" == "${DRBD_IMG_TAG}-1" ]]; then
     echo "* Load drbd module version \"${DRBD_IMG_TAG}\""
     modprobe drbd
