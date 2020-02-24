@@ -140,10 +140,10 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: #@ name() + "/node"
-                operator: In
-                values:
-                - "true"
+              #! - key: #@ name() + "/controller"
+              #!   operator: In
+              #!   values:
+              #!   - "true"
               - key: node-role.kubernetes.io/master
                 operator: DoesNotExist
       tolerations:
