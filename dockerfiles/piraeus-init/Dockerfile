@@ -1,11 +1,10 @@
-FROM debian:buster
+FROM alpine
 MAINTAINER Alex Zheng <alex.zheng@daocloud.io>
 
-RUN { echo 'APT::Install-Recommends "false";' ; echo 'APT::Install-Suggests "false";' ; } > /etc/apt/apt.conf.d/99_piraeus
 RUN set -x && \
-    apt-get update -y && \
-    apt-get install -y jq curl kmod && \
-    apt-get clean -y 
+    apk update && \
+    apk add bash jq curl kmod && \
+    rm -f /var/cache/apk/* 
 
 ADD . /files/
 

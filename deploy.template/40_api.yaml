@@ -6,7 +6,28 @@ metadata:
   name: #@ name() + "-api"
   namespace: kube-system
 data:
-  LS_CONTROLLERS: #@ name() + "-controller.kube-system:3370"
+  #! Must be an FQDN here, otherwise haproxy cannot resolve it!
+  LS_CONTROLLERS: #@ name() + "-controller.kube-system.svc.cluster.local:3370"
+  FRONTEND_PORT: '3370'
+  HAPROXY_CFG: |
+    defaults
+        timeout connect 10s
+        timeout client 30s
+        timeout server 30s
+        log stderr format raw daemon notice
+        mode tcp
+        option tcplog
+        maxconn 3000
+    frontend node
+        bind "${FRONTEND_IP}":"${FRONTEND_PORT}"
+        default_backend controllers
+    resolvers hostdns
+        parse-resolv-conf
+        accepted_payload_size 1024
+        hold valid 10s
+    backend controllers
+        balance roundrobin
+        server-template controller 1 "${LS_CONTROLLERS}" check resolvers hostdns init-addr none
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -34,35 +55,9 @@ spec:
       restartPolicy: Always
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
-      initContainers:
-      - name: init
-        image: #@ initimage()
-        imagePullPolicy: Always
-        securityContext:
-          privileged: true
-        resources:
-          #! requests:
-          #!   cpu: 50m
-          #!   memory: 50Mi
-          limits:
-            cpu: 100m
-            memory: 100Mi
-        envFrom:
-        - configMapRef:
-            name:  #@ name() + "-api"
-        env:
-        - name: THIS_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name     
-        volumeMounts:
-        - name: localtime
-          mountPath: /etc/localtime
-        - name: init
-          mountPath: /init
       containers:
       - name: proxy
-        image: haproxy:2.1.3
+        image: docker.io/library/haproxy:2.1.3-alpine
         imagePullPolicy: Always
         resources:
           #! requests:
@@ -89,15 +84,18 @@ spec:
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
-        - name: init
+        - name: etc-haproxy
           mountPath: /usr/local/etc/haproxy
-          subPath: etc/haproxy
       volumes:
       - name: localtime
         hostPath:
           path: /etc/localtime
-      - name: init
-        emptyDir: {}
+      - name: etc-haproxy
+        configMap:
+          name: #@ name() + "-api"
+          items:
+          - key: HAPROXY_CFG
+            path: haproxy.cfg
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
