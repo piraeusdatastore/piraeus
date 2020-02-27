@@ -8,5 +8,6 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y kmod gnupg wget m
 RUN wget https://www.linbit.com/downloads/drbd/9.0/drbd-${DRBD_VERSION}.tar.gz -O /drbd.tar.gz && \
     wget https://raw.githubusercontent.com/LINBIT/drbd/drbd-9.0/docker/entry.sh -O /entry.sh
 
+ENV LB_HOW compile
 RUN chmod +x /entry.sh
 ENTRYPOINT /entry.sh
