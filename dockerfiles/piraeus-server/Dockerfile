@@ -11,7 +11,8 @@ RUN apt-get install -y gnupg2 && \
 	 apt-get install -y default-jre-headless && \
 	 apt-get install -y udev linstor-controller linstor-satellite linstor-client \
 	 drbd-utils wget xfsprogs jq \
-	 net-tools iputils-ping iproute2 dnsutils netcat sysstat curl && \
+	 net-tools iputils-ping iproute2 dnsutils netcat sysstat curl \
+	 util-linux && \
 	 apt-get clean
 # remove jre-headless with linstor 0.9.13
 
