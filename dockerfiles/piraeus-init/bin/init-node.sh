@@ -97,7 +97,15 @@ fi
 
 # set up haproxy
 echo "* Set up local api proxy"
-/init/bin/init-api.sh
+if [[ ! "${LS_CONTROLLERS/:*/}" =~ \.svc\.cluster\.local$ ]]; then
+    if [[ "${LS_CONTROLLERS}" =~ :[0-9]+$ ]]; then
+         CONTROLLER_FQDN="${LS_CONTROLLERS/:/.svc.cluster.local:}"
+    else
+         CONTROLLER_FQDN="${LS_CONTROLLERS/$/.svc.cluster.local}"
+    fi
+fi
+sed -i "s/_CONTROLLER_FQDN_/${CONTROLLER_FQDN}/" /init/etc/haproxy/haproxy.cfg
+cat /init/etc/haproxy/haproxy.cfg
 
 # install linstor cli script
 echo "* Install local linstor cli"

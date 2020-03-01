@@ -134,17 +134,23 @@ spec:
         - name: init
           mountPath: /init
         - name: log
-          mountPath: /var/log
-          subPath: linstor-satellite
+          mountPath: /var/log/linstor-satellite
         - name: #@ "var-local-" + name()
           mountPath: #@ "/var/local/" + name()
         - name: dev
           mountPath: /dev
+          
         - name: lib-modules
           mountPath: /lib/modules
         #@ if map_host_lvm():
+        - name: proc 
+          mountPath: /host/proc
         - name: run-lvm
           mountPath: /run/lvm
+        - name: run-udev
+          mountPath: /run/udev
+        #! - name: run
+        #!   mountPath: /run
         #@ end
         #@ if map_host_linstor():
         - name: var-lib-linstor-d
@@ -198,10 +204,16 @@ spec:
           path: #@ "/var/local/" + name()
       - name: log
         hostPath:
-          path: #@ "/var/log/"+ name()
+          path: #@ "/var/log/"+ name() + "/linstor-satellite"
       - name: dev
         hostPath:
           path: /dev
+      - name: run-lvm
+        hostPath:
+            path: /run/lvm
+      - name: run-udev
+        hostPath:
+            path: /run/udev
       - name: usr-local-bin
         hostPath:
           path: /usr/local/bin
@@ -212,12 +224,12 @@ spec:
         hostPath:
           path: /lib/modules
       #@ if map_host_lvm():
-      #! - name: etc-lvm
-      #!   hostPath:
-      #!     path: /etc/lvm
-      - name: run-lvm
-        hostPath:
-          path: /run/lvm
+      - name: proc 
+        hostPath: 
+          path: /proc
+      - name: run
+        hostPath:            
+          path: /run
       #@ end
       #@ if map_host_linstor():
       - name: etc-drbd-d

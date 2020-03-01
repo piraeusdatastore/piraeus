@@ -57,19 +57,19 @@ spec:
       - name: html-root
         persistentVolumeClaim:
           claimName: demo-rwo-r3
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: piraeus/node
-                operator: In
-                values:
-                - "true"
-              # - key: piraeus/demo
-              #   operator: In
-              #   values:
-              #   - "true"
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #       - matchExpressions:
+      #         - key: piraeus/node
+      #           operator: In
+      #           values:
+      #           - "true"
+      #         - key: piraeus/demo
+      #           operator: In
+      #           values:
+      #           - "true"
       tolerations:
       - operator: "Exists"
         effect: "NoSchedule"

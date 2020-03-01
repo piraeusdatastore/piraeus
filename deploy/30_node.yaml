@@ -124,16 +124,19 @@ spec:
         - name: init
           mountPath: /init
         - name: log
-          mountPath: /var/log
-          subPath: linstor-satellite
+          mountPath: /var/log/linstor-satellite
         - name: var-local-piraeus
           mountPath: /var/local/piraeus
         - name: dev
           mountPath: /dev
         - name: lib-modules
           mountPath: /lib/modules
+        - name: proc
+          mountPath: /host/proc
         - name: run-lvm
           mountPath: /run/lvm
+        - name: run-udev
+          mountPath: /run/udev
       - name: proxy
         image: docker.io/library/haproxy:2.1.3-alpine
         imagePullPolicy: Always
@@ -179,10 +182,16 @@ spec:
           path: /var/local/piraeus
       - name: log
         hostPath:
-          path: /var/log/piraeus
+          path: /var/log/piraeus/linstor-satellite
       - name: dev
         hostPath:
           path: /dev
+      - name: run-lvm
+        hostPath:
+          path: /run/lvm
+      - name: run-udev
+        hostPath:
+          path: /run/udev
       - name: usr-local-bin
         hostPath:
           path: /usr/local/bin
@@ -192,9 +201,12 @@ spec:
       - name: lib-modules
         hostPath:
           path: /lib/modules
-      - name: run-lvm
+      - name: proc
         hostPath:
-          path: /run/lvm
+          path: /proc
+      - name: run
+        hostPath:
+          path: /run
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

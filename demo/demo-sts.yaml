@@ -69,7 +69,7 @@ spec:
       terminationGracePeriodSeconds: 0
       initContainers:
       - name: init-mysql
-        image: mysql:5.7
+        image: docker.io/library/mysql:5.7
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -134,7 +134,7 @@ spec:
           mountPath: /etc/mysql/conf.d
       containers:
       - name: mysql
-        image: mysql:5.7
+        image: docker.io/library/mysql:5.7
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -257,4 +257,4 @@ spec:
       resources:
         requests:
           storage: 10Gi
-      storageClassName: piraeus-default-r1
+      storageClassName: piraeus-default-r2

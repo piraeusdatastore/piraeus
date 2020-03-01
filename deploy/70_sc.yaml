@@ -5,11 +5,12 @@ metadata:
 provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
 parameters:
   layerlist: drbd storage
   placementCount: "1"
-  placementPolicy: AutoPlace
-  allowRemoteVolumeAccess: "true"
+  placementPolicy: FollowTopology
+  allowRemoteVolumeAccess: "false"
   disklessOnRemaining: "false"
   mountOpts: noatime,discard
   storagePool: DfltStorPool
@@ -21,11 +22,12 @@ metadata:
 provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
 parameters:
   layerlist: drbd storage
   placementCount: "2"
-  placementPolicy: AutoPlace
-  allowRemoteVolumeAccess: "true"
+  placementPolicy: FollowTopology
+  allowRemoteVolumeAccess: "false"
   disklessOnRemaining: "false"
   mountOpts: noatime,discard
   storagePool: DfltStorPool
@@ -37,11 +39,12 @@ metadata:
 provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
 parameters:
   layerlist: drbd storage
   placementCount: "3"
-  placementPolicy: AutoPlace
-  allowRemoteVolumeAccess: "true"
+  placementPolicy: FollowTopology
+  allowRemoteVolumeAccess: "false"
   disklessOnRemaining: "false"
   mountOpts: noatime,discard
   storagePool: DfltStorPool
@@ -49,22 +52,16 @@ parameters:
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: piraeus-default-local
+  name: piraeus-default-raw
 provisioner: linstor.csi.linbit.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
 parameters:
   layerlist: storage
   placementCount: "1"
-  placementPolicy: AutoPlace
-  allowRemoteVolumeAccess: "true"
+  placementPolicy: FollowTopology
+  allowRemoteVolumeAccess: "false"
   disklessOnRemaining: "false"
   mountOpts: noatime,discard
   storagePool: DfltStorPool
----
-kind: VolumeSnapshotClass
-apiVersion: snapshot.storage.k8s.io/v1alpha1
-metadata:
-  name: piraeus-snapshot
-  namespace: kube-system
-snapshotter: io.drbd.linstor-csi

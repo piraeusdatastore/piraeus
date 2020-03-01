@@ -40,12 +40,12 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: demo-rwo-local
+  name: demo-rwo-raw
   namespace: piraeus
 spec:
-  storageClassName: piraeus-default-local
+  storageClassName: piraeus-default-raw
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 15Gi
+      storage: 10Gi

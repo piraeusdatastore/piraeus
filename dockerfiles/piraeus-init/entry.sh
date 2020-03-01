@@ -13,9 +13,6 @@ if [[ "${THIS_POD_NAME}" =~ -etcd-[0-9]+$ ]]; then
 elif [[ "${THIS_POD_NAME}" =~ -controller-[0-9a-z]+-[0-9a-z]+$ ]]; then
     echo "* Initialize controller"
     /init/bin/init-controller.sh
-elif [[ "${THIS_POD_NAME}" =~ -api-[0-9a-z]+-[0-9a-z]+$ ]]; then
-    echo "* Initialize api"
-    /init/bin/init-api.sh
 elif [[ "${THIS_POD_NAME}" =~ -node-[0-9a-z]+$ ]]; then
     echo "* Initialize node"
     /init/bin/init-node.sh
