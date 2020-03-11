@@ -1,7 +1,7 @@
 FROM centos:centos8
 MAINTAINER Roland Kammerer <roland.kammerer@linbit.com>
 
-ENV DRBD_VERSION 9.0.21-1
+ENV DRBD_VERSION 9.0.22-1
 
 RUN yum -y update-minimal --security --sec-severity=Important --sec-severity=Critical && \
 	yum install -y wget gcc make patch curl elfutils-libelf-devel && yum clean all -y
