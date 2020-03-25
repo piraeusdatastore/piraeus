@@ -8,6 +8,14 @@ data:
   LS_CONTROLLERS: piraeus-controller.piraeus-system.svc.cluster.local:3370
   POOL_BASE_DIR: /var/lib/piraeus/storagepools
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: piraeus-scaler-task
+  namespace: piraeus-system
+data:
+  task: ""
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -34,16 +42,39 @@ spec:
       hostPID: true
       hostIPC: true
       dnsPolicy: ClusterFirstWithHostNet
-      containers:
-      - name: tasker
+      initContainers:
+      - name: init
         image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
         imagePullPolicy: Always
-        securityContext:
-          privileged: true
         resources:
           limits:
             cpu: 100m
             memory: 100Mi
+        envFrom:
+        - configMapRef:
+            name: piraeus-scaler
+        env:
+        - name: THIS_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        args:
+        - initScaler
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+      containers:
+      - name: scaler
+        image: quay.io/piraeusdatastore/piraeus-client:v1.0.11
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
         envFrom:
         - configMapRef:
             name: piraeus-scaler
@@ -60,17 +91,18 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        args:
-        - initScaler
-        readinessProbe:
-          successThreshold: 3
-          failureThreshold: 3
-          httpGet:
-            port: 13366
-          periodSeconds: 1
+        command:
+        - /init/bin/run-scaler.sh
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+        - name: run
+          mountPath: /var/run/task
+          subPath: task
+        - name: var-lib-piraeus
+          mountPath: /var/lib/piraeus
         - name: dockersock
           mountPath: /var/run/docker.sock
         - name: usr-src
@@ -81,9 +113,18 @@ spec:
       - name: localtime
         hostPath:
           path: /etc/localtime
-      - name: var-local-piraeus
+      - name: init
+        emptyDir: {}
+      - name: run
+        configMap:
+          name: piraeus-scaler-task
+          items:
+          - key: task
+            path: task
+            mode: 493
+      - name: var-lib-piraeus
         hostPath:
-          path: /var/local/piraeus
+          path: /var/lib/piraeus
       - name: dev
         hostPath:
           path: /dev

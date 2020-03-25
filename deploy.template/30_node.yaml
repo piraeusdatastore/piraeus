@@ -138,8 +138,8 @@ spec:
           subPath: bin/prestart-node.sh
         - name: log
           mountPath: /var/log/linstor-satellite
-        - name: storagepool-dir
-          mountPath: #@ "/var/lib/" + name() + "/storagepools"
+        - name: #@ "var-lib-" + name()
+          mountPath: #@ "/var/lib/" + name()
         - name: dev
           mountPath: /dev
         - name: lib-modules
@@ -163,9 +163,9 @@ spec:
       - name: #@ "opt-" + name()
         hostPath:
           path: #@ "/opt/" + name()
-      - name: storagepool-dir
+      - name: #@ "var-lib-" + name()
         hostPath:
-          path: #@ "/var/lib/" + name() + "/storagepools"
+          path: #@ "/var/lib/" + name()
       - name: log
         hostPath:
           path: #@ "/var/log/"+ name() + "/linstor-satellite"

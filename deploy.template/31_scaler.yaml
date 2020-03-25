@@ -1,4 +1,4 @@
-#@ load("funcs.lib.yml", "map_host_linstor", "map_host_lvm", "name", "namespace", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage", "set_priority_class")
+#@ load("funcs.lib.yml", "map_host_linstor", "map_host_lvm", "name", "namespace", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage", "clientimage", "set_priority_class")
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -10,6 +10,14 @@ data:
   #! Must be an FQDN here, otherwise it might not resolve!
   LS_CONTROLLERS: #@ controllerhostport()
   POOL_BASE_DIR: #@ "/var/lib/" + name() + "/storagepools"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: #@ name() + "-scaler-task"
+  namespace: #@ namespace()
+data:
+  task: "" #! placeholder
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -40,12 +48,10 @@ spec:
       hostPID: true
       hostIPC: true
       dnsPolicy: ClusterFirstWithHostNet
-      containers:
-      - name: tasker
+      initContainers:
+      - name: init
         image: #@ initimage()
         imagePullPolicy: Always
-        securityContext:
-          privileged: true
         resources:
           #! requests:
           #!   cpu: 50m
@@ -53,6 +59,34 @@ spec:
           limits:
             cpu: 100m
             memory: 100Mi
+        envFrom:
+        - configMapRef:
+            name:  #@ name() + "-scaler"
+        env:
+        - name: THIS_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        args:
+          - initScaler
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+      containers:
+      - name: scaler
+        image: #@ clientimage()
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        resources:
+          #! requests:
+          #!   cpu: 50m
+          #!   memory: 50Mi
+          limits:
+            cpu: 200m
+            memory: 200Mi
         envFrom:
         - configMapRef:
             name:  #@ name() + "-scaler"
@@ -69,17 +103,18 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        args:
-          - initScaler
-        readinessProbe:
-          successThreshold: 3
-          failureThreshold: 3
-          httpGet:
-            port: 13366
-          periodSeconds: 1
+        command:
+          - /init/bin/run-scaler.sh
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+        - name: run
+          mountPath: /var/run/task
+          subPath: task
+        - name: #@ "var-lib-" + name()
+          mountPath: #@ "/var/lib/" + name()
         - name: dockersock
           mountPath: /var/run/docker.sock
         - name: usr-src
@@ -90,9 +125,18 @@ spec:
       - name: localtime
         hostPath:
           path: /etc/localtime
-      - name: #@ "var-local-" + name()
+      - name: init
+        emptyDir: {}
+      - name: run
+        configMap:
+          name: #@ name() + "-scaler-task"
+          items:
+          - key: task
+            path: task
+            mode: 0755
+      - name: #@ "var-lib-" + name()
         hostPath:
-          path: #@ "/var/local/" + name()
+          path: #@ "/var/lib/" + name()
       - name: dev
         hostPath:
           path: /dev

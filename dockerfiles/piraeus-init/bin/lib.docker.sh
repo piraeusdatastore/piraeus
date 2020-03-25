@@ -68,7 +68,7 @@ _docker_run_drbd_driver_loader() {
 }
 EOF
     # for ubuntu
-    if [[ ! -z $2 ]]; then
+    if [ -n "$2" ]; then
         mv /init/tmp/.data.json /init/tmp/.old.data.json
         cat /init/tmp/.old.data.json | jq ".HostConfig.Binds += [\"$2\"]" > /init/tmp/.data.json
     fi
@@ -78,7 +78,7 @@ EOF
             -d @/init/tmp/.data.json \
             | jq -r '.Id' )"
 
-    if [[ ! -z "${ID}" ]]; then
+    if [ -n "$ID" ]; then
         _docker_start "${ID}"
         _docker_logs "${ID}"
         _docker_remove "${ID}"

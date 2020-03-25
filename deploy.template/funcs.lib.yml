@@ -68,6 +68,10 @@
 #@   return imageversion(data.values.images.csi, data.values.csiversion)
 #@ end
 
+#@ def clientimage():
+#@   return imageversion(data.values.images.client, data.values.clientversion)
+#@ end
+
 #@ def set_priority_class():
 #@   if namespace() == "kube-system":
 #@     return True

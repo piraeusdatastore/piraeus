@@ -125,8 +125,8 @@ spec:
           subPath: bin/prestart-node.sh
         - name: log
           mountPath: /var/log/linstor-satellite
-        - name: storagepool-dir
-          mountPath: /var/lib/piraeus/storagepools
+        - name: var-lib-piraeus
+          mountPath: /var/lib/piraeus
         - name: dev
           mountPath: /dev
         - name: lib-modules
@@ -140,9 +140,9 @@ spec:
       - name: opt-piraeus
         hostPath:
           path: /opt/piraeus
-      - name: storagepool-dir
+      - name: var-lib-piraeus
         hostPath:
-          path: /var/lib/piraeus/storagepools
+          path: /var/lib/piraeus
       - name: log
         hostPath:
           path: /var/log/piraeus/linstor-satellite
