@@ -54,11 +54,7 @@ On each Kubernetes work node where piraeus is deployed:
 
 Also on Kuberntes master nodes:
 ```
-POD="$( $( kubectl -n kube-system get pod \
--l app.kubernetes.io/component=piraeus-controller \
---field-selector status.phase=Running -o name )"
-
-kubectl -n kube-system exec -it "$POD" -- linstor node list
+kubectl -n piraeus-system exec -it piraeus-controller-0 -- linstor node list
 ```
 
 This should show that the selected nodes are `Online` at the LINSTOR level.

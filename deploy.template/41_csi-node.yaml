@@ -1,10 +1,10 @@
-#@ load("funcs.lib.yml", "name", "csiimage", "controllerhostport", "csinode", "controller")
+#@ load("funcs.lib.yml", "name", "namespace", "csiimage", "controllerhostport", "csinode", "controller", "set_priority_class")
 ---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: #@ csinode()
-  namespace: kube-system
+  namespace: #@ namespace()
 spec:
   minReadySeconds: 0
   updateStrategy:
@@ -21,10 +21,11 @@ spec:
         app.kubernetes.io/name: #@ name()
         app.kubernetes.io/component: #@ csinode()
     spec:
+      #@ if set_priority_class():
       priorityClassName: system-node-critical
+      #@ end
       serviceAccount: #@ csinode() + "-sa"
       restartPolicy: Always
-      terminationGracePeriodSeconds: 0
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       #! imagePullSecrets:
@@ -32,7 +33,7 @@ spec:
       containers:
       - name: csi-node-driver-registrar
         image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
-        imagePullPolicy: "Always"
+        imagePullPolicy: IfNotPresent
         resources:
           #! requests:
           #!   cpu: '100m'
@@ -66,7 +67,7 @@ spec:
           mountPath: /registration/
       - name: #@ name() + "-csi-plugin"
         image: #@ csiimage()
-        imagePullPolicy: "Always"
+        imagePullPolicy: IfNotPresent
         resources:
           #! requests:
           #!   cpu: '100m'
@@ -134,20 +135,22 @@ spec:
               - key: node-role.kubernetes.io/master
                 operator: DoesNotExist
       tolerations:
-        - operator: "Exists"
-          effect: "NoSchedule"
+        - operator: Exists
+          effect: NoSchedule
+        - key: CriticalAddonsOnly
+          operator: Exists
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: #@ csinode() + "-sa"
-  namespace: kube-system
+  namespace: #@ namespace()
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: #@ csinode() + "-driver-registrar-role"
-  namespace: kube-system
+  namespace: #@ namespace()
 rules:
 - apiGroups: [""]
   resources: ["events"]
@@ -160,7 +163,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: #@ csinode() + "-sa"
-  namespace: kube-system
+  namespace: #@ namespace()
 roleRef:
   kind: ClusterRole
   name: #@ csinode() + "-driver-registrar-role"

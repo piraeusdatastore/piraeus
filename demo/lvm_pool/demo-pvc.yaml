@@ -4,7 +4,7 @@ metadata:
   name: demo-rwo-r1
   namespace: piraeus
 spec:
-  storageClassName: piraeus-dflt-r1
+  storageClassName: piraeus-lvm-r1
   accessModes:
     - ReadWriteOnce
   volumeMode: Filesystem
@@ -18,7 +18,7 @@ metadata:
   name: demo-rwo-r2
   namespace: piraeus
 spec:
-  storageClassName: piraeus-dflt-r2
+  storageClassName: piraeus-lvm-r2
   accessModes:
     - ReadWriteOnce
   volumeMode: Filesystem
@@ -32,7 +32,7 @@ metadata:
   name: demo-rwo-r3
   namespace: piraeus
 spec:
-  storageClassName: piraeus-dflt-r3
+  storageClassName: piraeus-lvm-r3
   accessModes:
     - ReadWriteOnce
   volumeMode: Filesystem
@@ -43,10 +43,10 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: demo-rwo-raw
+  name: demo-rwo-raw2
   namespace: piraeus
 spec:
-  storageClassName: piraeus-dflt-raw
+  storageClassName: piraeus-lvm-raw
   accessModes:
     - ReadWriteOnce
   volumeMode: Filesystem

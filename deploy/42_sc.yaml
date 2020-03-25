@@ -1,0 +1,131 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: piraeus-local-dflt-r1
+provisioner: linstor.csi.linbit.com
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  layerlist: drbd storage
+  placementCount: "1"
+  placementPolicy: FollowTopology
+  allowRemoteVolumeAccess: "false"
+  disklessOnRemaining: "false"
+  mountOpts: noatime,discard
+  storagePool: DfltStorPool
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: piraeus-local-dflt-r2
+provisioner: linstor.csi.linbit.com
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  layerlist: drbd storage
+  placementCount: "2"
+  placementPolicy: FollowTopology
+  allowRemoteVolumeAccess: "false"
+  disklessOnRemaining: "false"
+  mountOpts: noatime,discard
+  storagePool: DfltStorPool
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: piraeus-local-dflt-r3
+provisioner: linstor.csi.linbit.com
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  layerlist: drbd storage
+  placementCount: "3"
+  placementPolicy: FollowTopology
+  allowRemoteVolumeAccess: "false"
+  disklessOnRemaining: "false"
+  mountOpts: noatime,discard
+  storagePool: DfltStorPool
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: piraeus-local-dflt-raw
+provisioner: linstor.csi.linbit.com
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  layerlist: storage
+  placementCount: "1"
+  placementPolicy: FollowTopology
+  allowRemoteVolumeAccess: "false"
+  disklessOnRemaining: "false"
+  mountOpts: noatime,discard
+  storagePool: DfltStorPool
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: piraeus-dflt-r1
+provisioner: linstor.csi.linbit.com
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+parameters:
+  layerlist: drbd storage
+  placementCount: "1"
+  placementPolicy: AutoPlace
+  allowRemoteVolumeAccess: "true"
+  disklessOnRemaining: "false"
+  mountOpts: noatime,discard
+  storagePool: DfltStorPool
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: piraeus-dflt-r2
+provisioner: linstor.csi.linbit.com
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+parameters:
+  layerlist: drbd storage
+  placementCount: "2"
+  placementPolicy: AutoPlace
+  allowRemoteVolumeAccess: "true"
+  disklessOnRemaining: "false"
+  mountOpts: noatime,discard
+  storagePool: DfltStorPool
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: piraeus-dflt-r3
+provisioner: linstor.csi.linbit.com
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+parameters:
+  layerlist: drbd storage
+  placementCount: "3"
+  placementPolicy: AutoPlace
+  allowRemoteVolumeAccess: "true"
+  disklessOnRemaining: "false"
+  mountOpts: noatime,discard
+  storagePool: DfltStorPool
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: piraeus-dflt-raw
+provisioner: linstor.csi.linbit.com
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+parameters:
+  layerlist: storage
+  placementCount: "1"
+  placementPolicy: FollowTopology
+  allowRemoteVolumeAccess: "false"
+  disklessOnRemaining: "false"
+  mountOpts: noatime,discard
+  storagePool: DfltStorPool

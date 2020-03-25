@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: piraeus-etcd-headless
-  namespace: kube-system
+  namespace: piraeus-system
   labels:
     app.kubernetes.io/name: piraeus
     app.kubernetes.io/component: piraeus-etcd
@@ -21,7 +21,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: piraeus-etcd
-  namespace: kube-system
+  namespace: piraeus-system
   labels:
     app.kubernetes.io/name: piraeus
     app.kubernetes.io/component: piraeus-etcd
@@ -45,7 +45,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: piraeus-etcd
-  namespace: kube-system
+  namespace: piraeus-system
   labels:
     app.kubernetes.io/name: piraeus
     app.kubernetes.io/component: piraeus-etcd
@@ -66,12 +66,11 @@ spec:
         app.kubernetes.io/name: piraeus
         app.kubernetes.io/component: piraeus-etcd
     spec:
-      priorityClassName: system-node-critical
       restartPolicy: Always
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.2
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
         imagePullPolicy: Always
         resources:
           limits:
@@ -88,6 +87,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        args:
+        - initEtcd
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
@@ -96,7 +97,7 @@ spec:
       containers:
       - name: etcd
         image: quay.io/coreos/etcd:v3.4.3
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           limits:
             cpu: 200m
@@ -117,7 +118,6 @@ spec:
           httpGet:
             path: /health
             port: 2379
-          initialDelaySeconds: 10
           periodSeconds: 1
         volumeMounts:
         - name: localtime
@@ -154,3 +154,5 @@ spec:
       tolerations:
       - operator: Exists
         effect: NoSchedule
+      - key: CriticalAddonsOnly
+        operator: Exists

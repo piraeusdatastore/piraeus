@@ -1,26 +1,19 @@
-#@ load("funcs.lib.yml", "name", "controller", "initimage", "etcdendpoint", "controllerimage")
----
-kind: Namespace
-apiVersion: v1
-metadata:
-  name: #@ name()
----
+#@ load("funcs.lib.yml", "name", "namespace", "controller", "initimage", "etcdendpoint", "controllerimage", "controllerhostport", "set_priority_class")
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: #@ controller()
-  namespace: kube-system
+  namespace: #@ namespace()
 data:
   INIT_DEBUG: 'false'
-  MIN_WAIT: '5'
-  MAX_WAIT: '3600'
-  ETCD_ENDPOINTS: #@ name() + "-etcd.kube-system:2379"
+  ETCD_ENDPOINTS: #@ etcdendpoint()
+  LS_CONTROLLERS: #@ controllerhostport()
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: #@ controller()
-  namespace: kube-system
+  namespace: #@ namespace()
   labels:
     app.kubernetes.io/name: #@ name()
     app.kubernetes.io/component: #@ controller()
@@ -35,29 +28,33 @@ spec:
     app.kubernetes.io/component: #@ controller()
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: #@ controller()
-  namespace: kube-system
+  namespace: #@ namespace()
   labels:
     app.kubernetes.io/name: #@ name()
     app.kubernetes.io/component: #@ controller()
 spec:
+  serviceName: #@ controller()
+  updateStrategy:
+    type: RollingUpdate
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: #@ name()
       app.kubernetes.io/component: #@ controller()
-  strategy:
-    type: Recreate
-  replicas: 1
   template:
     metadata:
       labels:
         app.kubernetes.io/name: #@ name()
         app.kubernetes.io/component: #@ controller()
     spec:
-      priorityClassName: system-node-critical
+      #@ if set_priority_class():
+      priorityClassName: system-cluster-critical
+      #@ end
       restartPolicy: Always
+      terminationGracePeriodSeconds: 0
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
@@ -73,11 +70,8 @@ spec:
         envFrom:
             - configMapRef:
                 name: #@ controller()
-        env:
-        - name: THIS_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+        args:
+            - initController
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
@@ -86,21 +80,24 @@ spec:
       containers:
       - name: controller
         image: #@ controllerimage()
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           #! requests:
           #!   cpu: '500m'
           #!   memory: '500Mi'
           limits:
             cpu: '1'
-            memory: '1Gi'
+            memory: 1Gi
         ports:
         - name: rest-api
           containerPort: 3370
+          hostPort: 3370
         - name: plain
           containerPort: 3376
+          hostPort: 3376
         - name: ssl
           containerPort: 3377
+          hostPort: 3377
         env:
         - name: THIS_POD_IP
           valueFrom:
@@ -109,13 +106,13 @@ spec:
         #@ if name() == "piraeus":
         args:
         - startController
+        - --stack-traces
         #@ end
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3
           httpGet:
             port: 3370
-          initialDelaySeconds: 5
           periodSeconds: 1
         volumeMounts:
         - name: localtime
@@ -148,5 +145,7 @@ spec:
       tolerations:
       - operator: Exists
         effect: NoSchedule
+      - key: CriticalAddonsOnly
+        operator: Exists
       #! imagePullSecrets:
       #! - name: piraeus-regcred

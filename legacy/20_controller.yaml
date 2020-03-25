@@ -1,10 +1,4 @@
 #@ load("funcs.lib.yml", "name", "controller", "initimage", "etcdendpoint", "controllerimage")
----
-kind: Namespace
-apiVersion: v1
-metadata:
-  name: piraeus
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -12,9 +6,7 @@ metadata:
   namespace: kube-system
 data:
   INIT_DEBUG: 'false'
-  MIN_WAIT: '5'
-  MAX_WAIT: '3600'
-  ETCD_ENDPOINTS: #@ name() + "-etcd.kube-system:2379"
+  ETCD_ENDPOINTS: #@ name() + "-etcd.kube-system.svc.cluster.local:2379"
 ---
 apiVersion: v1
 kind: Service
@@ -56,10 +48,9 @@ spec:
         app.kubernetes.io/name: #@ name()
         app.kubernetes.io/component: #@ controller()
     spec:
-      priorityClassName: system-node-critical
+      priorityClassName: system-cluster-critical
       restartPolicy: Always
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
+      dnsPolicy: ClusterFirst
       initContainers:
       - name: init
         image: #@ initimage()
@@ -74,11 +65,8 @@ spec:
         envFrom:
             - configMapRef:
                 name: #@ controller()
-        env:
-        - name: THIS_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+        args:
+            - initController
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
@@ -87,21 +75,24 @@ spec:
       containers:
       - name: controller
         image: #@ controllerimage()
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           #! requests:
           #!   cpu: '500m'
           #!   memory: '500Mi'
           limits:
             cpu: '1'
-            memory: '1Gi'
+            memory: 1Gi
         ports:
         - name: rest-api
           containerPort: 3370
+          hostPort: 3370
         - name: plain
           containerPort: 3376
+          hostPort: 3376
         - name: ssl
           containerPort: 3377
+          hostPort: 3377
         env:
         - name: THIS_POD_IP
           valueFrom:
@@ -110,14 +101,13 @@ spec:
         #@ if name() == "piraeus":
         args:
         - startController
-        - --rest-bind=$(THIS_POD_IP):3370
+        - --stack-traces
         #@ end
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3
           httpGet:
             port: 3370
-          initialDelaySeconds: 5
           periodSeconds: 1
         volumeMounts:
         - name: localtime
@@ -127,7 +117,6 @@ spec:
           subPath: etc/linstor
         - name: log
           mountPath: /var/log/linstor-controller
-          subPath: linstor-controller
       volumes:
       - name: localtime
         hostPath:
@@ -136,20 +125,22 @@ spec:
         emptyDir: {}
       - name: log
         hostPath:
-          path: #@ "/var/log/" + name()
+          path: #@ "/var/log/" + name() + "/linstor-controller"
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: #@ name() + "/node"
-                operator: In
-                values:
-                - "true"
+              #! - key: #@ name() + "/controller"
+              #!   operator: In
+              #!   values:
+              #!   - "true"
               - key: node-role.kubernetes.io/master
                 operator: DoesNotExist
       tolerations:
       - operator: Exists
         effect: NoSchedule
+      - key: CriticalAddonsOnly
+        operator: Exists
       #! imagePullSecrets:
       #! - name: piraeus-regcred

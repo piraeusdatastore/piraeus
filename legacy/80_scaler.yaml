@@ -1,23 +1,24 @@
-#@ load("funcs.lib.yml", "map_host_linstor", "map_host_lvm", "name", "namespace", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage", "set_priority_class")
+#@ load("funcs.lib.yml", "map_host_linstor", "map_host_lvm", "name", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage")
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: #@ node()
-  namespace: #@ namespace()
+  namespace: kube-system
 data:
   INIT_DEBUG: 'false'
-  #! Must be an FQDN here, otherwise it might not resolve!
-  LS_CONTROLLERS: #@ controllerhostport()
-  POOL_BASE_DIR: #@ "/var/lib/" + name() + "/storagepools"
+  MIN_WAIT: '5'
+  MAX_WAIT: '3600'
+  LS_CONTROLLERS: #@ name() + "-controller.kube-system:3370"
   DRBD_IMG_TAG: v9.0.21 #! "none" will skip drbd installation
-  DRBD_IMG_PULL_POLICY: IfNotPresent
-  MAP_HOST_LVM: 'true'
+  DRBD_IMG_PULL_POLICY: Always
+  POOL_BASE_DIR: #@ "/var/local/" + name() + "/storagepools"
 ---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: #@ node()
-  namespace: #@ namespace()
+  namespace: kube-system
 spec:
   minReadySeconds: 0
   updateStrategy:
@@ -34,16 +35,12 @@ spec:
         app.kubernetes.io/name: #@ name()
         app.kubernetes.io/component: #@ node()
     spec:
-      #@ if set_priority_class():
       priorityClassName: system-node-critical
-      #@ end
       restartPolicy: Always
       hostNetwork: true
-      hostPID: true
-      hostIPC: true
       dnsPolicy: ClusterFirstWithHostNet
-      initContainers:
-      - name: init
+      containers:
+      - name: scaler
         image: #@ initimage()
         imagePullPolicy: Always
         securityContext:
@@ -58,127 +55,69 @@ spec:
         envFrom:
         - configMapRef:
             name:  #@ node()
-        env:    
+        env:
+        - name: THIS_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name 
         - name: THIS_POD_UID
           valueFrom:
             fieldRef:
-              fieldPath: metadata.uid        
+              fieldPath: metadata.uid         
         - name: THIS_POD_IP
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: THIS_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
         - name: THIS_NODE_NAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        args:
-            - initNode
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
+        - name: #@ "opt-" + name()
+          mountPath: #@ "/opt/" + name()
+        - name: usr-local-bin
+          mountPath: /usr/local/bin
         - name: dockersock
           mountPath: /var/run/docker.sock
         - name: usr-src
           mountPath: /usr/src
         - name: lib-modules
           mountPath: /lib/modules
-        - name: #@ "opt-" + name()
-          mountPath: #@ "/opt/" + name()
-        - name: usr-local-bin
-          mountPath: /usr/local/bin
-      containers:
-      - name: satellite
-        image: #@ satelliteimage()
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          privileged: true
-        resources:
-          #! requests:
-          #!   cpu: '500m'
-          #!   memory: '500Mi'
-          limits:
-            cpu: 1
-            memory: 1Gi
-        envFrom:
-        - configMapRef:
-            name:  #@ node()
-        env:
-        - name: THIS_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: THIS_NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        #@ if name() == "piraeus":
-        args:
-        - startSatellite
-        - --stack-traces
-        #@ end
-        readinessProbe:
-          successThreshold: 3
-          failureThreshold: 3
-          tcpSocket:
-            port: 3366
-          periodSeconds: 1
-        volumeMounts:
-        - name: localtime
-          mountPath: /etc/localtime
-        - name: init
-          mountPath: /init
-        - name: init
-          mountPath: /usr/bin/pre-start.sh
-          subPath: bin/prestart-node.sh
-        - name: log
-          mountPath: /var/log/linstor-satellite
-        - name: storagepool-dir
-          mountPath: #@ "/var/lib/" + name() + "/storagepools"
-        - name: dev
-          mountPath: /dev
-        - name: lib-modules
-          mountPath: /lib/modules
-        #@ if map_host_lvm():
-        - name: run-lvm
-          mountPath: /run/lvm
-        - name: run-udev
-          mountPath: /run/udev
-        #@ end
-        #@ if map_host_linstor():
-        - name: var-lib-linstor-d
-          mountPath: /var/lib/linstor.d
-        #@ end
       volumes:
       - name: localtime
         hostPath:
           path: /etc/localtime
       - name: init
         emptyDir: {}
+      - name: dockersock
+        hostPath:
+          path: /var/run/docker.sock
+          type: Socket
       - name: #@ "opt-" + name()
         hostPath:
           path: #@ "/opt/" + name()
-      - name: storagepool-dir
+      - name: #@ "var-local-" + name()
         hostPath:
-          path: #@ "/var/lib/" + name() + "/storagepools"
+          path: #@ "/var/local/" + name()
       - name: log
         hostPath:
           path: #@ "/var/log/"+ name() + "/linstor-satellite"
       - name: dev
         hostPath:
           path: /dev
+      - name: run-lvm
+        hostPath:
+            path: /run/lvm
+      - name: run-udev
+        hostPath:
+            path: /run/udev
       - name: usr-local-bin
         hostPath:
           path: /usr/local/bin
-      - name: dockersock
-        hostPath:
-          path: /var/run/docker.sock
-          type: Socket
       - name: usr-src
         hostPath:
           path: /usr/src
@@ -186,12 +125,12 @@ spec:
         hostPath:
           path: /lib/modules
       #@ if map_host_lvm():
-      - name: run-lvm
-        hostPath:           
-          path: /run/lvm
-      - name: run-udev
-        hostPath:           
-          path: /run/udev 
+      - name: proc 
+        hostPath: 
+          path: /proc
+      - name: run
+        hostPath:            
+          path: /run
       #@ end
       #@ if map_host_linstor():
       - name: etc-drbd-d
@@ -218,7 +157,5 @@ spec:
       tolerations:
       - operator: Exists
         effect: NoSchedule
-      - key: CriticalAddonsOnly
-        operator: Exists
       #! imagePullSecrets:
       #! - name: piraeus-regcred

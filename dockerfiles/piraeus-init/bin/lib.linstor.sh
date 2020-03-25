@@ -3,7 +3,7 @@
 _linstor_node_list() {
     [[ -z $1 ]] || NODE_NAME="?nodes=$1"
     curl -Ss --connect-timeout 2 \
-         -X GET "${CONTROLLER_ENDPOINT}/v1/nodes${NODE_NAME}" \
+         -X GET "${LS_CONTROLLERS}/v1/nodes${NODE_NAME}" \
          -H "Content-Type: application/json" \
         | jq '.'
 }
@@ -16,8 +16,12 @@ _linstor_has_node_ip() {
     [ ! -z $( _linstor_node_list | jq -r ".[] .net_interfaces[] | select(.address == \"$1\" )" ) ]
 }
 
+_linstor_node_is_online() {
+    [[ "$( _linstor_node_list $1 | jq -r '.[0].connection_status' )" == 'ONLINE' ]]
+}
+
 _linstor_node_create() {
-    cat > /init/tmp/.data.json <<EOF
+    cat > /init/tmp/.data.json << EOF
 {
     "name": "$1",
     "type": "SATELLITE",
@@ -34,7 +38,7 @@ _linstor_node_create() {
 EOF
 
     curl -Ss --connect-timeout 2 \
-         -X POST "${CONTROLLER_ENDPOINT}/v1/nodes" \
+         -X POST "${LS_CONTROLLERS}/v1/nodes" \
          -H "accept: application/json" \
          -H "Content-Type: application/json" \
          -d @/init/tmp/.data.json \
@@ -52,7 +56,7 @@ _linstor_node_interface_create() {
 EOF
 
     curl -Ss --connect-timeout 2 \
-         -X POST "${CONTROLLER_ENDPOINT}/v1/nodes/$1/net-interfaces" \
+         -X POST "${LS_CONTROLLERS}/v1/nodes/$1/net-interfaces" \
          -H "accept: application/json" \
          -H "Content-Type: application/json" \
          -d @/init/tmp/.data.json \
@@ -61,16 +65,41 @@ EOF
 
 _linstor_node_delete() {
     curl -Ss --connect-timeout 2
-         -X DELETE "${CONTROLLER_ENDPOINT}/v1/nodes/k8s-node-1" \
+         -X DELETE "${LS_CONTROLLERS}/v1/nodes/k8s-node-1" \
          -H "Content-Type: application/json" \
         | jq '.'
 }
 
 _linstor_storage_pool_list() {
     curl -Ss --connect-timeout 2 \
-         -X GET "${CONTROLLER_ENDPOINT}/v1/nodes/${NODE_NAME}/storage-pools" \
+         -X GET "${LS_CONTROLLERS}/v1/nodes/${NODE_NAME}/storage-pools" \
          -H "Content-Type: application/json" \
         | jq '.'
+}
+
+_linstor_create_storage_pool() {
+    cat > /init/tmp/.data.json << EOF
+{
+    "storage_pool_name": "$3", 
+    "provider_kind": "$1", 
+    "props": {
+        "StorDriver/FileDir": "$4"
+    }
+}
+EOF
+    curl -Ss --connect-timeout 2 \
+    -X POST "${LS_CONTROLLERS}/v1/nodes/$2/storage-pools" \
+    -H "Content-Type: application/json" \
+    -d @/init/tmp/.data.json \
+    | jq '.'
+
+}
+
+_linstor_has_storage_pool() {
+    [[ $( curl -Ss --connect-timeout 2 \
+        -X GET "${LS_CONTROLLERS}/v1/view/storage-pools?nodes=$1&storage_pools=$2" \
+        -H 'Content-Type: application/json' \
+        | jq '.[0].storage_pool_name' ) != 'null' ]]
 }
 
 linstor_node_is_online() {

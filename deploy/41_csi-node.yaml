@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: piraeus-csi-node
-  namespace: kube-system
+  namespace: piraeus-system
 spec:
   minReadySeconds: 0
   updateStrategy:
@@ -19,16 +19,14 @@ spec:
         app.kubernetes.io/name: piraeus
         app.kubernetes.io/component: piraeus-csi-node
     spec:
-      priorityClassName: system-node-critical
       serviceAccount: piraeus-csi-node-sa
       restartPolicy: Always
-      terminationGracePeriodSeconds: 0
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: csi-node-driver-registrar
         image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           limits:
             cpu: 100m
@@ -61,8 +59,8 @@ spec:
         - name: registration-dir
           mountPath: /registration/
       - name: piraeus-csi-plugin
-        image: quay.io/piraeusdatastore/piraeus-csi:v0.7.3
-        imagePullPolicy: Always
+        image: quay.io/piraeusdatastore/piraeus-csi:v0.7.4
+        imagePullPolicy: IfNotPresent
         resources:
           limits:
             cpu: 100m
@@ -80,7 +78,7 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         - name: LS_CONTROLLERS
-          value: http://piraeus-controller.kube-system:3370
+          value: http://piraeus-controller.piraeus-system.svc.cluster.local:3370
         securityContext:
           privileged: true
           capabilities:
@@ -130,18 +128,20 @@ spec:
       tolerations:
       - operator: Exists
         effect: NoSchedule
+      - key: CriticalAddonsOnly
+        operator: Exists
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: piraeus-csi-node-sa
-  namespace: kube-system
+  namespace: piraeus-system
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: piraeus-csi-node-driver-registrar-role
-  namespace: kube-system
+  namespace: piraeus-system
 rules:
 - apiGroups:
   - ""
@@ -162,7 +162,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: piraeus-csi-node-sa
-  namespace: kube-system
+  namespace: piraeus-system
 roleRef:
   kind: ClusterRole
   name: piraeus-csi-node-driver-registrar-role

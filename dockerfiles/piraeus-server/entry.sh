@@ -1,5 +1,7 @@
 #!/bin/sh
 
+[ -x /usr/bin/pre-start.sh ] && /usr/bin/pre-start.sh
+
 case $1 in
 	startSatellite)
 		shift

@@ -1,20 +1,17 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: piraeus-node
+  name: piraeus-scaler
   namespace: piraeus-system
 data:
   INIT_DEBUG: "false"
   LS_CONTROLLERS: piraeus-controller.piraeus-system.svc.cluster.local:3370
   POOL_BASE_DIR: /var/lib/piraeus/storagepools
-  DRBD_IMG_TAG: v9.0.21
-  DRBD_IMG_PULL_POLICY: IfNotPresent
-  MAP_HOST_LVM: "true"
 ---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: piraeus-node
+  name: piraeus-scaler
   namespace: piraeus-system
 spec:
   minReadySeconds: 0
@@ -25,20 +22,20 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: piraeus
-      app.kubernetes.io/component: piraeus-node
+      app.kubernetes.io/component: piraeus-scaler
   template:
     metadata:
       labels:
         app.kubernetes.io/name: piraeus
-        app.kubernetes.io/component: piraeus-node
+        app.kubernetes.io/component: piraeus-scaler
     spec:
       restartPolicy: Always
       hostNetwork: true
       hostPID: true
       hostIPC: true
       dnsPolicy: ClusterFirstWithHostNet
-      initContainers:
-      - name: init
+      containers:
+      - name: tasker
         image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
         imagePullPolicy: Always
         securityContext:
@@ -49,7 +46,7 @@ spec:
             memory: 100Mi
         envFrom:
         - configMapRef:
-            name: piraeus-node
+            name: piraeus-scaler
         env:
         - name: THIS_POD_UID
           valueFrom:
@@ -59,99 +56,37 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: THIS_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
         - name: THIS_NODE_NAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
         args:
-        - initNode
+        - initScaler
+        readinessProbe:
+          successThreshold: 3
+          failureThreshold: 3
+          httpGet:
+            port: 13366
+          periodSeconds: 1
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
-        - name: init
-          mountPath: /init
         - name: dockersock
           mountPath: /var/run/docker.sock
         - name: usr-src
           mountPath: /usr/src
         - name: lib-modules
           mountPath: /lib/modules
-        - name: opt-piraeus
-          mountPath: /opt/piraeus
-        - name: usr-local-bin
-          mountPath: /usr/local/bin
-      containers:
-      - name: satellite
-        image: quay.io/piraeusdatastore/piraeus-server:v1.4.2
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          privileged: true
-        resources:
-          limits:
-            cpu: 1
-            memory: 1Gi
-        envFrom:
-        - configMapRef:
-            name: piraeus-node
-        env:
-        - name: THIS_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: THIS_NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        args:
-        - startSatellite
-        - --stack-traces
-        readinessProbe:
-          successThreshold: 3
-          failureThreshold: 3
-          tcpSocket:
-            port: 3366
-          periodSeconds: 1
-        volumeMounts:
-        - name: localtime
-          mountPath: /etc/localtime
-        - name: init
-          mountPath: /init
-        - name: init
-          mountPath: /usr/bin/pre-start.sh
-          subPath: bin/prestart-node.sh
-        - name: log
-          mountPath: /var/log/linstor-satellite
-        - name: storagepool-dir
-          mountPath: /var/lib/piraeus/storagepools
-        - name: dev
-          mountPath: /dev
-        - name: lib-modules
-          mountPath: /lib/modules
       volumes:
       - name: localtime
         hostPath:
           path: /etc/localtime
-      - name: init
-        emptyDir: {}
-      - name: opt-piraeus
+      - name: var-local-piraeus
         hostPath:
-          path: /opt/piraeus
-      - name: storagepool-dir
-        hostPath:
-          path: /var/lib/piraeus/storagepools
-      - name: log
-        hostPath:
-          path: /var/log/piraeus/linstor-satellite
+          path: /var/local/piraeus
       - name: dev
         hostPath:
           path: /dev
-      - name: usr-local-bin
-        hostPath:
-          path: /usr/local/bin
       - name: dockersock
         hostPath:
           path: /var/run/docker.sock

@@ -6,17 +6,25 @@ cp -fr /files/* /init
 [[ -d /init/tmp ]] || mkdir -v /init/tmp # for storing temp data for curl
 
 # configure each component
-echo "* This pod name is ${THIS_POD_NAME}"
-if [[ "${THIS_POD_NAME}" =~ -etcd-[0-9]+$ ]]; then
-    echo "* Initialize etcd"
-    /init/bin/init-etcd.sh
-elif [[ "${THIS_POD_NAME}" =~ -controller-[0-9a-z]+-[0-9a-z]+$ ]]; then
-    echo "* Initialize controller"
-    /init/bin/init-controller.sh
-elif [[ "${THIS_POD_NAME}" =~ -node-[0-9a-z]+$ ]]; then
-    echo "* Initialize node"
-    /init/bin/init-node.sh
-else
-    echo "* Failed to identify the component"
-    exit 1
-fi
+case $1 in
+    initEtcd)
+        echo "* Initialize etcd"
+        /init/bin/init-etcd.sh
+        ;;
+    initController)
+        echo "* Initialize controller"
+        /init/bin/init-controller.sh
+        ;;
+    initNode)
+        echo "* Initialize node"
+        /init/bin/init-node.sh
+        ;;
+    initScaler)
+        echo "* Run tasks"
+        /init/bin/init-scaler.sh
+        ;;
+    * )
+        echo "* Missing argument"
+        exit 1
+        ;;
+esac    

@@ -1,0 +1,134 @@
+#@ load("funcs.lib.yml", "map_host_linstor", "map_host_lvm", "name", "namespace", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage", "set_priority_class")
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: #@ name() + "-scaler"
+  namespace: #@ namespace()
+data:
+  INIT_DEBUG: 'false'
+  #! Must be an FQDN here, otherwise it might not resolve!
+  LS_CONTROLLERS: #@ controllerhostport()
+  POOL_BASE_DIR: #@ "/var/lib/" + name() + "/storagepools"
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: #@ name() + "-scaler"
+  namespace: #@ namespace()
+spec:
+  minReadySeconds: 0
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: #@ name()
+      app.kubernetes.io/component: #@ name() + "-scaler"
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: #@ name()
+        app.kubernetes.io/component: #@ name() + "-scaler"
+    spec:
+      #@ if set_priority_class():
+      priorityClassName: system-node-critical
+      #@ end
+      restartPolicy: Always
+      hostNetwork: true
+      hostPID: true
+      hostIPC: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: tasker
+        image: #@ initimage()
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        resources:
+          #! requests:
+          #!   cpu: 50m
+          #!   memory: 50Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        envFrom:
+        - configMapRef:
+            name:  #@ name() + "-scaler"
+        env:
+        - name: THIS_POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid         
+        - name: THIS_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: THIS_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        args:
+          - initScaler
+        readinessProbe:
+          successThreshold: 3
+          failureThreshold: 3
+          httpGet:
+            port: 13366
+          periodSeconds: 1
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: dockersock
+          mountPath: /var/run/docker.sock
+        - name: usr-src
+          mountPath: /usr/src
+        - name: lib-modules
+          mountPath: /lib/modules
+      volumes:
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+      - name: #@ "var-local-" + name()
+        hostPath:
+          path: #@ "/var/local/" + name()
+      - name: dev
+        hostPath:
+          path: /dev
+      - name: dockersock
+        hostPath:
+          path: /var/run/docker.sock
+          type: Socket
+      - name: usr-src
+        hostPath:
+          path: /usr/src
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+      #@ if map_host_lvm():
+      - name: proc 
+        hostPath: 
+          path: /proc
+      - name: run
+        hostPath:            
+          path: /run
+      #@ end
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: #@ name() + "/node"
+                operator: In
+                values:
+                  - "true"
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      - key: CriticalAddonsOnly
+        operator: Exists
+      #! imagePullSecrets:
+      #! - name: piraeus-regcred
