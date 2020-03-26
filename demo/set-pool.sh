@@ -1,5 +1,5 @@
 #!/bin/bash -x
-# generate demo yamls for lvmpool
+# generate demo yamls for another pool
 
 [ -z "$1" ] && echo 'Must Provide a Pool name prefix, such as "lvm"' && exit 1
 

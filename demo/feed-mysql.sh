@@ -15,6 +15,6 @@ EOF
 
 cat .sample.sql
 
-kubectl -n piraeus exec -it mysql-0 -c mysql -- mysql -t < .sample.sql
+kubectl -n piraeus-demo exec -it mysql-0 -c mysql -- mysql -t < .sample.sql
 
 rm -f .sample.sql 

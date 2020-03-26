@@ -51,19 +51,19 @@ spec:
         - configMapRef:
             name: piraeus-node
         env:
-        - name: THIS_POD_UID
+        - name: POD_UID
           valueFrom:
             fieldRef:
               fieldPath: metadata.uid
-        - name: THIS_POD_IP
+        - name: POD_IP
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: THIS_POD_NAME
+        - name: POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: THIS_NODE_NAME
+        - name: NODE_NAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
@@ -98,11 +98,11 @@ spec:
         - configMapRef:
             name: piraeus-node
         env:
-        - name: THIS_POD_NAME
+        - name: POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: THIS_NODE_NAME
+        - name: NODE_NAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName

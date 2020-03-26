@@ -3,7 +3,7 @@ _curl_docker() {
     curl -Ss --connect-timeout 2 \
          --unix-socket /var/run/docker.sock \
          -H "Content-Type: application/json" \
-         $@
+         "$@"
 }
 
 _docker_ps() {
@@ -68,20 +68,20 @@ _docker_run_drbd_driver_loader() {
 }
 EOF
     # for ubuntu
-    if [ -n "$2" ]; then
+    if [[ -n "$2" ]]; then
         mv /init/tmp/.data.json /init/tmp/.old.data.json
         cat /init/tmp/.old.data.json | jq ".HostConfig.Binds += [\"$2\"]" > /init/tmp/.data.json
     fi
 
-    ID="$( _curl_docker \
+    id="$( _curl_docker \
             -X POST "http://localhost/containers/create" \
             -d @/init/tmp/.data.json \
             | jq -r '.Id' )"
 
-    if [ -n "$ID" ]; then
-        _docker_start "${ID}"
-        _docker_logs "${ID}"
-        _docker_remove "${ID}"
+    if [[ -n "$id" ]]; then
+        _docker_start "$id"
+        _docker_logs "$id"
+        _docker_remove "$id"
     else
         echo "ERROR: Failed to create container"
     fi

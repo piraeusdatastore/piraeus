@@ -1,23 +1,23 @@
 #!/bin/bash
 
 _linstor_node_list() {
-    [[ -z $1 ]] || NODE_NAME="?nodes=$1"
+    [[ -n "$1" ]] && node="?nodes=$1"
     curl -Ss --connect-timeout 2 \
-         -X GET "${LS_CONTROLLERS}/v1/nodes${NODE_NAME}" \
+         -X GET "${LS_CONTROLLERS}/v1/nodes${node}" \
          -H "Content-Type: application/json" \
         | jq '.'
 }
 
 _linstor_has_node() {
-    [[ $( _linstor_node_list $1 | jq '.[0]' ) != 'null' ]]
+    [[ "$( _linstor_node_list "$1" | jq '.[0]' )" != 'null' ]]
 }
 
 _linstor_has_node_ip() {
-    [ ! -z $( _linstor_node_list | jq -r ".[] .net_interfaces[] | select(.address == \"$1\" )" ) ]
+    [[ -n "$( _linstor_node_list | jq -r ".[] .net_interfaces[] | select(.address == \"$1\" )" )" ]]
 }
 
 _linstor_node_is_online() {
-    [[ "$( _linstor_node_list $1 | jq -r '.[0].connection_status' )" == 'ONLINE' ]]
+    [[ "$( _linstor_node_list "$1" | jq -r '.[0].connection_status' )" == 'ONLINE' ]]
 }
 
 _linstor_node_create() {
@@ -96,18 +96,18 @@ EOF
 }
 
 _linstor_has_storage_pool() {
-    [[ $( curl -Ss --connect-timeout 2 \
+    [[ "$( curl -Ss --connect-timeout 2 \
         -X GET "${LS_CONTROLLERS}/v1/view/storage-pools?nodes=$1&storage_pools=$2" \
         -H 'Content-Type: application/json' \
-        | jq '.[0].storage_pool_name' ) != 'null' ]]
+        | jq '.[0].storage_pool_name' )" != 'null' ]]
 }
 
 linstor_node_is_online() {
-    [[ "$( linstor --machine node list --node $1 \
+    [[ "$( linstor --machine node list --node "$1" \
             | jq '.[0].nodes[0].connection_status' )" == '2' ]]
 }
 
 linstor_has_storage_pool() {
-    [[ "$( linstor --machine storage-pool list --node $1 --storage-pools $2 \
+    [[ "$( linstor --machine storage-pool list --node "$1" --storage-pools "$2" \
         | jq '.[0].stor_pools[0]' )" != 'null' ]]
 }

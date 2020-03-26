@@ -19,27 +19,27 @@ while [ "${SECONDS}" -lt '3600' ];  do
 done
 
 # register node to cluster
-THIS_POD_IF=$( _get_if_by_ip "${THIS_POD_IP}" )
-echo "This node IP: ${THIS_POD_IP}@${THIS_POD_IF}"
+pod_if=$( _get_if_by_ip "$POD_IP" )
+echo "This node IP: ${POD_IP}@${pod_if}"
 
-if _linstor_has_node "${THIS_NODE_NAME}" ; then
-    echo "WARN: This node name \"${THIS_NODE_NAME}\" is already registered"
-elif _linstor_has_node_ip ${THIS_POD_IP}; then
-    echo "WARN: This node ip \"${THIS_POD_IP}\" is already registered"
+if _linstor_has_node "$NODE_NAME" ; then
+    echo "WARN: This node name \"${NODE_NAME}\" is already registered"
+elif _linstor_has_node_ip "$POD_IP"; then
+    echo "WARN: This node ip \"${POD_IP}\" is already registered"
 else
-    echo "* Add node \"${THIS_NODE_NAME}\" to the cluster"
-     _linstor_node_create "${THIS_NODE_NAME}" "${THIS_POD_IF}" "${THIS_POD_IP}" 3366 plain true
+    echo "* Add node \"${NODE_NAME}\" to the cluster"
+     _linstor_node_create "$NODE_NAME" "$pod_if" "$POD_IP" 3366 plain true
 fi
 
 echo 'Now cluster has nodes:'
-_linstor_node_list "${THIS_NODE_NAME}"
+_linstor_node_list "$NODE_NAME"
 
 # find and inherit current image repo
-CONTAINER_ID="$( cat /proc/self/cgroup | grep :pids:/kubepods/pod${THIS_POD_UID} | awk -F/ '{print $NF}' )"
-THIS_IMG=$( _docker_ps | jq -r ".[] | select(.Id == \"${CONTAINER_ID}\") | .Image" )
-echo "${THIS_IMG}"
-[[ "${THIS_IMG}" == "${THIS_IMG%/*}" ]] && THIS_IMG_REPO='docker.io/library' || THIS_IMG_REPO="${THIS_IMG%/*}"
-echo "${THIS_IMG_REPO}"
+container_id="$( cat /proc/self/cgroup | grep :pids:/kubepods/pod"${POD_UID}" | awk -F/ '{print $NF}' )"
+image="$( _docker_ps | jq -r ".[] | select(.Id == \"${container_id}\") | .Image" )"
+echo "$image"
+[[ "$image" == "${image%/*}" ]] && image_repo='docker.io/library' || image_repo="${image%/*}"
+echo "$image_repo"
 
 # enable devicemapper thin-provisioning
 echo '* Enable dm_thin_pool'
@@ -62,29 +62,29 @@ elif [[ ${DRBD_IMG_TAG,,} == 'none' ]]; then
 else
     # find image name according to linux distribution
     if [[ "$( uname -r )" =~ el7 ]]; then
-        DRBD_IMG_NAME=drbd9-centos7
+        drbd_image_name=drbd9-centos7
     elif [[ "$( uname -r )" =~ el8 ]]; then
-        DRBD_IMG_NAME=drbd9-centos8
+        drbd_image_name=drbd9-centos8
     elif [[ "$( uname -a )" =~ Ubuntu ]]; then
-        DRBD_IMG_NAME=drbd9-bionic
-        [[ "$( uname -r )" =~ 4\.15\. ]] && MOUNT_USR_LIB=/usr/lib:/usr/lib:ro
+        drbd_image_name=drbd9-bionic
+        [[ "$( uname -r )" =~ 4\.15\. ]] && mount_usr_lib=/usr/lib:/usr/lib:ro
     fi
 
     # run drbd9 driver loader
-    DRBD_IMG_URL="${THIS_IMG_REPO}/${DRBD_IMG_NAME}:${DRBD_IMG_TAG}"
-    echo "* Compile and load drbd module by image \"${DRBD_IMG_URL}\""
-    if [[ "${DRBD_IMG_PULL_POLICY}" == "Always" ]] || [[ "$( _docker_image_inspect ${DRBD_IMG_URL} | jq '.Id' )" == "null" ]]; then
-        _docker_pull "${DRBD_IMG_URL}"
+    drbd_image_url="${image_repo}/${drbd_image_name}:${DRBD_IMG_TAG}"
+    echo "* Compile and load drbd module by image \"${drbd_image_url}\""
+    if [[ "${DRBD_IMG_PULL_POLICY,,}" == "always" ]] || [[ "$( _docker_image_inspect "$drbd_image_url" | jq '.Id' )" == "null" ]]; then
+        _docker_pull "$drbd_image_url"
     fi
-    _docker_run_drbd_driver_loader "${DRBD_IMG_URL}" "${MOUNT_USR_LIB}"
+    _docker_run_drbd_driver_loader "$drbd_image_url" "$mount_usr_lib"
 fi
 
 # install linstor cli script
 echo "* Install local linstor cli"
-sed -i "s#quay.io/piraeusdatastore/#${THIS_IMG_REPO}/#" /init/bin/linstor.sh
-CLI_DIR="/opt/${THIS_POD_NAME/-*/}/client"
-mkdir -vp "${CLI_DIR}"
-cp -vf /init/bin/linstor.sh "${CLI_DIR}/linstor"
-cp -vf /etc/resolv.conf "${CLI_DIR}/"
-printenv > "${CLI_DIR}/env"
-ln -fs "${CLI_DIR}/linstor"  /usr/local/bin/linstor
+sed -i "s#quay.io/piraeusdatastore/#${image_repo}/#" /init/bin/linstor.sh
+cli_dir="/opt/${POD_NAME/-*/}/client"
+mkdir -vp "$cli_dir"
+cp -vuf /init/bin/linstor.sh "${cli_dir}/linstor"
+cp -vuf /etc/resolv.conf "${cli_dir}/"
+printenv > "${cli_dir}/env"
+ln -fs "${cli_dir}/linstor"  /usr/local/bin/linstor

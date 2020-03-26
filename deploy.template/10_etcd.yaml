@@ -1,4 +1,4 @@
-#@ load("funcs.lib.yml", "name", "namespace", "etcd", "initimage", "set_priority_class")
+#@ load("funcs.lib.yml", "name", "namespace", "etcd", "etcdendpoint", "initimage", "set_priority_class")
 #! dns service for stable DNS entries of StatefulSet members.
 #! https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/
 apiVersion: v1
@@ -87,13 +87,17 @@ spec:
             cpu: 100m
             memory: 100Mi
         env:
-        - name: CLUSTER_SIZE
+        - name: INIT_CLUSTER_SIZE
           value: '3'
-        - name: THIS_POD_NAME
+        - name: PEER_PORT
+          value: '2380'
+        - name: CLIENT_PORT
+          value: '2379'
+        - name: POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: THIS_POD_IP
+        - name: POD_IP
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
@@ -104,9 +108,11 @@ spec:
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
+        - name: data
+          mountPath: /.etcd/data
       containers:
       - name: etcd
-        image: quay.io/coreos/etcd:v3.4.3
+        image: quay.io/coreos/etcd:v3.4.5
         imagePullPolicy: IfNotPresent
         resources:
           #! requests:

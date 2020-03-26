@@ -1,6 +1,8 @@
 #!/bin/bash -e
 ${INIT_DEBUG,,} && set -x
 
+source /init/bin/lib.etcd.sh
+
 # get etcd endpoints from linstor.toml
 echo Etcd endpoints are:
 echo -e "${ETCD_ENDPOINTS/,/\n}"
@@ -9,7 +11,7 @@ echo -e "${ETCD_ENDPOINTS/,/\n}"
 SECONDS=0
 while [ "${SECONDS}" -lt '3600' ];  do
     for i in $( echo "${ETCD_ENDPOINTS}" | tr ',' '\n' ); do # Considering multiple etcd addresses
-        if [[ "$( curl -Ss --connect-timeout 2 $i/health | jq -r '.health' )" == 'true' ]] ; then
+        if  _etcd_is_healthy "$i" ; then
             echo ...etcd is healthy
             break 2
         else

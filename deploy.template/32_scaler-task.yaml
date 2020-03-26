@@ -11,5 +11,5 @@ data:
     pool_name=DfltStorPool
     pool_dir="${POOL_BASE_DIR}/${pool_name}"
     mkdir -vp "$pool_dir"
-    linstor storage-pool list -n "$THIS_NODE_NAME" -s "$pool_name" | grep -w "$pool_name" || \
-    linstor storage-pool create filethin "$THIS_NODE_NAME" "$pool_name" "$pool_dir"
+    linstor storage-pool list -n "$NODE_NAME" -s "$pool_name" | grep -vw "$pool_name" && \
+    linstor storage-pool create filethin "$NODE_NAME" "$pool_name" "$pool_dir"
