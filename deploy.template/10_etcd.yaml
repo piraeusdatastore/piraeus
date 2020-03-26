@@ -91,7 +91,7 @@ spec:
         - name: init
           mountPath: /init
         - name: data
-          mountPath: /.etcd/data
+          mountPath: /var/lib/etcd/data
       containers:
       - name: etcd
         image: quay.io/coreos/etcd:v3.4.5
@@ -119,15 +119,22 @@ spec:
           httpGet:
             path: /health
             port: 2379
-          periodSeconds: 1
+          periodSeconds: 2
+        lifecycle:
+          preStop:
+            exec:
+              command: [ prestop ]
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
         - name: init
           mountPath: /etc/etcd
           subPath: etc/etcd
+        - name: init
+          mountPath: /usr/local/bin/prestop
+          subPath: bin/prestop-etcd.sh
         - name: data
-          mountPath: /.etcd/data
+          mountPath: /var/lib/etcd/data
       volumes:
       - name: localtime
         hostPath:
@@ -137,7 +144,7 @@ spec:
       - name: data
         emptyDir: {}
         #! hostPath:
-        #!   path: #@ "/var/local/" + name() + "/etcd"
+        #!   path: #@ "/var/lib/" + name() + "/etcd"
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

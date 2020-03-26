@@ -92,7 +92,7 @@ spec:
         - name: init
           mountPath: /init
         - name: data
-          mountPath: /.etcd/data
+          mountPath: /var/lib/etcd/data
       containers:
       - name: etcd
         image: quay.io/coreos/etcd:v3.4.5
@@ -117,15 +117,23 @@ spec:
           httpGet:
             path: /health
             port: 2379
-          periodSeconds: 1
+          periodSeconds: 2
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - prestop
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
         - name: init
           mountPath: /etc/etcd
           subPath: etc/etcd
+        - name: init
+          mountPath: /usr/local/bin/prestop
+          subPath: bin/prestop-etcd.sh
         - name: data
-          mountPath: /.etcd/data
+          mountPath: /var/lib/etcd/data
       volumes:
       - name: localtime
         hostPath:
@@ -259,7 +267,7 @@ spec:
           failureThreshold: 3
           httpGet:
             port: 3370
-          periodSeconds: 1
+          periodSeconds: 2
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
@@ -406,7 +414,7 @@ spec:
           failureThreshold: 3
           tcpSocket:
             port: 3366
-          periodSeconds: 1
+          periodSeconds: 2
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime

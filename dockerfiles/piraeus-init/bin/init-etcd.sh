@@ -2,11 +2,13 @@
 
 source /init/bin/lib.etcd.sh
 
+# Get set name
 pod_set="${POD_NAME/-[0-9]*/}"
 
 # Assemble cluster
 if _etcd_is_healthy "$ETCD_ENDPOINT"; then
-    _etcd_has_old_member "$POD_NAME" && \
+    # clean up duplicated member in case prestop cleanup fails
+    _etcd_has_old_member "$POD_NAME" && \ 
     _etcd_remove_member "$POD_NAME" && \
     rm -fr /.etcd/data/*
 
@@ -31,7 +33,7 @@ initial-advertise-peer-urls: http://${POD_IP}:${PEER_PORT}
 initial-cluster-token:       ${pod_set}
 initial-cluster:             ${cluster}
 initial-cluster-state:       ${cluster_state}
-data-dir:                    /.etcd/data
+data-dir:                    /var/lib/etcd/data
 enable-v2:                   true
 EOF
 cat /init/etc/etcd/etcd.conf

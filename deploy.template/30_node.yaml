@@ -127,7 +127,7 @@ spec:
           failureThreshold: 3
           tcpSocket:
             port: 3366
-          periodSeconds: 1
+          periodSeconds: 2
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime

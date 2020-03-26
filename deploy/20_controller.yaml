@@ -101,7 +101,7 @@ spec:
           failureThreshold: 3
           httpGet:
             port: 3370
-          periodSeconds: 1
+          periodSeconds: 2
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
