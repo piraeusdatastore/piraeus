@@ -1,24 +1,6 @@
 #@ load("funcs.lib.yml", "name", "namespace", "etcd", "etcdendpoint", "initimage", "set_priority_class")
 #! dns service for stable DNS entries of StatefulSet members.
 #! https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/
-apiVersion: v1
-kind: Service
-metadata:
-  name: #@ etcd() + "-headless"
-  namespace: #@ namespace()
-  labels:
-    app.kubernetes.io/name: #@ name()
-    app.kubernetes.io/component: #@ etcd()
-spec:
-  ports:
-  - name: client
-    port: 2379
-  - name: peer
-    port: 2380
-  clusterIP: None
-  selector:
-    app.kubernetes.io/name: #@ name()
-    app.kubernetes.io/component: #@ etcd()
 ---
 apiVersion: v1
 kind: Service
@@ -30,10 +12,10 @@ metadata:
     app.kubernetes.io/component: #@ etcd()
   annotations:
     #! create endpoints also if the related pod isn't ready
-    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+    #! service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 spec:
   type: ClusterIP
-  publishNotReadyAddresses: true
+  #! publishNotReadyAddresses: true
   ports:
   - name: client
     port: 2379
@@ -55,7 +37,7 @@ metadata:
     app.kubernetes.io/component: #@ etcd()
 spec:
   serviceName: #@ etcd()
-  podManagementPolicy: Parallel
+  #! podManagementPolicy: Parallel
   replicas: 3
   updateStrategy:
     type: RollingUpdate
@@ -87,8 +69,8 @@ spec:
             cpu: 100m
             memory: 100Mi
         env:
-        - name: INIT_CLUSTER_SIZE
-          value: '3'
+        - name: ETCD_ENDPOINT
+          value: #@ etcdendpoint()
         - name: PEER_PORT
           value: '2380'
         - name: CLIENT_PORT
