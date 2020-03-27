@@ -71,7 +71,7 @@ spec:
         args:
         - initEtcd
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
@@ -101,14 +101,14 @@ spec:
           httpGet:
             path: /health
             port: 2379
-          periodSeconds: 2
+          periodSeconds: 5
         lifecycle:
           preStop:
             exec:
               command:
               - prestop
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /etc/etcd
@@ -119,9 +119,9 @@ spec:
         - name: data
           mountPath: /var/lib/etcd
       volumes:
-      - name: localtime
+      - name: timezone
         hostPath:
-          path: /etc/localtime
+          path: /usr/share/zoneinfo/Etc/UTC
       - name: init
         emptyDir: {}
       - name: data

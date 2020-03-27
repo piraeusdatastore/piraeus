@@ -1,4 +1,4 @@
-#@ load("funcs.lib.yml", "map_host_linstor", "map_host_lvm", "name", "namespace", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage", "clientimage", "set_priority_class")
+#@ load("funcs.lib.yml", "map_host_linstor", "map_host_lvm", "name", "namespace", "timezone", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage", "clientimage", "set_priority_class")
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -51,7 +51,7 @@ spec:
       initContainers:
       - name: init
         image: #@ initimage()
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           #! requests:
           #!   cpu: 50m
@@ -70,7 +70,7 @@ spec:
         args:
           - initScaler
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
@@ -106,7 +106,7 @@ spec:
         command:
           - /init/bin/run-scaler.sh
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
@@ -122,9 +122,9 @@ spec:
         - name: lib-modules
           mountPath: /lib/modules
       volumes:
-      - name: localtime
+      - name: timezone
         hostPath:
-          path: /etc/localtime
+          path: #@ timezone()
       - name: init
         emptyDir: {}
       - name: run

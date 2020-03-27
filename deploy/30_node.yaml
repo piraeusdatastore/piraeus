@@ -40,7 +40,7 @@ spec:
       initContainers:
       - name: init
         image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
         resources:
@@ -70,7 +70,7 @@ spec:
         args:
         - initNode
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
@@ -114,9 +114,9 @@ spec:
           failureThreshold: 3
           tcpSocket:
             port: 3366
-          periodSeconds: 2
+          periodSeconds: 5
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
@@ -132,9 +132,9 @@ spec:
         - name: lib-modules
           mountPath: /lib/modules
       volumes:
-      - name: localtime
+      - name: timezone
         hostPath:
-          path: /etc/localtime
+          path: /usr/share/zoneinfo/Etc/UTC
       - name: init
         emptyDir: {}
       - name: opt-piraeus

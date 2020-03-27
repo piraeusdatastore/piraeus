@@ -1,4 +1,4 @@
-#@ load("funcs.lib.yml", "name", "namespace", "etcd", "etcdendpoint", "initimage", "set_priority_class")
+#@ load("funcs.lib.yml", "name", "namespace", "timezone", "etcd", "etcdendpoint", "initimage", "set_priority_class")
 #! dns service for stable DNS entries of StatefulSet members.
 #! https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/
 ---
@@ -83,7 +83,7 @@ spec:
         args:
             - initEtcd
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
@@ -116,13 +116,13 @@ spec:
           httpGet:
             path: /health
             port: 2379
-          periodSeconds: 2
+          periodSeconds: 5
         lifecycle:
           preStop:
             exec:
               command: [ prestop ]
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /etc/etcd
@@ -133,9 +133,9 @@ spec:
         - name: data
           mountPath: /var/lib/etcd
       volumes:
-      - name: localtime
+      - name: timezone
         hostPath:
-          path: /etc/localtime
+          path: #@ timezone()
       - name: init
         emptyDir: {}
       - name: data

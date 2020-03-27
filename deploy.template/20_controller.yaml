@@ -1,4 +1,4 @@
-#@ load("funcs.lib.yml", "name", "namespace", "controller", "initimage", "etcdendpoint", "controllerimage", "controllerhostport", "set_priority_class")
+#@ load("funcs.lib.yml", "name", "namespace", "timezone", "controller", "initimage", "etcdendpoint", "controllerimage", "controllerhostport", "set_priority_class")
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -59,7 +59,7 @@ spec:
       initContainers:
       - name: init
         image: #@ initimage()
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           #! requests:
           #!   cpu: 50m
@@ -73,7 +73,7 @@ spec:
         args:
             - initController
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
@@ -113,9 +113,9 @@ spec:
           failureThreshold: 3
           httpGet:
             port: 3370
-          periodSeconds: 2
+          periodSeconds: 5
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /etc/linstor
@@ -123,9 +123,9 @@ spec:
         - name: log
           mountPath: /var/log/linstor-controller
       volumes:
-      - name: localtime
+      - name: timezone
         hostPath:
-          path: /etc/localtime
+          path: #@ timezone()
       - name: init
         emptyDir: {}
       - name: log

@@ -1,4 +1,4 @@
-#@ load("funcs.lib.yml", "map_host_linstor", "map_host_lvm", "name", "namespace", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage", "set_priority_class")
+#@ load("funcs.lib.yml", "map_host_linstor", "map_host_lvm", "name", "namespace", "timezone", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage", "set_priority_class")
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -45,7 +45,7 @@ spec:
       initContainers:
       - name: init
         image: #@ initimage()
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
         resources:
@@ -78,7 +78,7 @@ spec:
         args:
             - initNode
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
@@ -127,9 +127,9 @@ spec:
           failureThreshold: 3
           tcpSocket:
             port: 3366
-          periodSeconds: 2
+          periodSeconds: 5
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
@@ -155,9 +155,9 @@ spec:
           mountPath: /var/lib/linstor.d
         #@ end
       volumes:
-      - name: localtime
+      - name: timezone
         hostPath:
-          path: /etc/localtime
+          path: #@ timezone()
       - name: init
         emptyDir: {}
       - name: #@ "opt-" + name()
