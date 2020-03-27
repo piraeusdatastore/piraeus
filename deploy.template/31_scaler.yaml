@@ -51,7 +51,7 @@ spec:
       initContainers:
       - name: init
         image: #@ initimage()
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           #! requests:
           #!   cpu: 50m

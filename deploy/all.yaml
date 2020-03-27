@@ -116,7 +116,7 @@ spec:
           httpGet:
             path: /health
             port: 2379
-          periodSeconds: 2
+          periodSeconds: 5
         lifecycle:
           preStop:
             exec:
@@ -220,7 +220,7 @@ spec:
       initContainers:
       - name: init
         image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           limits:
             cpu: 100m
@@ -266,7 +266,7 @@ spec:
           failureThreshold: 3
           httpGet:
             port: 3370
-          periodSeconds: 2
+          periodSeconds: 5
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
@@ -339,7 +339,7 @@ spec:
       initContainers:
       - name: init
         image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
         resources:
@@ -413,7 +413,7 @@ spec:
           failureThreshold: 3
           tcpSocket:
             port: 3366
-          periodSeconds: 2
+          periodSeconds: 5
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
@@ -525,7 +525,7 @@ spec:
       initContainers:
       - name: init
         image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           limits:
             cpu: 100m

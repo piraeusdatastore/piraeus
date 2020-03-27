@@ -59,7 +59,7 @@ spec:
       initContainers:
       - name: init
         image: #@ initimage()
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           #! requests:
           #!   cpu: 50m
@@ -113,7 +113,7 @@ spec:
           failureThreshold: 3
           httpGet:
             port: 3370
-          periodSeconds: 2
+          periodSeconds: 5
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime

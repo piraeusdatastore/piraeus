@@ -55,7 +55,7 @@ spec:
       initContainers:
       - name: init
         image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           limits:
             cpu: 100m
@@ -101,7 +101,7 @@ spec:
           failureThreshold: 3
           httpGet:
             port: 3370
-          periodSeconds: 2
+          periodSeconds: 5
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime

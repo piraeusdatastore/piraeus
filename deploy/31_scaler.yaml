@@ -45,7 +45,7 @@ spec:
       initContainers:
       - name: init
         image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           limits:
             cpu: 100m

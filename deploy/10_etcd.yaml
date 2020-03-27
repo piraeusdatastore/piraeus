@@ -101,7 +101,7 @@ spec:
           httpGet:
             path: /health
             port: 2379
-          periodSeconds: 2
+          periodSeconds: 5
         lifecycle:
           preStop:
             exec:

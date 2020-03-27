@@ -45,7 +45,7 @@ spec:
       initContainers:
       - name: init
         image: #@ initimage()
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
         resources:
@@ -127,7 +127,7 @@ spec:
           failureThreshold: 3
           tcpSocket:
             port: 3366
-          periodSeconds: 2
+          periodSeconds: 5
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
