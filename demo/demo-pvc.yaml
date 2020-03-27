@@ -2,11 +2,12 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: demo-rwo-r1
-  namespace: piraeus
+  namespace: piraeus-demo
 spec:
-  storageClassName: piraeus-default-r1
+  storageClassName: piraeus-dflt-r1
   accessModes:
     - ReadWriteOnce
+  volumeMode: Filesystem
   resources:
     requests:
       storage: 11Gi
@@ -15,11 +16,12 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: demo-rwo-r2
-  namespace: piraeus
+  namespace: piraeus-demo
 spec:
-  storageClassName: piraeus-default-r2
+  storageClassName: piraeus-dflt-r2
   accessModes:
     - ReadWriteOnce
+  volumeMode: Filesystem
   resources:
     requests:
       storage: 12Gi
@@ -28,11 +30,12 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: demo-rwo-r3
-  namespace: piraeus
+  namespace: piraeus-demo
 spec:
-  storageClassName: piraeus-default-r3
+  storageClassName: piraeus-dflt-r3
   accessModes:
     - ReadWriteOnce
+  volumeMode: Filesystem
   resources:
     requests:
       storage: 13Gi

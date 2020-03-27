@@ -1,0 +1,14 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: piraeus
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: piraeus-system
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: piraeus-demo

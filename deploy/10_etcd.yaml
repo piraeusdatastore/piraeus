@@ -1,35 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: piraeus-etcd-dns
-  namespace: kube-system
-  labels:
-    app.kubernetes.io/name: piraeus
-    app.kubernetes.io/component: piraeus-etcd-dns
-spec:
-  ports:
-  - name: client
-    port: 2379
-  - name: peer
-    port: 2380
-  clusterIP: None
-  selector:
-    app.kubernetes.io/name: piraeus
-    app.kubernetes.io/component: piraeus-etcd-dns
----
-apiVersion: v1
-kind: Service
-metadata:
   name: piraeus-etcd
-  namespace: kube-system
+  namespace: piraeus-system
   labels:
     app.kubernetes.io/name: piraeus
     app.kubernetes.io/component: piraeus-etcd
-  annotations:
-    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 spec:
   type: ClusterIP
-  publishNotReadyAddresses: true
   ports:
   - name: client
     port: 2379
@@ -45,20 +23,19 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: piraeus-etcd
-  namespace: kube-system
+  namespace: piraeus-system
   labels:
     app.kubernetes.io/name: piraeus
     app.kubernetes.io/component: piraeus-etcd
 spec:
   serviceName: piraeus-etcd
-  podManagementPolicy: Parallel
+  replicas: 3
   updateStrategy:
     type: RollingUpdate
   selector:
     matchLabels:
       app.kubernetes.io/name: piraeus
       app.kubernetes.io/component: piraeus-etcd
-  replicas: 3
   template:
     metadata:
       name: piraeus-etcd
@@ -66,72 +43,81 @@ spec:
         app.kubernetes.io/name: piraeus
         app.kubernetes.io/component: piraeus-etcd
     spec:
-      priorityClassName: system-node-critical
       restartPolicy: Always
-      terminationGracePeriodSeconds: 0
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
         imagePullPolicy: Always
         resources:
           limits:
             cpu: 100m
             memory: 100Mi
         env:
-        - name: CLUSTER_SIZE
-          value: "3"
-        - name: ETCDCTL_API
-          value: "2"
-        - name: THIS_POD_NAME
+        - name: ETCD_ENDPOINT
+          value: piraeus-etcd.piraeus-system.svc.cluster.local:2379
+        - name: PEER_PORT
+          value: "2380"
+        - name: CLIENT_PORT
+          value: "2379"
+        - name: POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: THIS_POD_IP
+        - name: POD_IP
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        volumeMounts:
-        - name: localtime
-          mountPath: /etc/localtime
-        - name: init
-          mountPath: /init
-      containers:
-      - name: etcd
-        image: quay.io/coreos/etcd:v3.4.3
-        imagePullPolicy: Always
-        resources:
-          limits:
-            cpu: 200m
-            memory: 200Mi
-        ports:
-        - name: client
-          containerPort: 2379
-        - name: peer
-          containerPort: 2380
-        env:
-        - name: ETCDCTL_API
-          value: "2"
-        command:
-        - etcd
         args:
-        - --config-file
-        - /init/conf/etcd.conf
-        readinessProbe:
-          successThreshold: 3
-          failureThreshold: 3
-          httpGet:
-            path: /health
-            port: 2379
-          initialDelaySeconds: 10
-          periodSeconds: 1
+        - initEtcd
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
         - name: data
-          mountPath: /.etcd/data
+          mountPath: /var/lib/etcd
+      containers:
+      - name: etcd
+        image: quay.io/coreos/etcd:v3.4.5
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - name: client
+          containerPort: 2379
+        - name: peer
+          containerPort: 2380
+        command:
+        - etcd
+        args:
+        - --config-file
+        - /etc/etcd/etcd.conf
+        readinessProbe:
+          successThreshold: 3
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 2379
+          periodSeconds: 2
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - prestop
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /etc/etcd
+          subPath: etc/etcd
+        - name: init
+          mountPath: /usr/local/bin/prestop
+          subPath: bin/prestop-etcd.sh
+        - name: data
+          mountPath: /var/lib/etcd
       volumes:
       - name: localtime
         hostPath:
@@ -159,3 +145,5 @@ spec:
       tolerations:
       - operator: Exists
         effect: NoSchedule
+      - key: CriticalAddonsOnly
+        operator: Exists

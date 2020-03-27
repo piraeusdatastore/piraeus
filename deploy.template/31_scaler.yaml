@@ -1,22 +1,28 @@
-#@ load("funcs.lib.yml", "map_host_linstor", "map_host_lvm", "name", "namespace", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage", "set_priority_class")
+#@ load("funcs.lib.yml", "map_host_linstor", "map_host_lvm", "name", "namespace", "node", "initimage", "controllerhostport", "registry", "controllerimage", "satelliteimage", "clientimage", "set_priority_class")
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: #@ node()
+  name: #@ name() + "-scaler"
   namespace: #@ namespace()
 data:
   INIT_DEBUG: 'false'
   #! Must be an FQDN here, otherwise it might not resolve!
   LS_CONTROLLERS: #@ controllerhostport()
   POOL_BASE_DIR: #@ "/var/lib/" + name() + "/storagepools"
-  DRBD_IMG_TAG: v9.0.21 #! "none" will skip drbd installation
-  DRBD_IMG_PULL_POLICY: IfNotPresent
-  MAP_HOST_LVM: 'true'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: #@ name() + "-scaler-task"
+  namespace: #@ namespace()
+data:
+  task: "" #! placeholder
 ---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: #@ node()
+  name: #@ name() + "-scaler"
   namespace: #@ namespace()
 spec:
   minReadySeconds: 0
@@ -27,12 +33,12 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: #@ name()
-      app.kubernetes.io/component: #@ node()
+      app.kubernetes.io/component: #@ name() + "-scaler"
   template:
     metadata:
       labels:
         app.kubernetes.io/name: #@ name()
-        app.kubernetes.io/component: #@ node()
+        app.kubernetes.io/component: #@ name() + "-scaler"
     spec:
       #@ if set_priority_class():
       priorityClassName: system-node-critical
@@ -46,6 +52,32 @@ spec:
       - name: init
         image: #@ initimage()
         imagePullPolicy: Always
+        resources:
+          #! requests:
+          #!   cpu: 50m
+          #!   memory: 50Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        envFrom:
+        - configMapRef:
+            name:  #@ name() + "-scaler"
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        args:
+          - initScaler
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+      containers:
+      - name: scaler
+        image: #@ clientimage()
+        imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
         resources:
@@ -57,124 +89,57 @@ spec:
             memory: 100Mi
         envFrom:
         - configMapRef:
-            name:  #@ node()
-        env:    
+            name:  #@ name() + "-scaler"
+        env:
         - name: POD_UID
           valueFrom:
             fieldRef:
-              fieldPath: metadata.uid        
+              fieldPath: metadata.uid         
         - name: POD_IP
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
         - name: NODE_NAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        args:
-            - initNode
+        command:
+          - /init/bin/run-scaler.sh
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
+        - name: run
+          mountPath: /var/run/task
+          subPath: task
+        - name: #@ "var-lib-" + name()
+          mountPath: #@ "/var/lib/" + name()
         - name: dockersock
           mountPath: /var/run/docker.sock
         - name: usr-src
           mountPath: /usr/src
         - name: lib-modules
           mountPath: /lib/modules
-        - name: #@ "opt-" + name()
-          mountPath: #@ "/opt/" + name()
-        - name: usr-local-bin
-          mountPath: /usr/local/bin
-      containers:
-      - name: satellite
-        image: #@ satelliteimage()
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          privileged: true
-        resources:
-          #! requests:
-          #!   cpu: '100m'
-          #!   memory: '200Mi'
-          limits:
-            cpu: 300m
-            memory: 300Mi
-        envFrom:
-        - configMapRef:
-            name:  #@ node()
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        #@ if name() == "piraeus":
-        args:
-        - startSatellite
-        - --stack-traces
-        #@ end
-        readinessProbe:
-          successThreshold: 3
-          failureThreshold: 3
-          tcpSocket:
-            port: 3366
-          periodSeconds: 2
-        volumeMounts:
-        - name: localtime
-          mountPath: /etc/localtime
-        - name: init
-          mountPath: /init
-        - name: init
-          mountPath: /usr/bin/pre-start.sh
-          subPath: bin/prestart-node.sh
-        - name: log
-          mountPath: /var/log/linstor-satellite
-        - name: #@ "var-lib-" + name()
-          mountPath: #@ "/var/lib/" + name()
-        - name: dev
-          mountPath: /dev
-        - name: lib-modules
-          mountPath: /lib/modules
-        #@ if map_host_lvm():
-        - name: run-lvm
-          mountPath: /run/lvm
-        - name: run-udev
-          mountPath: /run/udev
-        #@ end
-        #@ if map_host_linstor():
-        - name: var-lib-linstor-d
-          mountPath: /var/lib/linstor.d
-        #@ end
       volumes:
       - name: localtime
         hostPath:
           path: /etc/localtime
       - name: init
         emptyDir: {}
-      - name: #@ "opt-" + name()
-        hostPath:
-          path: #@ "/opt/" + name()
+      - name: run
+        configMap:
+          name: #@ name() + "-scaler-task"
+          items:
+          - key: task
+            path: task
+            mode: 0755
       - name: #@ "var-lib-" + name()
         hostPath:
           path: #@ "/var/lib/" + name()
-      - name: log
-        hostPath:
-          path: #@ "/var/log/"+ name() + "/linstor-satellite"
       - name: dev
         hostPath:
           path: /dev
-      - name: usr-local-bin
-        hostPath:
-          path: /usr/local/bin
       - name: dockersock
         hostPath:
           path: /var/run/docker.sock
@@ -186,23 +151,12 @@ spec:
         hostPath:
           path: /lib/modules
       #@ if map_host_lvm():
-      - name: run-lvm
-        hostPath:           
-          path: /run/lvm
-      - name: run-udev
-        hostPath:           
-          path: /run/udev 
-      #@ end
-      #@ if map_host_linstor():
-      - name: etc-drbd-d
-        hostPath:
-          path: /etc/drbd.d
-      - name: var-lib-linstor-d
-        hostPath:
-          path: /var/lib/linstor.d
-      - name: etc-linstor
-        hostPath:
-          path: /etc/linstor
+      - name: proc 
+        hostPath: 
+          path: /proc
+      - name: run
+        hostPath:            
+          path: /run
       #@ end
       affinity:
         nodeAffinity:

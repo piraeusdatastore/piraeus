@@ -1,0 +1,2 @@
+[db]
+connection_url = "etcd://_ETCD_ENDPOINTS_"

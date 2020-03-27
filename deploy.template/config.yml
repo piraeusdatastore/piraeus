@@ -1,14 +1,18 @@
 #@data/values
 ---
 name: "piraeus"
+namespace: "piraeus-system"
 map_host_linstor: false
-map_host_lvm: true
+map_host_lvm: false
+set_priority_class: false
 registry: "quay.io/piraeusdatastore"
-initversion: "v0.5"
+initversion: "v0.5.3"
 contsatversion: "v1.4.2"
-csiversion: "v0.7.3"
+csiversion: "v0.7.4"
+clientversion: "v1.0.11"
 images:
   init: "piraeus-init"
   controller: "piraeus-server"
   satellite: "piraeus-server"
   csi: "piraeus-csi"
+  client: "piraeus-client"

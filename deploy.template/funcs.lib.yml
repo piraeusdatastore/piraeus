@@ -4,6 +4,10 @@
 #@   return data.values.name
 #@ end
 
+#@ def namespace():
+#@   return data.values.namespace
+#@ end
+
 #@ def map_host_linstor():
 #@   return data.values.map_host_linstor
 #@ end
@@ -17,7 +21,7 @@
 #@ end
 
 #@ def etcdendpoint():
-#@   return "http://" + etcd() + ":2379"
+#@   return name() + "-etcd." + namespace() + ".svc.cluster.local:2379"
 #@ end
 
 #@ def node():
@@ -37,7 +41,7 @@
 #@ end
 
 #@ def controllerhostport():
-#@   return name() + "-controller.kube-system" + ":3370"
+#@   return name() + "-controller." + namespace() + ".svc.cluster.local:3370"
 #@ end
 
 #@ def registry():
@@ -62,4 +66,16 @@
 
 #@ def csiimage():
 #@   return imageversion(data.values.images.csi, data.values.csiversion)
+#@ end
+
+#@ def clientimage():
+#@   return imageversion(data.values.images.client, data.values.clientversion)
+#@ end
+
+#@ def set_priority_class():
+#@   if namespace() == "kube-system":
+#@     return True
+#@   else:
+#@     return data.values.set_priority_class
+#@   end
 #@ end

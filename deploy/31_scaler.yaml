@@ -1,20 +1,25 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: piraeus-node
+  name: piraeus-scaler
   namespace: piraeus-system
 data:
   INIT_DEBUG: "false"
   LS_CONTROLLERS: piraeus-controller.piraeus-system.svc.cluster.local:3370
   POOL_BASE_DIR: /var/lib/piraeus/storagepools
-  DRBD_IMG_TAG: v9.0.21
-  DRBD_IMG_PULL_POLICY: IfNotPresent
-  MAP_HOST_LVM: "true"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: piraeus-scaler-task
+  namespace: piraeus-system
+data:
+  task: ""
 ---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: piraeus-node
+  name: piraeus-scaler
   namespace: piraeus-system
 spec:
   minReadySeconds: 0
@@ -25,12 +30,12 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: piraeus
-      app.kubernetes.io/component: piraeus-node
+      app.kubernetes.io/component: piraeus-scaler
   template:
     metadata:
       labels:
         app.kubernetes.io/name: piraeus
-        app.kubernetes.io/component: piraeus-node
+        app.kubernetes.io/component: piraeus-scaler
     spec:
       restartPolicy: Always
       hostNetwork: true
@@ -41,6 +46,29 @@ spec:
       - name: init
         image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
         imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        envFrom:
+        - configMapRef:
+            name: piraeus-scaler
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        args:
+        - initScaler
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+      containers:
+      - name: scaler
+        image: quay.io/piraeusdatastore/piraeus-client:v1.0.11
+        imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
         resources:
@@ -49,7 +77,7 @@ spec:
             memory: 100Mi
         envFrom:
         - configMapRef:
-            name: piraeus-node
+            name: piraeus-scaler
         env:
         - name: POD_UID
           valueFrom:
@@ -59,76 +87,26 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
         - name: NODE_NAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        args:
-        - initNode
+        command:
+        - /init/bin/run-scaler.sh
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
+        - name: run
+          mountPath: /var/run/task
+          subPath: task
+        - name: var-lib-piraeus
+          mountPath: /var/lib/piraeus
         - name: dockersock
           mountPath: /var/run/docker.sock
         - name: usr-src
           mountPath: /usr/src
-        - name: lib-modules
-          mountPath: /lib/modules
-        - name: opt-piraeus
-          mountPath: /opt/piraeus
-        - name: usr-local-bin
-          mountPath: /usr/local/bin
-      containers:
-      - name: satellite
-        image: quay.io/piraeusdatastore/piraeus-server:v1.4.2
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          privileged: true
-        resources:
-          limits:
-            cpu: 300m
-            memory: 300Mi
-        envFrom:
-        - configMapRef:
-            name: piraeus-node
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        args:
-        - startSatellite
-        - --stack-traces
-        readinessProbe:
-          successThreshold: 3
-          failureThreshold: 3
-          tcpSocket:
-            port: 3366
-          periodSeconds: 2
-        volumeMounts:
-        - name: localtime
-          mountPath: /etc/localtime
-        - name: init
-          mountPath: /init
-        - name: init
-          mountPath: /usr/bin/pre-start.sh
-          subPath: bin/prestart-node.sh
-        - name: log
-          mountPath: /var/log/linstor-satellite
-        - name: var-lib-piraeus
-          mountPath: /var/lib/piraeus
-        - name: dev
-          mountPath: /dev
         - name: lib-modules
           mountPath: /lib/modules
       volumes:
@@ -137,21 +115,19 @@ spec:
           path: /etc/localtime
       - name: init
         emptyDir: {}
-      - name: opt-piraeus
-        hostPath:
-          path: /opt/piraeus
+      - name: run
+        configMap:
+          name: piraeus-scaler-task
+          items:
+          - key: task
+            path: task
+            mode: 493
       - name: var-lib-piraeus
         hostPath:
           path: /var/lib/piraeus
-      - name: log
-        hostPath:
-          path: /var/log/piraeus/linstor-satellite
       - name: dev
         hostPath:
           path: /dev
-      - name: usr-local-bin
-        hostPath:
-          path: /usr/local/bin
       - name: dockersock
         hostPath:
           path: /var/run/docker.sock

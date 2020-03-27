@@ -1,14 +1,32 @@
-FROM debian:buster
+FROM python:3-alpine
 MAINTAINER Alex Zheng <alex.zheng@daocloud.io>
 
-RUN { echo 'APT::Install-Recommends "false";' ; echo 'APT::Install-Suggests "false";' ; } > /etc/apt/apt.conf.d/99_piraeus
+ENV LINSTOR_API_PY_VER 1.0.11
+
 RUN set -x && \
-    apt-get update -y && \
-    apt-get install -y jq curl kmod && \
-    apt-get clean -y 
+    apk update && \
+    apk add bash jq curl libcurl kmod && \
+    rm -f /var/cache/apk/* 
 
-ADD * /root/cmd/
+RUN set -x && \
+    pip install kubernetes nsenter docker-py python-etcd
 
-RUN mv /root/cmd/entrypoint.sh /; chmod +x entrypoint.sh; ls -1 /root/cmd
+RUN set -x && \
+    mkdir -vp /tmp/linstor && \
+    cd /tmp/linstor && \
+    curl -LO "https://github.com/LINBIT/linstor-api-py/archive/v${LINSTOR_API_PY_VER}.tar.gz" && \
+    tar -zxf "v${LINSTOR_API_PY_VER}.tar.gz" && \
+    cd "linstor-api-py-${LINSTOR_API_PY_VER}" && \
+    ./setup.py install && \
+    rm -vfr /tmp/linstor
 
-ENTRYPOINT [ "/entrypoint.sh" ]
+ADD . /files/
+
+RUN set -x && \
+    mkdir -vp /init && \
+    cd /files && \
+    ls -1 && \
+    chmod -vR +x bin && \
+    for i in entry.sh Makefile README.md; do mv -v $i /; done
+
+ENTRYPOINT [ "/entry.sh" ]

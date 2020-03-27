@@ -1,25 +1,19 @@
-#@ load("funcs.lib.yml", "name", "controller", "initimage", "etcdendpoint", "controllerimage")
-kind: Namespace
-apiVersion: v1
-metadata:
-  name: piraeus
----
+#@ load("funcs.lib.yml", "name", "namespace", "controller", "initimage", "etcdendpoint", "controllerimage", "controllerhostport", "set_priority_class")
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: #@ name() + "-controller"
-  namespace: kube-system
+  name: #@ controller()
+  namespace: #@ namespace()
 data:
   INIT_DEBUG: 'false'
-  MIN_WAIT: '5'
-  MAX_WAIT: '3600'
-  LINSTOR_TOML: #@ "[db]\nconnection_url = \"etcd://http://{}-etcd.kube-system:2379\"".format( name() )
+  ETCD_ENDPOINTS: #@ etcdendpoint()
+  LS_CONTROLLERS: #@ controllerhostport()
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: #@ controller()
-  namespace: kube-system
+  namespace: #@ namespace()
   labels:
     app.kubernetes.io/name: #@ name()
     app.kubernetes.io/component: #@ controller()
@@ -37,27 +31,28 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: #@ controller()
-  namespace: kube-system
+  namespace: #@ namespace()
   labels:
     app.kubernetes.io/name: #@ name()
     app.kubernetes.io/component: #@ controller()
 spec:
   serviceName: #@ controller()
-  podManagementPolicy: Parallel
   updateStrategy:
     type: RollingUpdate
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: #@ name()
       app.kubernetes.io/component: #@ controller()
-  replicas: 1
   template:
     metadata:
       labels:
         app.kubernetes.io/name: #@ name()
         app.kubernetes.io/component: #@ controller()
     spec:
-      priorityClassName: system-node-critical
+      #@ if set_priority_class():
+      priorityClassName: system-cluster-critical
+      #@ end
       restartPolicy: Always
       terminationGracePeriodSeconds: 0
       dnsPolicy: ClusterFirst
@@ -74,28 +69,25 @@ spec:
             memory: 100Mi
         envFrom:
             - configMapRef:
-                name: #@ name() + "-controller"
-        env:
-        - name: THIS_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+                name: #@ controller()
+        args:
+            - initController
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
-        - name: etc-linstor
-          mountPath: /etc/linstor
+        - name: init
+          mountPath: /init
       containers:
       - name: controller
         image: #@ controllerimage()
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           #! requests:
-          #!   cpu: '500m'
-          #!   memory: '500Mi'
+          #!   cpu: 500m
+          #!   memory: 500Mi
           limits:
-            cpu: '1'
-            memory: '1Gi'
+            cpu: 500m
+            memory: 500Mi
         ports:
         - name: rest-api
           containerPort: 3370
@@ -106,34 +98,36 @@ spec:
         - name: ssl
           containerPort: 3377
           hostPort: 3377
+        env:
+        - name: THIS_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         #@ if name() == "piraeus":
         args:
         - startController
+        - --stack-traces
         #@ end
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3
           httpGet:
             port: 3370
-          initialDelaySeconds: 5
-          periodSeconds: 1
+          periodSeconds: 2
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
-        - name: etc-linstor
+        - name: init
           mountPath: /etc/linstor
+          subPath: etc/linstor
         - name: log
           mountPath: /var/log/linstor-controller
       volumes:
       - name: localtime
         hostPath:
           path: /etc/localtime
-      - name: etc-linstor
-        configMap:
-          name: #@ name() + "-controller"
-          items:
-          - key: LINSTOR_TOML
-            path: linstor.toml
+      - name: init
+        emptyDir: {}
       - name: log
         hostPath:
           path: #@ "/var/log/" + name() + "/linstor-controller"
@@ -151,5 +145,7 @@ spec:
       tolerations:
       - operator: Exists
         effect: NoSchedule
+      - key: CriticalAddonsOnly
+        operator: Exists
       #! imagePullSecrets:
       #! - name: piraeus-regcred

@@ -1,40 +1,18 @@
-#@ load("funcs.lib.yml", "name", "etcd", "initimage")
----
+#@ load("funcs.lib.yml", "name", "namespace", "etcd", "etcdendpoint", "initimage", "set_priority_class")
 #! dns service for stable DNS entries of StatefulSet members.
 #! https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/
-apiVersion: v1
-kind: Service
-metadata:
-  name: #@ etcd() + "-dns"
-  namespace: kube-system
-  labels:
-    app.kubernetes.io/name: #@ name()
-    app.kubernetes.io/component: #@ etcd() + "-dns"
-spec:
-  ports:
-  - name: client
-    port: 2379
-  - name: peer
-    port: 2380
-  clusterIP: None
-  selector:
-    app.kubernetes.io/name: #@ name()
-    app.kubernetes.io/component: #@ etcd() + "-dns"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: #@ etcd()
-  namespace: kube-system
+  namespace: #@ namespace()
   labels:
     app.kubernetes.io/name: #@ name()
     app.kubernetes.io/component: #@ etcd()
-  annotations:
-    #! create endpoints also if the related pod isn't ready
-    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 spec:
   type: ClusterIP
-  publishNotReadyAddresses: true
+  #! publishNotReadyAddresses: true
   ports:
   - name: client
     port: 2379
@@ -50,20 +28,20 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: #@ etcd()
-  namespace: kube-system
+  namespace: #@ namespace()
   labels:
     app.kubernetes.io/name: #@ name()
     app.kubernetes.io/component: #@ etcd()
 spec:
   serviceName: #@ etcd()
-  podManagementPolicy: Parallel
+  #! podManagementPolicy: Parallel
+  replicas: 3
   updateStrategy:
     type: RollingUpdate
   selector:
     matchLabels:
       app.kubernetes.io/name: #@ name()
       app.kubernetes.io/component: #@ etcd()
-  replicas: 3
   template:
     metadata:
       name: #@ etcd()
@@ -71,9 +49,10 @@ spec:
         app.kubernetes.io/name: #@ name()
         app.kubernetes.io/component: #@ etcd()
     spec:
+      #@ if set_priority_class():
       priorityClassName: system-node-critical
+      #@ end
       restartPolicy: Always
-      terminationGracePeriodSeconds: 0
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
@@ -87,62 +66,72 @@ spec:
             cpu: 100m
             memory: 100Mi
         env:
-        - name: CLUSTER_SIZE
-          value: '3'
-        - name: ETCDCTL_API
-          value: '2'
-        - name: THIS_POD_NAME
+        - name: ETCD_ENDPOINT
+          value: #@ etcdendpoint()
+        - name: PEER_PORT
+          value: '2380'
+        - name: CLIENT_PORT
+          value: '2379'
+        - name: POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: THIS_POD_IP
+        - name: POD_IP
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        volumeMounts:
-        - name: localtime
-          mountPath: /etc/localtime
-        - name: init
-          mountPath: /init
-      containers:
-      - name: etcd
-        image: quay.io/coreos/etcd:v3.4.3
-        imagePullPolicy: Always
-        resources:
-          #! requests:
-          #!   cpu: 100m
-          #!   memory: 100Mi
-          limits:
-            cpu: 200m
-            memory: 200Mi
-        ports:
-        - name: client
-          containerPort: 2379
-        - name: peer
-          containerPort: 2380
-        env:
-        - name: ETCDCTL_API
-          value: '2'
-        command:
-        - etcd
         args:
-        - --config-file
-        - /init/conf/etcd.conf
-        readinessProbe:
-          successThreshold: 3
-          failureThreshold: 3
-          httpGet:
-            path: /health
-            port: 2379
-          initialDelaySeconds: 10
-          periodSeconds: 1
+            - initEtcd
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
         - name: data
-          mountPath: /.etcd/data
+          mountPath: /var/lib/etcd
+      containers:
+      - name: etcd
+        image: quay.io/coreos/etcd:v3.4.5
+        imagePullPolicy: IfNotPresent
+        resources:
+          #! requests:
+          #!   cpu: 100m
+          #!   memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - name: client
+          containerPort: 2379
+        - name: peer
+          containerPort: 2380
+        command:
+        - etcd
+        args:
+        - --config-file
+        - /etc/etcd/etcd.conf
+        readinessProbe:
+          successThreshold: 3
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 2379
+          periodSeconds: 2
+        lifecycle:
+          preStop:
+            exec:
+              command: [ prestop ]
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /etc/etcd
+          subPath: etc/etcd
+        - name: init
+          mountPath: /usr/local/bin/prestop
+          subPath: bin/prestop-etcd.sh
+        - name: data
+          mountPath: /var/lib/etcd
       volumes:
       - name: localtime
         hostPath:
@@ -151,6 +140,8 @@ spec:
         emptyDir: {}
       - name: data
         emptyDir: {}
+        #! hostPath:
+        #!   path: #@ "/var/lib/" + name() + "/etcd"
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -174,5 +165,7 @@ spec:
       tolerations:
       - operator: Exists
         effect: NoSchedule
+      - key: CriticalAddonsOnly
+        operator: Exists
       #! imagePullSecrets:
       #! - name: piraeus-regcred

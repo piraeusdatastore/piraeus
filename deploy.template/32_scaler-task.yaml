@@ -1,0 +1,15 @@
+#@ load("funcs.lib.yml", "name", "namespace" )
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: #@ name() + "-scaler-task"
+  namespace: #@ namespace()
+data:
+  task: |
+    #!/bin/sh -x
+    pool_name=DfltStorPool
+    pool_dir="${POOL_BASE_DIR}/${pool_name}"
+    mkdir -vp "$pool_dir"
+    linstor storage-pool list -n "$NODE_NAME" -s "$pool_name" | grep -vw "$pool_name" && \
+    linstor storage-pool create filethin "$NODE_NAME" "$pool_name" "$pool_dir"
