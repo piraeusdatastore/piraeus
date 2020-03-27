@@ -1,6 +1,6 @@
 PROJECT ?= drbd9
-DF = Dockerfile.centos8
-CENTOS = Dockerfile.centos7 Dockerfile.centos8 Dockerfile.bionic
+DF = Dockerfile.centos7 Dockerfile.centos8 Dockerfile.bionic
+DEFAULT_CENTOS = Dockerfile.centos7
 REGISTRY ?= piraeusdatastore
 TAG ?= latest
 NOCACHE ?= false
@@ -25,7 +25,7 @@ upload:
 			pd=$(PROJECT)-$$(echo $$f | sed 's/^Dockerfile\.//'); \
 			docker tag $$pd:$(TAG) $$r/$$pd:$(TAG) ; \
 			docker tag $$pd:$(TAG) $$r/$$pd:latest ; \
-				if [ "$$f" = "${CENTOS}" ]; then \
+				if [ "$$f" = "${DEFAULT_CENTOS}" ]; then \
 					docker tag $$pd:$(TAG) $$r/centos:$(TAG) ; \
 					docker tag $$pd:$(TAG) $$r/centos:latest ; \
 					docker push $$r/centos:$(TAG) ; \

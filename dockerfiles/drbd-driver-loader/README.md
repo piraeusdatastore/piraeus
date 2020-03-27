@@ -43,7 +43,7 @@ docker run -it --rm --privileged \
 
 # Registries
 - [Docker Hub](https://hub.docker.com/r/piraeusdatastore/)
-- [quay.io](https://quay.io/repository/piraeusdatastore/)
+- [quay.io](https://quay.io/organization/piraeusdatastore/)
 
 # How does this differ from LINBIT's LINSTOR?
 The containers we provide in the Piraeus project are Debian based and packages get installed from a
