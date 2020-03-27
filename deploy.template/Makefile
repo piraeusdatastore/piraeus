@@ -3,7 +3,23 @@ SRC=$(sort $(wildcard *.yaml))
 DST=$(addprefix ../deploy/$(PREFIX),$(SRC))
 LAST=$(lastword $(DST))
 
-all: ../deploy/$(PREFIX)all.yaml
+all: ../deploy/$(PREFIX)all.yaml cn dce
+
+# for Chinese users, switch registries to azure local mirror
+cn:
+	cat ../deploy/all.yaml \
+	| sed 's/image: quay.io/image: quay.azk8s.cn/g' \
+	| sed 's/image: docker.io/image: dockerhub.azk8s.cn/g' \
+	| sed 's/image: gcr.io/image: gcr.azk8s.cn/g' \
+	> ../deploy/all.cn.yaml
+
+# for daocloud dce, fix etcds and controllers on kube-master nodes
+dce:
+	cat ../deploy/all.cn.yaml \
+	| sed '/ name: piraeus-etcd$$/,/DoesNotExist/ s/DoesNotExist/Exists/' \
+	| sed '/ name: piraeus-controller$$/,/DoesNotExist/ s/DoesNotExist/Exists/' \
+	| sed '/ name: piraeus-csi-controller$$/,/DoesNotExist/ s/DoesNotExist/Exists/' \
+	> ../deploy/all.dce.yaml
 
 ../deploy/$(PREFIX)all.yaml: $(DST)
 	:> $@

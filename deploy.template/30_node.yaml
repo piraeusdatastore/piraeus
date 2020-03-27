@@ -50,8 +50,8 @@ spec:
           privileged: true
         resources:
           #! requests:
-          #!   cpu: 50m
-          #!   memory: 50Mi
+          #!   cpu: 100m
+          #!   memory: 100Mi
           limits:
             cpu: 100m
             memory: 100Mi
@@ -100,11 +100,11 @@ spec:
           privileged: true
         resources:
           #! requests:
-          #!   cpu: '500m'
-          #!   memory: '500Mi'
+          #!   cpu: '100m'
+          #!   memory: '200Mi'
           limits:
-            cpu: 1
-            memory: 1Gi
+            cpu: 300m
+            memory: 300Mi
         envFrom:
         - configMapRef:
             name:  #@ node()

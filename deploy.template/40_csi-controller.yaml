@@ -40,11 +40,11 @@ spec:
         imagePullPolicy: IfNotPresent
         resources:
           #! requests:
-          #!   cpu: '500m'
-          #!   memory: '500Mi'
+          #!   cpu: '100m'
+          #!   memory: '100Mi'
           limits:
-            cpu: 500m
-            memory: 500Mi
+            cpu: 100m
+            memory: 100Mi
         args:
         - "--csi-address=$(ADDRESS)"
         - "--v=5"
@@ -65,11 +65,11 @@ spec:
         imagePullPolicy: IfNotPresent
         resources:
           #! requests:
-          #!   cpu: '500m'
-          #!   memory: '500Mi'
+          #!   cpu: '100m'
+          #!   memory: '100Mi'
           limits:
-            cpu: 200m
-            memory: 200Mi
+            cpu: 100m
+            memory: 100Mi
         args:
         - "--v=5"
         - "--csi-address=$(ADDRESS)"
@@ -88,11 +88,11 @@ spec:
         imagePullPolicy: IfNotPresent
         resources:
           #! requests:
-          #!   cpu: '500m'
-          #!   memory: '500Mi'
+          #!   cpu: '100m'
+          #!   memory: '100Mi'
           limits:
-            cpu: 200m
-            memory: 200Mi
+            cpu: 100m
+            memory: 100Mi
         args:
         - "--csi-address=$(ADDRESS)"
         - "--timeout=120s"
@@ -110,11 +110,11 @@ spec:
         imagePullPolicy: IfNotPresent
         resources:
           #! requests:
-          #!   cpu: '500m'
-          #!   memory: '500Mi'
+          #!   cpu: '100m'
+          #!   memory: '100Mi'
           limits:
-            cpu: 200m
-            memory: 200Mi
+            cpu: 100m
+            memory: 100Mi
         args:
         - "--v=5"
         - "--pod-info-mount-version=\"v1\""
@@ -132,11 +132,11 @@ spec:
         imagePullPolicy: IfNotPresent
         resources:
           #! requests:
-          #!   cpu: '500m'
-          #!   memory: '500Mi'
+          #!   cpu: '100m'
+          #!   memory: '100Mi'
           limits:
-            cpu: 500m
-            memory: 500Mi
+            cpu: 100m
+            memory: 100Mi
         args:
         - "--csi-endpoint=$(CSI_ENDPOINT)"
         - "--node=$(KUBE_NODE_NAME)"
@@ -163,6 +163,15 @@ spec:
       - name: socket-dir
         emptyDir: {}
       affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: In
+                values:
+                -  #@ csicontroller()
+            topologyKey: kubernetes.io/hostname
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:

@@ -76,8 +76,8 @@ spec:
         imagePullPolicy: IfNotPresent
         resources:
           limits:
-            cpu: "1"
-            memory: 1Gi
+            cpu: 500m
+            memory: 500Mi
         ports:
         - name: rest-api
           containerPort: 3370

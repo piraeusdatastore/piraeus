@@ -6,7 +6,6 @@ metadata:
   labels:
     app.kubernetes.io/name: piraeus
     app.kubernetes.io/component: piraeus-etcd
-  annotations: null
 spec:
   type: ClusterIP
   ports:
@@ -77,15 +76,15 @@ spec:
         - name: init
           mountPath: /init
         - name: data
-          mountPath: /var/lib/etcd/data
+          mountPath: /var/lib/etcd
       containers:
       - name: etcd
         image: quay.io/coreos/etcd:v3.4.5
         imagePullPolicy: IfNotPresent
         resources:
           limits:
-            cpu: 200m
-            memory: 200Mi
+            cpu: 100m
+            memory: 100Mi
         ports:
         - name: client
           containerPort: 2379
@@ -118,7 +117,7 @@ spec:
           mountPath: /usr/local/bin/prestop
           subPath: bin/prestop-etcd.sh
         - name: data
-          mountPath: /var/lib/etcd/data
+          mountPath: /var/lib/etcd
       volumes:
       - name: localtime
         hostPath:

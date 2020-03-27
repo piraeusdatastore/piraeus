@@ -48,3 +48,11 @@ EOF
     -d @/init/tmp/.data.json \
     | jq '.'
 }
+
+_etcd_reset_data_dir() {
+    timestamp="$( date +%Y-%m-%d_%H-%M-%S )"
+    data_dir=/var/lib/etcd/data
+    [ -d "$data_dir" ] && \
+    mv -vf "$data_dir" "${data_dir}.${timestamp}"
+    mkdir -vp "$data_dir"
+}

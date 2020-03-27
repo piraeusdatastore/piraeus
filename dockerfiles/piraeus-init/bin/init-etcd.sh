@@ -5,22 +5,26 @@ source /init/bin/lib.etcd.sh
 # Get set name
 pod_set="${POD_NAME/-[0-9]*/}"
 
+# create data dir and backup the old if exits
+_etcd_reset_data_dir
+
 # Assemble cluster
 if _etcd_is_healthy "$ETCD_ENDPOINT"; then
     # clean up duplicated member in case prestop cleanup fails
-    _etcd_has_old_member "$POD_NAME" && \ 
+    _etcd_has_old_member "$POD_NAME" && \
     _etcd_remove_member "$POD_NAME" && \
-    rm -fr /.etcd/data/*
+    _etcd_reset_data_dir
 
-    cluster="$( _etcd_cluster ),${POD_NAME}=http://${POD_IP}:${PEER_PORT}"
     cluster_state=existing
+    cluster="$( _etcd_cluster ),${POD_NAME}=http://${POD_IP}:${PEER_PORT}"
 
     _etcd_has_member "$POD_NAME" || \
     _etcd_add_member "$POD_NAME" "http://${POD_IP}:${PEER_PORT}"
 else
-    cluster="${POD_NAME}=http://${POD_IP}:${PEER_PORT}"
     cluster_state=new
+    cluster="${POD_NAME}=http://${POD_IP}:${PEER_PORT}"
 fi
+
 
 # write config file
 cat > /init/etc/etcd/etcd.conf << EOF

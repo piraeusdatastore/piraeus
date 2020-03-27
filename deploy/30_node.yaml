@@ -92,8 +92,8 @@ spec:
           privileged: true
         resources:
           limits:
-            cpu: 1
-            memory: 1Gi
+            cpu: 300m
+            memory: 300Mi
         envFrom:
         - configMapRef:
             name: piraeus-node

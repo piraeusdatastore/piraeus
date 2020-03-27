@@ -82,11 +82,11 @@ spec:
           privileged: true
         resources:
           #! requests:
-          #!   cpu: 50m
-          #!   memory: 50Mi
+          #!   cpu: 100m
+          #!   memory: 100Mi
           limits:
-            cpu: 200m
-            memory: 200Mi
+            cpu: 100m
+            memory: 100Mi
         envFrom:
         - configMapRef:
             name:  #@ name() + "-scaler"

@@ -10,9 +10,6 @@ metadata:
   labels:
     app.kubernetes.io/name: #@ name()
     app.kubernetes.io/component: #@ etcd()
-  annotations:
-    #! create endpoints also if the related pod isn't ready
-    #! service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 spec:
   type: ClusterIP
   #! publishNotReadyAddresses: true
@@ -91,7 +88,7 @@ spec:
         - name: init
           mountPath: /init
         - name: data
-          mountPath: /var/lib/etcd/data
+          mountPath: /var/lib/etcd
       containers:
       - name: etcd
         image: quay.io/coreos/etcd:v3.4.5
@@ -101,8 +98,8 @@ spec:
           #!   cpu: 100m
           #!   memory: 100Mi
           limits:
-            cpu: 200m
-            memory: 200Mi
+            cpu: 100m
+            memory: 100Mi
         ports:
         - name: client
           containerPort: 2379
@@ -134,7 +131,7 @@ spec:
           mountPath: /usr/local/bin/prestop
           subPath: bin/prestop-etcd.sh
         - name: data
-          mountPath: /var/lib/etcd/data
+          mountPath: /var/lib/etcd
       volumes:
       - name: localtime
         hostPath:

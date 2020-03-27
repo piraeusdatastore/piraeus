@@ -62,7 +62,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
+        image: quay.azk8s.cn/piraeusdatastore/piraeus-init:v0.5.3
         imagePullPolicy: Always
         resources:
           limits:
@@ -94,7 +94,7 @@ spec:
           mountPath: /var/lib/etcd
       containers:
       - name: etcd
-        image: quay.io/coreos/etcd:v3.4.5
+        image: quay.azk8s.cn/coreos/etcd:v3.4.5
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -219,7 +219,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
+        image: quay.azk8s.cn/piraeusdatastore/piraeus-init:v0.5.3
         imagePullPolicy: Always
         resources:
           limits:
@@ -237,7 +237,7 @@ spec:
           mountPath: /init
       containers:
       - name: controller
-        image: quay.io/piraeusdatastore/piraeus-server:v1.4.2
+        image: quay.azk8s.cn/piraeusdatastore/piraeus-server:v1.4.2
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -338,7 +338,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
+        image: quay.azk8s.cn/piraeusdatastore/piraeus-init:v0.5.3
         imagePullPolicy: Always
         securityContext:
           privileged: true
@@ -385,7 +385,7 @@ spec:
           mountPath: /usr/local/bin
       containers:
       - name: satellite
-        image: quay.io/piraeusdatastore/piraeus-server:v1.4.2
+        image: quay.azk8s.cn/piraeusdatastore/piraeus-server:v1.4.2
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
@@ -524,7 +524,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
+        image: quay.azk8s.cn/piraeusdatastore/piraeus-init:v0.5.3
         imagePullPolicy: Always
         resources:
           limits:
@@ -547,7 +547,7 @@ spec:
           mountPath: /init
       containers:
       - name: scaler
-        image: quay.io/piraeusdatastore/piraeus-client:v1.0.11
+        image: quay.azk8s.cn/piraeusdatastore/piraeus-client:v1.0.11
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
@@ -678,7 +678,7 @@ spec:
       dnsPolicy: ClusterFirst
       containers:
       - name: csi-provisioner
-        image: quay.io/k8scsi/csi-provisioner:v1.5.0
+        image: quay.azk8s.cn/k8scsi/csi-provisioner:v1.5.0
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -700,7 +700,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-attacher
-        image: quay.io/k8scsi/csi-attacher:v2.1.1
+        image: quay.azk8s.cn/k8scsi/csi-attacher:v2.1.1
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -720,7 +720,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-snapshotter
-        image: quay.io/k8scsi/csi-snapshotter:v2.0.1
+        image: quay.azk8s.cn/k8scsi/csi-snapshotter:v2.0.1
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -739,7 +739,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-cluster-driver-registrar
-        image: quay.io/k8scsi/csi-cluster-driver-registrar:v1.0.1
+        image: quay.azk8s.cn/k8scsi/csi-cluster-driver-registrar:v1.0.1
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -758,7 +758,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: piraeus-csi-plugin
-        image: quay.io/piraeusdatastore/piraeus-csi:v0.7.4
+        image: quay.azk8s.cn/piraeusdatastore/piraeus-csi:v0.7.4
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -1145,7 +1145,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: csi-node-driver-registrar
-        image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
+        image: quay.azk8s.cn/k8scsi/csi-node-driver-registrar:v1.2.0
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -1179,7 +1179,7 @@ spec:
         - name: registration-dir
           mountPath: /registration/
       - name: piraeus-csi-plugin
-        image: quay.io/piraeusdatastore/piraeus-csi:v0.7.4
+        image: quay.azk8s.cn/piraeusdatastore/piraeus-csi:v0.7.4
         imagePullPolicy: IfNotPresent
         resources:
           limits:
