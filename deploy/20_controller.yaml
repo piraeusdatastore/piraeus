@@ -66,7 +66,7 @@ spec:
         args:
         - initController
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
@@ -103,7 +103,7 @@ spec:
             port: 3370
           periodSeconds: 5
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /etc/linstor
@@ -111,9 +111,9 @@ spec:
         - name: log
           mountPath: /var/log/linstor-controller
       volumes:
-      - name: localtime
+      - name: timezone
         hostPath:
-          path: /etc/localtime
+          path: /usr/share/zoneinfo/Etc/UTC
       - name: init
         emptyDir: {}
       - name: log

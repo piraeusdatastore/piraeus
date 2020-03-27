@@ -1,4 +1,4 @@
-#@ load("funcs.lib.yml", "name", "namespace", "csiimage", "controllerhostport", "csinode", "controller", "set_priority_class")
+#@ load("funcs.lib.yml", "name", "namespace", "timezone", "csiimage", "controllerhostport", "csinode", "controller", "set_priority_class")
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -59,7 +59,7 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: plugin-dir
           mountPath: /csi/
@@ -95,7 +95,7 @@ spec:
             add: ["SYS_ADMIN"]
           allowPrivilegeEscalation: true
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: plugin-dir
           mountPath: /csi
@@ -105,9 +105,9 @@ spec:
         - name: device-dir
           mountPath: /dev
       volumes:
-      - name: localtime
+      - name: timezone
         hostPath:
-          path: /etc/localtime
+          path: #@ timezone()
       - name: registration-dir
         hostPath:
           path: /var/lib/kubelet/plugins_registry/

@@ -8,6 +8,10 @@
 #@   return data.values.namespace
 #@ end
 
+#@ def timezone():
+#@   return data.values.timezone
+#@ end
+
 #@ def map_host_linstor():
 #@   return data.values.map_host_linstor
 #@ end

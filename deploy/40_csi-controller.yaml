@@ -44,7 +44,7 @@ spec:
         - name: ADDRESS
           value: /var/lib/csi/sockets/pluginproxy/csi.sock
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
@@ -64,7 +64,7 @@ spec:
         - name: ADDRESS
           value: /var/lib/csi/sockets/pluginproxy/csi.sock
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
@@ -83,7 +83,7 @@ spec:
         - name: ADDRESS
           value: /var/lib/csi/sockets/pluginproxy/csi.sock
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
@@ -102,7 +102,7 @@ spec:
         - name: ADDRESS
           value: /var/lib/csi/sockets/pluginproxy/csi.sock
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
@@ -128,14 +128,14 @@ spec:
         - name: LS_CONTROLLERS
           value: http://piraeus-controller.piraeus-system.svc.cluster.local:3370
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       volumes:
-      - name: localtime
+      - name: timezone
         hostPath:
-          path: /etc/localtime
+          path: /usr/share/zoneinfo/Etc/UTC
       - name: socket-dir
         emptyDir: {}
       affinity:

@@ -52,7 +52,7 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: plugin-dir
           mountPath: /csi/
@@ -86,7 +86,7 @@ spec:
             - SYS_ADMIN
           allowPrivilegeEscalation: true
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: plugin-dir
           mountPath: /csi
@@ -96,9 +96,9 @@ spec:
         - name: device-dir
           mountPath: /dev
       volumes:
-      - name: localtime
+      - name: timezone
         hostPath:
-          path: /etc/localtime
+          path: /usr/share/zoneinfo/Etc/UTC
       - name: registration-dir
         hostPath:
           path: /var/lib/kubelet/plugins_registry/

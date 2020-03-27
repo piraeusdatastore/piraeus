@@ -70,7 +70,7 @@ spec:
         args:
         - initNode
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
@@ -116,7 +116,7 @@ spec:
             port: 3366
           periodSeconds: 5
         volumeMounts:
-        - name: localtime
+        - name: timezone
           mountPath: /etc/localtime
         - name: init
           mountPath: /init
@@ -132,9 +132,9 @@ spec:
         - name: lib-modules
           mountPath: /lib/modules
       volumes:
-      - name: localtime
+      - name: timezone
         hostPath:
-          path: /etc/localtime
+          path: /usr/share/zoneinfo/Etc/UTC
       - name: init
         emptyDir: {}
       - name: opt-piraeus
