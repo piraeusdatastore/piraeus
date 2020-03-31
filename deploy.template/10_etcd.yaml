@@ -139,9 +139,8 @@ spec:
       - name: init
         emptyDir: {}
       - name: data
-        emptyDir: {}
-        #! hostPath:
-        #!   path: #@ "/var/lib/" + name() + "/etcd"
+        hostPath:
+          path: #@ "/var/lib/" + name() + "/etcd"
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

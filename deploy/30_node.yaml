@@ -39,7 +39,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.4
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
@@ -82,8 +82,6 @@ spec:
           mountPath: /lib/modules
         - name: opt-piraeus
           mountPath: /opt/piraeus
-        - name: usr-local-bin
-          mountPath: /usr/local/bin
       containers:
       - name: satellite
         image: quay.io/piraeusdatastore/piraeus-server:v1.4.2
@@ -149,9 +147,6 @@ spec:
       - name: dev
         hostPath:
           path: /dev
-      - name: usr-local-bin
-        hostPath:
-          path: /usr/local/bin
       - name: dockersock
         hostPath:
           path: /var/run/docker.sock

@@ -7,10 +7,10 @@ map_host_linstor: false
 map_host_lvm: false
 set_priority_class: false
 registry: "quay.io/piraeusdatastore"
-initversion: "v0.5.3"
+initversion: "v0.5.4"
 contsatversion: "v1.4.2"
 csiversion: "v0.7.4"
-clientversion: "v1.0.11"
+clientversion: "latest"
 images:
   init: "piraeus-init"
   controller: "piraeus-server"

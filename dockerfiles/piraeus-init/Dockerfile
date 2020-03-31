@@ -9,7 +9,8 @@ RUN set -x && \
     rm -f /var/cache/apk/* 
 
 RUN set -x && \
-    pip install kubernetes nsenter docker-py python-etcd
+    pip install kubernetes nsenter docker-py python-etcd && \
+    rm -vf /usr/local/bin/nsenter
 
 RUN set -x && \
     mkdir -vp /tmp/linstor && \

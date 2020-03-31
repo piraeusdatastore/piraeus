@@ -44,7 +44,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.4
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -67,7 +67,7 @@ spec:
           mountPath: /init
       containers:
       - name: scaler
-        image: quay.io/piraeusdatastore/piraeus-client:v1.0.11
+        image: quay.io/piraeusdatastore/piraeus-client:latest
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true

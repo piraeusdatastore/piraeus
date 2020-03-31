@@ -90,8 +90,6 @@ spec:
           mountPath: /lib/modules
         - name: #@ "opt-" + name()
           mountPath: #@ "/opt/" + name()
-        - name: usr-local-bin
-          mountPath: /usr/local/bin
       containers:
       - name: satellite
         image: #@ satelliteimage()
@@ -172,9 +170,6 @@ spec:
       - name: dev
         hostPath:
           path: /dev
-      - name: usr-local-bin
-        hostPath:
-          path: /usr/local/bin
       - name: dockersock
         hostPath:
           path: /var/run/docker.sock

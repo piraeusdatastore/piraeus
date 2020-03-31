@@ -62,7 +62,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.4
         imagePullPolicy: Always
         resources:
           limits:
@@ -140,7 +140,8 @@ spec:
       - name: init
         emptyDir: {}
       - name: data
-        emptyDir: {}
+        hostPath:
+          path: /var/lib/piraeus/etcd
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -219,7 +220,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.4
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -338,7 +339,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.4
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
@@ -381,8 +382,6 @@ spec:
           mountPath: /lib/modules
         - name: opt-piraeus
           mountPath: /opt/piraeus
-        - name: usr-local-bin
-          mountPath: /usr/local/bin
       containers:
       - name: satellite
         image: quay.io/piraeusdatastore/piraeus-server:v1.4.2
@@ -448,9 +447,6 @@ spec:
       - name: dev
         hostPath:
           path: /dev
-      - name: usr-local-bin
-        hostPath:
-          path: /usr/local/bin
       - name: dockersock
         hostPath:
           path: /var/run/docker.sock
@@ -524,7 +520,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.4
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -547,7 +543,7 @@ spec:
           mountPath: /init
       containers:
       - name: scaler
-        image: quay.io/piraeusdatastore/piraeus-client:v1.0.11
+        image: quay.io/piraeusdatastore/piraeus-client:latest
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true

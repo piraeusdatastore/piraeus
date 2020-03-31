@@ -87,4 +87,4 @@ mkdir -vp "$cli_dir"
 cp -vuf /init/bin/linstor.sh "${cli_dir}/linstor"
 cp -vuf /etc/resolv.conf "${cli_dir}/"
 printenv > "${cli_dir}/env"
-ln -fs "${cli_dir}/linstor"  /usr/local/bin/linstor
+nsenter -t1 -m -- ln -vfs "${cli_dir}/linstor"  /usr/local/bin/linstor
