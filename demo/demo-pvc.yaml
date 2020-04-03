@@ -39,3 +39,17 @@ spec:
   resources:
     requests:
       storage: 13Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: demo-rwo-raw
+  namespace: piraeus-demo
+spec:
+  storageClassName: piraeus-dflt-raw
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 10Gi

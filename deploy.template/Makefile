@@ -5,12 +5,11 @@ LAST=$(lastword $(DST))
 
 all: ../deploy/$(PREFIX)all.yaml cn dce
 
-# for Chinese users, switch registries to azure local mirror, and tz to shanghai
+# for Chinese users, switch registries to daocloud registry, and tz to shanghai
 cn:
 	cat ../deploy/all.yaml \
-	| sed 's/image: quay.io/image: quay.azk8s.cn/g' \
-	| sed 's/image: docker.io/image: dockerhub.azk8s.cn/g' \
-	| sed 's/image: gcr.io/image: gcr.azk8s.cn/g' \
+	| sed 's#quay.io/piraeusdatastore#daocloud.io/piraeus#g' \
+	| sed 's#quay.io/.*/#daocloud.io/piraeus/#g' \
 	| sed 's#/usr/share/zoneinfo/Etc/UTC#/usr/share/zoneinfo/Asia/Shanghai#g' \
 	> ../deploy/all.cn.yaml
 

@@ -9,7 +9,8 @@ data:
   #! Must be an FQDN here, otherwise it might not resolve!
   LS_CONTROLLERS: #@ controllerhostport()
   POOL_BASE_DIR: #@ "/var/lib/" + name() + "/storagepools"
-  DRBD_IMG_TAG: v9.0.21 #! "none" will skip drbd installation
+  DRBD_IMG_REPO: quay.io/piraeusdatastore
+  DRBD_IMG_TAG: v9.0.22 #! "none" will skip drbd installation
   DRBD_IMG_PULL_POLICY: IfNotPresent
   MAP_HOST_LVM: 'true'
 ---

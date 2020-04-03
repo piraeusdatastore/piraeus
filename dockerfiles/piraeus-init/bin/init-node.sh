@@ -35,11 +35,13 @@ echo 'Now cluster has nodes:'
 _linstor_node_list "$NODE_NAME"
 
 # find and inherit current image repo
-container_id="$( cat /proc/self/cgroup | grep :pids:/kubepods/pod"${POD_UID}" | awk -F/ '{print $NF}' )"
-image="$( _docker_ps | jq -r ".[] | select(.Id == \"${container_id}\") | .Image" )"
-echo "$image"
-[[ "$image" == "${image%/*}" ]] && image_repo='docker.io/library' || image_repo="${image%/*}"
-echo "$image_repo"
+# container_id="$( cat /proc/self/cgroup | grep :pids:/kubepods/pod"${POD_UID}" | awk -F/ '{print $NF}' )"
+# image_id="$( _docker_ps | jq -r ".[] | select(.Id == \"${container_id}\") | .ImageID" )"
+# echo "* Current image ID is $image_id"
+# image="$( _docker_images | jq -r ".[] | select(.Id == \"${image_id}\") | .RepoTags[0]" )"
+# echo "* Current image name: $image"
+# [[ "$image" == "${image%/*}" ]] && image_repo='docker.io/library' || image_repo="${image%/*}"
+# echo "* Current image repository is: $image_repo"
 
 # enable devicemapper thin-provisioning
 echo '* Enable dm_thin_pool'
@@ -71,7 +73,7 @@ else
     fi
 
     # run drbd9 driver loader
-    drbd_image_url="${image_repo}/${drbd_image_name}:${DRBD_IMG_TAG}"
+    drbd_image_url="${DRBD_IMG_REPO}/${drbd_image_name}:${DRBD_IMG_TAG}"
     echo "* Compile and load drbd module by image \"${drbd_image_url}\""
     if [[ "${DRBD_IMG_PULL_POLICY,,}" == "always" ]] || [[ "$( _docker_image_inspect "$drbd_image_url" | jq '.Id' )" == "null" ]]; then
         _docker_pull "$drbd_image_url"
@@ -81,7 +83,7 @@ fi
 
 # install linstor cli script
 echo "* Install local linstor cli"
-sed -i "s#quay.io/piraeusdatastore/#${image_repo}/#" /init/bin/linstor.sh
+sed -i "s#quay.io/piraeusdatastore/#${DRBD_IMG_REPO}/#" /init/bin/linstor.sh
 cli_dir="/opt/${POD_NAME/-*/}/client"
 mkdir -vp "$cli_dir"
 cp -vuf /init/bin/linstor.sh "${cli_dir}/linstor"

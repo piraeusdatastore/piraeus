@@ -7,7 +7,8 @@ data:
   INIT_DEBUG: "false"
   LS_CONTROLLERS: piraeus-controller.piraeus-system.svc.cluster.local:3370
   POOL_BASE_DIR: /var/lib/piraeus/storagepools
-  DRBD_IMG_TAG: v9.0.21
+  DRBD_IMG_REPO: quay.io/piraeusdatastore
+  DRBD_IMG_TAG: v9.0.22
   DRBD_IMG_PULL_POLICY: IfNotPresent
   MAP_HOST_LVM: "true"
 ---
