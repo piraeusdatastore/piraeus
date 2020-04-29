@@ -83,6 +83,10 @@ spec:
           mountPath: /lib/modules
         - name: opt-piraeus
           mountPath: /opt/piraeus
+        - name: drbd-conf
+          mountPath: /etc/drbd.conf
+        - name: etc-drbd-d
+          mountPath: /etc/drbd.d
       containers:
       - name: satellite
         image: quay.io/piraeusdatastore/piraeus-server:v1.4.2
@@ -108,6 +112,8 @@ spec:
         args:
         - startSatellite
         - --stack-traces
+        - --log-level
+        - TRACE
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3
@@ -130,6 +136,8 @@ spec:
           mountPath: /dev
         - name: lib-modules
           mountPath: /lib/modules
+        - name: var-lib-linstor-d
+          mountPath: /var/lib/linstor.d
       volumes:
       - name: timezone
         hostPath:
@@ -158,6 +166,19 @@ spec:
       - name: lib-modules
         hostPath:
           path: /lib/modules
+      - name: drbd-conf
+        hostPath:
+          path: /etc/drbd.conf
+          type: FileOrCreate
+      - name: etc-drbd-d
+        hostPath:
+          path: /etc/drbd.d
+      - name: var-lib-linstor-d
+        hostPath:
+          path: /var/lib/linstor.d
+      - name: etc-linstor
+        hostPath:
+          path: /etc/linstor
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

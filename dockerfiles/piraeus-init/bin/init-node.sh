@@ -6,34 +6,6 @@ source /init/bin/lib.linstor.sh
 source /init/bin/lib.docker.sh
 source /init/bin/lib.tools.sh
 
-# wait until controller is up
-SECONDS=0
-while [ "${SECONDS}" -lt '3600' ];  do
-    if curl -Ss --connect-timeout 2 "${LS_CONTROLLERS}" | grep 'Linstor REST server'; then
-        echo '... controller is UP'
-        break
-    else
-        echo '... controller is DOWN'
-    fi
-    sleep 1
-done
-
-# register node to cluster
-pod_if=$( _get_if_by_ip "$POD_IP" )
-echo "This node IP: ${POD_IP}@${pod_if}"
-
-if _linstor_has_node "$NODE_NAME" ; then
-    echo "WARN: This node name \"${NODE_NAME}\" is already registered"
-elif _linstor_has_node_ip "$POD_IP"; then
-    echo "WARN: This node ip \"${POD_IP}\" is already registered"
-else
-    echo "* Add node \"${NODE_NAME}\" to the cluster"
-     _linstor_node_create "$NODE_NAME" "$pod_if" "$POD_IP" 3366 plain true
-fi
-
-echo 'Now cluster has nodes:'
-_linstor_node_list "$NODE_NAME"
-
 # find and inherit current image repo
 # container_id="$( cat /proc/self/cgroup | grep :pids:/kubepods/pod"${POD_UID}" | awk -F/ '{print $NF}' )"
 # image_id="$( _docker_ps | jq -r ".[] | select(.Id == \"${container_id}\") | .ImageID" )"
@@ -81,12 +53,53 @@ else
     _docker_run_drbd_driver_loader "$drbd_image_url" "$mount_usr_lib"
 fi
 
-# install linstor cli script
-echo "* Install local linstor cli"
-sed -i "s#quay.io/piraeusdatastore/#${DRBD_IMG_REPO}/#" /init/bin/linstor.sh
+# edit drbd.conf
+cat > /etc/drbd.conf << 'EOF'
+include "/etc/drbd.d/*.res";
+include "/var/lib/linstor.d/*.res";
+EOF
+cat > /etc/drbd.d/global_common.conf << 'EOF'
+global { 
+    usage-count no; 
+    }
+EOF
+
+# install cli script
+echo "* Install local cli"
+sed -i "s#quay.io/piraeusdatastore/#${DRBD_IMG_REPO}/#" /init/bin/cli.*.sh
 cli_dir="/opt/${POD_NAME/-*/}/client"
 mkdir -vp "$cli_dir"
-cp -vuf /init/bin/linstor.sh "${cli_dir}/linstor"
+cp -vuf /init/bin/cli.linstor.sh "${cli_dir}/linstor"
+cp -vuf /init/bin/cli.drbdadm.sh "${cli_dir}/drbdadm"
 cp -vuf /etc/resolv.conf "${cli_dir}/"
 printenv > "${cli_dir}/env"
 nsenter -t1 -m -- ln -vfs "${cli_dir}/linstor"  /usr/local/bin/linstor
+nsenter -t1 -m -- ln -vfs "${cli_dir}/drbdadm"  /usr/local/bin/drbdadm
+
+# wait until controller is up
+SECONDS=0
+while [ "${SECONDS}" -lt '3600' ];  do
+    if curl -Ss --connect-timeout 2 "${LS_CONTROLLERS}" | grep 'Linstor REST server'; then
+        echo '... controller is UP'
+        break
+    else
+        echo '... controller is DOWN'
+    fi
+    sleep 1
+done
+
+# register node to cluster
+pod_if=$( _get_if_by_ip "$POD_IP" )
+echo "This node IP: ${POD_IP}@${pod_if}"
+
+if _linstor_has_node "$NODE_NAME" ; then
+    echo "WARN: This node name \"${NODE_NAME}\" is already registered"
+elif _linstor_has_node_ip "$POD_IP"; then
+    echo "WARN: This node ip \"${POD_IP}\" is already registered"
+else
+    echo "* Add node \"${NODE_NAME}\" to the cluster"
+     _linstor_node_create "$NODE_NAME" "$pod_if" "$POD_IP" 3366 plain true
+fi
+
+echo 'Now cluster has nodes:'
+_linstor_node_list "$NODE_NAME"

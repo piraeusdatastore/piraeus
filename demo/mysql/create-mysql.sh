@@ -2,11 +2,11 @@
 
 if [[ "$1" == 'cn' ]]; then
     cat demo-sts-mysql.yaml \
-    | sed 's/gcr.io/gcr.azk8s.cn/' \
-    | sed 's/docker.io/dockerhub.azk8s.cn/' \
+    | sed 's#gcr.io/google-samples/#daocloud.io/piraeus/#' \
+    | sed 's#docker.io/library/#daocloud.io/piraeus/#' \
     | kubectl apply -f -
 else 
-    kubectl apply -f demo-mysql.sh
+    kubectl apply -f demo-sts-mysql.sh
 fi
 
 watch kubectl -n piraeus-demo -l app=mysql get po -o wide

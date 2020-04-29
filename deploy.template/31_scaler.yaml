@@ -150,14 +150,6 @@ spec:
       - name: lib-modules
         hostPath:
           path: /lib/modules
-      #@ if map_host_lvm():
-      - name: proc 
-        hostPath: 
-          path: /proc
-      - name: run
-        hostPath:            
-          path: /run
-      #@ end
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

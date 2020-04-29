@@ -91,6 +91,10 @@ spec:
           mountPath: /lib/modules
         - name: #@ "opt-" + name()
           mountPath: #@ "/opt/" + name()
+        - name: drbd-conf
+          mountPath: /etc/drbd.conf
+        - name: etc-drbd-d
+          mountPath: /etc/drbd.d
       containers:
       - name: satellite
         image: #@ satelliteimage()
@@ -120,6 +124,8 @@ spec:
         args:
         - startSatellite
         - --stack-traces
+        - --log-level
+        - TRACE
         #@ end
         readinessProbe:
           successThreshold: 3
@@ -139,6 +145,8 @@ spec:
           mountPath: /var/log/linstor-satellite
         - name: #@ "var-lib-" + name()
           mountPath: #@ "/var/lib/" + name()
+        #! - name: default-storage-pool
+        #!   mountPath: /DfltStorPool
         - name: dev
           mountPath: /dev
         - name: lib-modules
@@ -165,6 +173,9 @@ spec:
       - name: #@ "var-lib-" + name()
         hostPath:
           path: #@ "/var/lib/" + name()
+      #! - name: default-storage-pool
+      #!   hostPath:
+      #!     path: /DfltStorPool
       - name: log
         hostPath:
           path: #@ "/var/log/"+ name() + "/linstor-satellite"
@@ -181,6 +192,13 @@ spec:
       - name: lib-modules
         hostPath:
           path: /lib/modules
+      - name: drbd-conf
+        hostPath:
+          path: /etc/drbd.conf
+          type: FileOrCreate
+      - name: etc-drbd-d
+        hostPath:
+          path: /etc/drbd.d
       #@ if map_host_lvm():
       - name: run-lvm
         hostPath:           
@@ -190,9 +208,6 @@ spec:
           path: /run/udev 
       #@ end
       #@ if map_host_linstor():
-      - name: etc-drbd-d
-        hostPath:
-          path: /etc/drbd.d
       - name: var-lib-linstor-d
         hostPath:
           path: /var/lib/linstor.d
