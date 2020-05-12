@@ -106,13 +106,15 @@ spec:
         #@ if name() == "piraeus":
         args:
         - startController
-        - --stack-traces
+        #! - --stack-traces
+        #! - --log-level
+        #! - TRACE
         #@ end
         readinessProbe:
-          successThreshold: 3
-          failureThreshold: 3
           httpGet:
             port: 3370
+          successThreshold: 3
+          failureThreshold: 3
           periodSeconds: 5
         volumeMounts:
         - name: timezone

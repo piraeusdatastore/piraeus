@@ -9,7 +9,8 @@ data:
   #! Must be an FQDN here, otherwise it might not resolve!
   LS_CONTROLLERS: #@ controllerhostport()
   POOL_BASE_DIR: #@ "/var/lib/" + name() + "/storagepools"
-  DRBD_IMG_TAG: v9.0.21 #! "none" will skip drbd installation
+  DRBD_IMG_REPO: quay.io/piraeusdatastore
+  DRBD_IMG_TAG: v9.0.22 #! "none" will skip drbd installation
   DRBD_IMG_PULL_POLICY: IfNotPresent
   MAP_HOST_LVM: 'true'
 ---
@@ -90,8 +91,10 @@ spec:
           mountPath: /lib/modules
         - name: #@ "opt-" + name()
           mountPath: #@ "/opt/" + name()
-        - name: usr-local-bin
-          mountPath: /usr/local/bin
+        - name: drbd-conf
+          mountPath: /etc/drbd.conf
+        - name: etc-drbd-d
+          mountPath: /etc/drbd.d
       containers:
       - name: satellite
         image: #@ satelliteimage()
@@ -120,7 +123,9 @@ spec:
         #@ if name() == "piraeus":
         args:
         - startSatellite
-        - --stack-traces
+        #! - --stack-traces
+        #! - --log-level
+        #! - TRACE
         #@ end
         readinessProbe:
           successThreshold: 3
@@ -140,6 +145,8 @@ spec:
           mountPath: /var/log/linstor-satellite
         - name: #@ "var-lib-" + name()
           mountPath: #@ "/var/lib/" + name()
+        #! - name: default-storage-pool
+        #!   mountPath: /DfltStorPool
         - name: dev
           mountPath: /dev
         - name: lib-modules
@@ -166,15 +173,15 @@ spec:
       - name: #@ "var-lib-" + name()
         hostPath:
           path: #@ "/var/lib/" + name()
+      #! - name: default-storage-pool
+      #!   hostPath:
+      #!     path: /DfltStorPool
       - name: log
         hostPath:
           path: #@ "/var/log/"+ name() + "/linstor-satellite"
       - name: dev
         hostPath:
           path: /dev
-      - name: usr-local-bin
-        hostPath:
-          path: /usr/local/bin
       - name: dockersock
         hostPath:
           path: /var/run/docker.sock
@@ -185,6 +192,13 @@ spec:
       - name: lib-modules
         hostPath:
           path: /lib/modules
+      - name: drbd-conf
+        hostPath:
+          path: /etc/drbd.conf
+          type: FileOrCreate
+      - name: etc-drbd-d
+        hostPath:
+          path: /etc/drbd.d
       #@ if map_host_lvm():
       - name: run-lvm
         hostPath:           
@@ -194,9 +208,6 @@ spec:
           path: /run/udev 
       #@ end
       #@ if map_host_linstor():
-      - name: etc-drbd-d
-        hostPath:
-          path: /etc/drbd.d
       - name: var-lib-linstor-d
         hostPath:
           path: /var/lib/linstor.d

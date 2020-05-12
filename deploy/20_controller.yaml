@@ -54,7 +54,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.3
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.5
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -95,12 +95,11 @@ spec:
               fieldPath: status.podIP
         args:
         - startController
-        - --stack-traces
         readinessProbe:
-          successThreshold: 3
-          failureThreshold: 3
           httpGet:
             port: 3370
+          successThreshold: 3
+          failureThreshold: 3
           periodSeconds: 5
         volumeMounts:
         - name: timezone

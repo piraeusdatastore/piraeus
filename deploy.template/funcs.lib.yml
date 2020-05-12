@@ -24,6 +24,10 @@
 #@   return name() + "-etcd"
 #@ end
 
+#@ def etcdimage():
+#@   return "quay.io/coreos/etcd:" + data.values.etcdversion
+#@ end
+
 #@ def etcdendpoint():
 #@   return name() + "-etcd." + namespace() + ".svc.cluster.local:2379"
 #@ end

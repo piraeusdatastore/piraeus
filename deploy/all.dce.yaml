@@ -62,7 +62,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.azk8s.cn/piraeusdatastore/piraeus-init:v0.5.3
+        image: daocloud.io/piraeus/piraeus-init:v0.5.5
         imagePullPolicy: Always
         resources:
           limits:
@@ -94,7 +94,7 @@ spec:
           mountPath: /var/lib/etcd
       containers:
       - name: etcd
-        image: quay.azk8s.cn/coreos/etcd:v3.4.5
+        image: daocloud.io/piraeus/etcd:v3.4.7
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -140,7 +140,8 @@ spec:
       - name: init
         emptyDir: {}
       - name: data
-        emptyDir: {}
+        hostPath:
+          path: /var/lib/piraeus/etcd
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -219,7 +220,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.azk8s.cn/piraeusdatastore/piraeus-init:v0.5.3
+        image: daocloud.io/piraeus/piraeus-init:v0.5.5
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -237,7 +238,7 @@ spec:
           mountPath: /init
       containers:
       - name: controller
-        image: quay.azk8s.cn/piraeusdatastore/piraeus-server:v1.4.2
+        image: daocloud.io/piraeus/piraeus-server:v1.4.2
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -260,12 +261,11 @@ spec:
               fieldPath: status.podIP
         args:
         - startController
-        - --stack-traces
         readinessProbe:
-          successThreshold: 3
-          failureThreshold: 3
           httpGet:
             port: 3370
+          successThreshold: 3
+          failureThreshold: 3
           periodSeconds: 5
         volumeMounts:
         - name: timezone
@@ -306,7 +306,8 @@ data:
   INIT_DEBUG: "false"
   LS_CONTROLLERS: piraeus-controller.piraeus-system.svc.cluster.local:3370
   POOL_BASE_DIR: /var/lib/piraeus/storagepools
-  DRBD_IMG_TAG: v9.0.21
+  DRBD_IMG_REPO: daocloud.io/piraeus
+  DRBD_IMG_TAG: v9.0.22
   DRBD_IMG_PULL_POLICY: IfNotPresent
   MAP_HOST_LVM: "true"
 ---
@@ -338,7 +339,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.azk8s.cn/piraeusdatastore/piraeus-init:v0.5.3
+        image: daocloud.io/piraeus/piraeus-init:v0.5.5
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
@@ -381,11 +382,13 @@ spec:
           mountPath: /lib/modules
         - name: opt-piraeus
           mountPath: /opt/piraeus
-        - name: usr-local-bin
-          mountPath: /usr/local/bin
+        - name: drbd-conf
+          mountPath: /etc/drbd.conf
+        - name: etc-drbd-d
+          mountPath: /etc/drbd.d
       containers:
       - name: satellite
-        image: quay.azk8s.cn/piraeusdatastore/piraeus-server:v1.4.2
+        image: daocloud.io/piraeus/piraeus-server:v1.4.2
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
@@ -407,7 +410,6 @@ spec:
               fieldPath: spec.nodeName
         args:
         - startSatellite
-        - --stack-traces
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3
@@ -430,6 +432,8 @@ spec:
           mountPath: /dev
         - name: lib-modules
           mountPath: /lib/modules
+        - name: var-lib-linstor-d
+          mountPath: /var/lib/linstor.d
       volumes:
       - name: timezone
         hostPath:
@@ -448,9 +452,6 @@ spec:
       - name: dev
         hostPath:
           path: /dev
-      - name: usr-local-bin
-        hostPath:
-          path: /usr/local/bin
       - name: dockersock
         hostPath:
           path: /var/run/docker.sock
@@ -461,6 +462,19 @@ spec:
       - name: lib-modules
         hostPath:
           path: /lib/modules
+      - name: drbd-conf
+        hostPath:
+          path: /etc/drbd.conf
+          type: FileOrCreate
+      - name: etc-drbd-d
+        hostPath:
+          path: /etc/drbd.d
+      - name: var-lib-linstor-d
+        hostPath:
+          path: /var/lib/linstor.d
+      - name: etc-linstor
+        hostPath:
+          path: /etc/linstor
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -524,7 +538,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.azk8s.cn/piraeusdatastore/piraeus-init:v0.5.3
+        image: daocloud.io/piraeus/piraeus-init:v0.5.5
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -547,7 +561,7 @@ spec:
           mountPath: /init
       containers:
       - name: scaler
-        image: quay.azk8s.cn/piraeusdatastore/piraeus-client:v1.0.11
+        image: daocloud.io/piraeus/piraeus-client:latest
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
@@ -678,7 +692,7 @@ spec:
       dnsPolicy: ClusterFirst
       containers:
       - name: csi-provisioner
-        image: quay.azk8s.cn/k8scsi/csi-provisioner:v1.5.0
+        image: daocloud.io/piraeus/csi-provisioner:v1.5.0
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -700,7 +714,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-attacher
-        image: quay.azk8s.cn/k8scsi/csi-attacher:v2.1.1
+        image: daocloud.io/piraeus/csi-attacher:v2.1.1
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -720,7 +734,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-snapshotter
-        image: quay.azk8s.cn/k8scsi/csi-snapshotter:v2.0.1
+        image: daocloud.io/piraeus/csi-snapshotter:v2.0.1
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -739,7 +753,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-cluster-driver-registrar
-        image: quay.azk8s.cn/k8scsi/csi-cluster-driver-registrar:v1.0.1
+        image: daocloud.io/piraeus/csi-cluster-driver-registrar:v1.0.1
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -758,7 +772,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: piraeus-csi-plugin
-        image: quay.azk8s.cn/piraeusdatastore/piraeus-csi:v0.7.4
+        image: daocloud.io/piraeus/piraeus-csi:v0.7.4
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -1145,7 +1159,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: csi-node-driver-registrar
-        image: quay.azk8s.cn/k8scsi/csi-node-driver-registrar:v1.2.0
+        image: daocloud.io/piraeus/csi-node-driver-registrar:v1.2.0
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -1179,7 +1193,7 @@ spec:
         - name: registration-dir
           mountPath: /registration/
       - name: piraeus-csi-plugin
-        image: quay.azk8s.cn/piraeusdatastore/piraeus-csi:v0.7.4
+        image: daocloud.io/piraeus/piraeus-csi:v0.7.4
         imagePullPolicy: IfNotPresent
         resources:
           limits:

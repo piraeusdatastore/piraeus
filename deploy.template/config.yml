@@ -3,14 +3,15 @@
 name: "piraeus"
 namespace: "piraeus-system"
 timezone: "/usr/share/zoneinfo/Etc/UTC"
-map_host_linstor: false
+map_host_linstor: true
 map_host_lvm: false
 set_priority_class: false
 registry: "quay.io/piraeusdatastore"
-initversion: "v0.5.3"
+etcdversion: "v3.4.7"
+initversion: "v0.5.5"
 contsatversion: "v1.4.2"
 csiversion: "v0.7.4"
-clientversion: "v1.0.11"
+clientversion: "latest"
 images:
   init: "piraeus-init"
   controller: "piraeus-server"

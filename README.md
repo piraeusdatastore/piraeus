@@ -27,7 +27,7 @@ The hosts should use Docker as their container runtime and be running one of the
 The nodes on which piraeus should provide or consume storage should be labelled as follows:
 
 ```
-kubectl label nodes $NODE_NAME piraeus/enabled=true
+kubectl label nodes $NODE_NAME piraeus/node=true
 ```
 
 These nodes must also have the appropriate kernel development package installed unless DRBD is already present.
