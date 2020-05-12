@@ -41,7 +41,7 @@ else
         drbd_image_name=drbd9-centos8
     elif [[ "$( uname -a )" =~ Ubuntu ]]; then
         drbd_image_name=drbd9-bionic
-        [[ "$( uname -r )" =~ 4\.15\. ]] && mount_usr_lib=/usr/lib:/usr/lib:ro
+        # [[ "$( uname -r )" =~ 4\.15\. ]] && mount_usr_lib=/usr/lib:/usr/lib:ro
     fi
 
     # run drbd9 driver loader
@@ -55,6 +55,7 @@ fi
 
 # edit drbd.conf
 cat > /etc/drbd.conf << 'EOF'
+include "drbd.d/global_common.conf";
 include "/etc/drbd.d/*.res";
 include "/var/lib/linstor.d/*.res";
 EOF
@@ -85,7 +86,7 @@ while [ "${SECONDS}" -lt '3600' ];  do
     else
         echo '... controller is DOWN'
     fi
-    sleep 1
+    sleep 5
 done
 
 # register node to cluster

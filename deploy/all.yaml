@@ -62,7 +62,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.4
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.5
         imagePullPolicy: Always
         resources:
           limits:
@@ -94,7 +94,7 @@ spec:
           mountPath: /var/lib/etcd
       containers:
       - name: etcd
-        image: quay.io/coreos/etcd:v3.4.5
+        image: quay.io/coreos/etcd:v3.4.7
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -220,7 +220,7 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.4
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.5
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -261,12 +261,11 @@ spec:
               fieldPath: status.podIP
         args:
         - startController
-        - --stack-traces
         readinessProbe:
-          successThreshold: 3
-          failureThreshold: 3
           httpGet:
             port: 3370
+          successThreshold: 3
+          failureThreshold: 3
           periodSeconds: 5
         volumeMounts:
         - name: timezone
@@ -340,7 +339,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.4
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.5
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
@@ -411,9 +410,6 @@ spec:
               fieldPath: spec.nodeName
         args:
         - startSatellite
-        - --stack-traces
-        - --log-level
-        - TRACE
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3
@@ -542,7 +538,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.4
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.5
         imagePullPolicy: IfNotPresent
         resources:
           limits:

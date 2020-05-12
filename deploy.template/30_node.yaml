@@ -123,9 +123,9 @@ spec:
         #@ if name() == "piraeus":
         args:
         - startSatellite
-        - --stack-traces
-        - --log-level
-        - TRACE
+        #! - --stack-traces
+        #! - --log-level
+        #! - TRACE
         #@ end
         readinessProbe:
           successThreshold: 3

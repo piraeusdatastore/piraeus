@@ -1,4 +1,4 @@
-#@ load("funcs.lib.yml", "name", "namespace", "timezone", "etcd", "etcdendpoint", "initimage", "set_priority_class")
+#@ load("funcs.lib.yml", "name", "namespace", "timezone", "etcd", "etcdimage", "etcdendpoint", "initimage", "set_priority_class")
 #! dns service for stable DNS entries of StatefulSet members.
 #! https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/
 ---
@@ -91,7 +91,7 @@ spec:
           mountPath: /var/lib/etcd
       containers:
       - name: etcd
-        image: quay.io/coreos/etcd:v3.4.5
+        image: #@ etcdimage()
         imagePullPolicy: IfNotPresent
         resources:
           #! requests:

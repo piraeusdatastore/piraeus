@@ -40,7 +40,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.4
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.5
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
@@ -111,9 +111,6 @@ spec:
               fieldPath: spec.nodeName
         args:
         - startSatellite
-        - --stack-traces
-        - --log-level
-        - TRACE
         readinessProbe:
           successThreshold: 3
           failureThreshold: 3

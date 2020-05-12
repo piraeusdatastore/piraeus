@@ -12,5 +12,5 @@ while [ "${SECONDS}" -lt '3600' ];  do
     else
         echo '... this node is OFFLINE'
     fi
-    sleep 1
+    sleep 5
 done
