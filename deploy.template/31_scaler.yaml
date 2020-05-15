@@ -94,7 +94,7 @@ spec:
         - name: POD_UID
           valueFrom:
             fieldRef:
-              fieldPath: metadata.uid         
+              fieldPath: metadata.uid
         - name: POD_IP
           valueFrom:
             fieldRef:

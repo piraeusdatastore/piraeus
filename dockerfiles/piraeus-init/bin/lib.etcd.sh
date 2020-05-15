@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 _curl () {
     curl -Ss --connect-timeout 1 --retry 3 --retry-delay 0 "$@"
@@ -28,7 +28,7 @@ _etcd_cluster() {
 
 _etcd_member_id() {
     _curl "${ETCD_ENDPOINT}"/v2/members | jq -r ".members[] | select(.name==\"$1\").id"
-} 
+}
 
 _etcd_remove_member() {
     member_id="$( _etcd_member_id "$1" )"

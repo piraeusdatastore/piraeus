@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh
 
 docker run --rm --net host -it \
 --env-file /opt/piraeus/client/env \

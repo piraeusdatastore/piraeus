@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh
 
 docker run --rm --privileged -it --net host \
 -v /etc/drbd.conf:/etc/drbd.conf:ro \

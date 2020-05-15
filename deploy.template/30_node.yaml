@@ -59,11 +59,11 @@ spec:
         envFrom:
         - configMapRef:
             name:  #@ node()
-        env:    
+        env:
         - name: POD_UID
           valueFrom:
             fieldRef:
-              fieldPath: metadata.uid        
+              fieldPath: metadata.uid
         - name: POD_IP
           valueFrom:
             fieldRef:
@@ -201,11 +201,11 @@ spec:
           path: /etc/drbd.d
       #@ if map_host_lvm():
       - name: run-lvm
-        hostPath:           
+        hostPath:
           path: /run/lvm
       - name: run-udev
-        hostPath:           
-          path: /run/udev 
+        hostPath:
+          path: /run/udev
       #@ end
       #@ if map_host_linstor():
       - name: var-lib-linstor-d
