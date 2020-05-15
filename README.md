@@ -65,6 +65,16 @@ kubectl -n piraeus-system exec -it piraeus-controller-0 -- linstor node list
 
 This should show that the selected nodes are `Online` at the LINSTOR level.
 
+### Upgrade
+
+`all.yaml` is only for installation.
+For upgrade, please use `upgrade.yaml`. It skips etcd upgrade (which is dangerous), and storageclass upgrade (which is immutable).
+
+```
+kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/deploy/upgrade.yaml
+```
+
+
 ### Using storage (demo)
 
 Piraeus preconfigures a `DfltStorPool` by using LINSTOR's `FileThin` backend, which is ready to use after yaml deployment.
