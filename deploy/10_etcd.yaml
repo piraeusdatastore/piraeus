@@ -6,8 +6,11 @@ metadata:
   labels:
     app.kubernetes.io/name: piraeus
     app.kubernetes.io/component: piraeus-etcd
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 spec:
   type: ClusterIP
+  publishNotReadyAddresses: true
   ports:
   - name: client
     port: 2379
@@ -29,6 +32,7 @@ metadata:
     app.kubernetes.io/component: piraeus-etcd
 spec:
   serviceName: piraeus-etcd
+  podManagementPolicy: Parallel
   replicas: 3
   updateStrategy:
     type: RollingUpdate
@@ -47,15 +51,15 @@ spec:
       dnsPolicy: ClusterFirst
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.5
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.6
         imagePullPolicy: Always
         resources:
           limits:
             cpu: 100m
             memory: 100Mi
         env:
-        - name: ETCD_ENDPOINT
-          value: piraeus-etcd.piraeus-system.svc.cluster.local:2379
+        - name: CLUSTER_SIZE
+          value: "3"
         - name: PEER_PORT
           value: "2380"
         - name: CLIENT_PORT
@@ -141,6 +145,10 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
+              - key: piraeus/etcd
+                operator: In
+                values:
+                - "true"
               - key: node-role.kubernetes.io/master
                 operator: DoesNotExist
       tolerations:
