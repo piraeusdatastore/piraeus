@@ -8,7 +8,7 @@ map_host_lvm: false
 set_priority_class: false
 registry: "quay.io/piraeusdatastore"
 etcdversion: "v3.4.7"
-initversion: "v0.5.5"
+initversion: "v0.5.6"
 contsatversion: "v1.4.2"
 csiversion: "v0.7.4"
 clientversion: "latest"

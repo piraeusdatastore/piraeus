@@ -12,6 +12,7 @@ parameters:
   placementPolicy: FollowTopology
   allowRemoteVolumeAccess: "false"
   disklessOnRemaining: "false"
+  csi.storage.k8s.io/fstype: xfs
   mountOpts: noatime,discard
   storagePool: DfltStorPool
 ---
@@ -46,6 +47,7 @@ parameters:
   placementPolicy: FollowTopology
   allowRemoteVolumeAccess: "false"
   disklessOnRemaining: "false"
+  csi.storage.k8s.io/fstype: xfs
   mountOpts: noatime,discard
   storagePool: DfltStorPool
 ---

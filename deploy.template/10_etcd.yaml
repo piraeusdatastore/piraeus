@@ -10,9 +10,11 @@ metadata:
   labels:
     app.kubernetes.io/name: #@ name()
     app.kubernetes.io/component: #@ etcd()
+  annotations: 
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 spec:
   type: ClusterIP
-  #! publishNotReadyAddresses: true
+  publishNotReadyAddresses: true
   ports:
   - name: client
     port: 2379
@@ -34,7 +36,7 @@ metadata:
     app.kubernetes.io/component: #@ etcd()
 spec:
   serviceName: #@ etcd()
-  #! podManagementPolicy: Parallel
+  podManagementPolicy: Parallel
   replicas: 3
   updateStrategy:
     type: RollingUpdate
@@ -66,8 +68,8 @@ spec:
             cpu: 100m
             memory: 100Mi
         env:
-        - name: ETCD_ENDPOINT
-          value: #@ etcdendpoint()
+        - name: CLUSTER_SIZE
+          value: '3'
         - name: PEER_PORT
           value: '2380'
         - name: CLIENT_PORT
@@ -155,10 +157,10 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              #! - key: piraeus/etcd
-              #!   operator: In
-              #!   values:
-              #!     - "true"
+              - key: piraeus/etcd
+                operator: In
+                values:
+                 - "true"
               - key: node-role.kubernetes.io/master
                 operator: DoesNotExist
       tolerations:

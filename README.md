@@ -24,6 +24,12 @@ The hosts should use Docker as their container runtime and be running one of the
 
 ### Node selection
 
+The 3 nodes on which piraeus runs etcd clusters should be labelled as follows:
+
+```
+kubectl label nodes $NODE_NAME piraeus/etcd=true
+```
+
 The nodes on which piraeus should provide or consume storage should be labelled as follows:
 
 ```

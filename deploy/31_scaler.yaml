@@ -44,7 +44,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
       - name: init
-        image: quay.io/piraeusdatastore/piraeus-init:v0.5.5
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.6
         imagePullPolicy: IfNotPresent
         resources:
           limits:

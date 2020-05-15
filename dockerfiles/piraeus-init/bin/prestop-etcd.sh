@@ -1,8 +1,10 @@
 #!/bin/sh
-# remove this member from the cluster and clean up the data dir
+data_dir=/var/lib/etcd/data
+# backup data dir if not empty
+if [ -d "$data_dir" ] && [ "$( ls -A "$data_dir" )" ]; then
+    mod_time="$( date +%Y-%m-%d_%H-%M-%S -r "$data_dir" )"
+    cp -vfr "$data_dir" "${data_dir}_${mod_time}"
+fi
 
-member_id="$( etcdctl member list -w fields | awk '/"MemberID"/ {print $NF}' )"
-
-etcdctl member remove "$( printf "%x" "$member_id" )"
-
-mv -vf /var/lib/etcd/data "/var/lib/etcd/data.$(date +%Y-%m-%d_%H-%M-%S)"
+etcdctl get --prefix "LINSTOR/" -w simple > "${data_dir}_${mod_time}/keys.txt"
+etcdctl get --prefix "LINSTOR/" -w json > "${data_dir}_${mod_time}/keys.json"
