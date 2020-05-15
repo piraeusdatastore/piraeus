@@ -79,8 +79,8 @@ _linstor_storage_pool_list() {
 _linstor_create_storage_pool() {
     cat > /init/tmp/.data.json << EOF
 {
-    "storage_pool_name": "$3", 
-    "provider_kind": "$1", 
+    "storage_pool_name": "$3",
+    "provider_kind": "$1",
     "props": {
         "StorDriver/FileDir": "$4"
     }
