@@ -1,0 +1,1153 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: piraeus
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: piraeus-system
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: piraeus-demo
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: piraeus-controller
+  namespace: piraeus-system
+data:
+  INIT_DEBUG: "false"
+  ETCD_ENDPOINTS: piraeus-etcd.piraeus-system.svc.cluster.local:2379
+  LS_CONTROLLERS: piraeus-controller.piraeus-system.svc.cluster.local:3370
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: piraeus-controller
+  namespace: piraeus-system
+  labels:
+    app.kubernetes.io/name: piraeus
+    app.kubernetes.io/component: piraeus-controller
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3370
+    name: rest-api
+    targetPort: 3370
+  selector:
+    app.kubernetes.io/name: piraeus
+    app.kubernetes.io/component: piraeus-controller
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: piraeus-controller
+  namespace: piraeus-system
+  labels:
+    app.kubernetes.io/name: piraeus
+    app.kubernetes.io/component: piraeus-controller
+spec:
+  serviceName: piraeus-controller
+  updateStrategy:
+    type: RollingUpdate
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: piraeus
+      app.kubernetes.io/component: piraeus-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: piraeus
+        app.kubernetes.io/component: piraeus-controller
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 0
+      dnsPolicy: ClusterFirst
+      initContainers:
+      - name: init
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.6
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        envFrom:
+        - configMapRef:
+            name: piraeus-controller
+        args:
+        - initController
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+      containers:
+      - name: controller
+        image: quay.io/piraeusdatastore/piraeus-server:v1.4.2
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        ports:
+        - name: rest-api
+          containerPort: 3370
+          hostPort: 3370
+        - name: plain
+          containerPort: 3376
+          hostPort: 3376
+        - name: ssl
+          containerPort: 3377
+          hostPort: 3377
+        env:
+        - name: THIS_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        args:
+        - startController
+        readinessProbe:
+          httpGet:
+            port: 3370
+          successThreshold: 3
+          failureThreshold: 3
+          periodSeconds: 5
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /etc/linstor
+          subPath: etc/linstor
+        - name: log
+          mountPath: /var/log/linstor-controller
+      volumes:
+      - name: timezone
+        hostPath:
+          path: /usr/share/zoneinfo/Etc/UTC
+      - name: init
+        emptyDir: {}
+      - name: log
+        hostPath:
+          path: /var/log/piraeus/linstor-controller
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      - key: CriticalAddonsOnly
+        operator: Exists
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: piraeus-node
+  namespace: piraeus-system
+data:
+  INIT_DEBUG: "false"
+  LS_CONTROLLERS: piraeus-controller.piraeus-system.svc.cluster.local:3370
+  POOL_BASE_DIR: /var/lib/piraeus/storagepools
+  DRBD_IMG_REPO: quay.io/piraeusdatastore
+  DRBD_IMG_TAG: v9.0.22
+  DRBD_IMG_PULL_POLICY: IfNotPresent
+  MAP_HOST_LVM: "true"
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: piraeus-node
+  namespace: piraeus-system
+spec:
+  minReadySeconds: 0
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: piraeus
+      app.kubernetes.io/component: piraeus-node
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: piraeus
+        app.kubernetes.io/component: piraeus-node
+    spec:
+      restartPolicy: Always
+      hostNetwork: true
+      hostPID: true
+      hostIPC: true
+      dnsPolicy: ClusterFirstWithHostNet
+      initContainers:
+      - name: init
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.6
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        envFrom:
+        - configMapRef:
+            name: piraeus-node
+        env:
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        args:
+        - initNode
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+        - name: dockersock
+          mountPath: /var/run/docker.sock
+        - name: usr-src
+          mountPath: /usr/src
+        - name: lib-modules
+          mountPath: /lib/modules
+        - name: opt-piraeus
+          mountPath: /opt/piraeus
+        - name: drbd-conf
+          mountPath: /etc/drbd.conf
+        - name: etc-drbd-d
+          mountPath: /etc/drbd.d
+      containers:
+      - name: satellite
+        image: quay.io/piraeusdatastore/piraeus-server:v1.4.2
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        resources:
+          limits:
+            cpu: 300m
+            memory: 300Mi
+        envFrom:
+        - configMapRef:
+            name: piraeus-node
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        args:
+        - startSatellite
+        readinessProbe:
+          successThreshold: 3
+          failureThreshold: 3
+          tcpSocket:
+            port: 3366
+          periodSeconds: 5
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+        - name: init
+          mountPath: /usr/bin/pre-start.sh
+          subPath: bin/prestart-node.sh
+        - name: log
+          mountPath: /var/log/linstor-satellite
+        - name: var-lib-piraeus
+          mountPath: /var/lib/piraeus
+        - name: dev
+          mountPath: /dev
+        - name: lib-modules
+          mountPath: /lib/modules
+        - name: var-lib-linstor-d
+          mountPath: /var/lib/linstor.d
+      volumes:
+      - name: timezone
+        hostPath:
+          path: /usr/share/zoneinfo/Etc/UTC
+      - name: init
+        emptyDir: {}
+      - name: opt-piraeus
+        hostPath:
+          path: /opt/piraeus
+      - name: var-lib-piraeus
+        hostPath:
+          path: /var/lib/piraeus
+      - name: log
+        hostPath:
+          path: /var/log/piraeus/linstor-satellite
+      - name: dev
+        hostPath:
+          path: /dev
+      - name: dockersock
+        hostPath:
+          path: /var/run/docker.sock
+          type: Socket
+      - name: usr-src
+        hostPath:
+          path: /usr/src
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+      - name: drbd-conf
+        hostPath:
+          path: /etc/drbd.conf
+          type: FileOrCreate
+      - name: etc-drbd-d
+        hostPath:
+          path: /etc/drbd.d
+      - name: var-lib-linstor-d
+        hostPath:
+          path: /var/lib/linstor.d
+      - name: etc-linstor
+        hostPath:
+          path: /etc/linstor
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: piraeus/node
+                operator: In
+                values:
+                - "true"
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      - key: CriticalAddonsOnly
+        operator: Exists
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: piraeus-scaler
+  namespace: piraeus-system
+data:
+  INIT_DEBUG: "false"
+  LS_CONTROLLERS: piraeus-controller.piraeus-system.svc.cluster.local:3370
+  POOL_BASE_DIR: /var/lib/piraeus/storagepools
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: piraeus-scaler-task
+  namespace: piraeus-system
+data:
+  task: ""
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: piraeus-scaler
+  namespace: piraeus-system
+spec:
+  minReadySeconds: 0
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: piraeus
+      app.kubernetes.io/component: piraeus-scaler
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: piraeus
+        app.kubernetes.io/component: piraeus-scaler
+    spec:
+      restartPolicy: Always
+      hostNetwork: true
+      hostPID: true
+      hostIPC: true
+      dnsPolicy: ClusterFirstWithHostNet
+      initContainers:
+      - name: init
+        image: quay.io/piraeusdatastore/piraeus-init:v0.5.6
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        envFrom:
+        - configMapRef:
+            name: piraeus-scaler
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        args:
+        - initScaler
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+      containers:
+      - name: scaler
+        image: quay.io/piraeusdatastore/piraeus-client:latest
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        envFrom:
+        - configMapRef:
+            name: piraeus-scaler
+        env:
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        command:
+        - /init/bin/run-scaler.sh
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+        - name: init
+          mountPath: /init
+        - name: run
+          mountPath: /var/run/task
+          subPath: task
+        - name: var-lib-piraeus
+          mountPath: /var/lib/piraeus
+        - name: dockersock
+          mountPath: /var/run/docker.sock
+        - name: usr-src
+          mountPath: /usr/src
+        - name: lib-modules
+          mountPath: /lib/modules
+      volumes:
+      - name: timezone
+        hostPath:
+          path: /usr/share/zoneinfo/Etc/UTC
+      - name: init
+        emptyDir: {}
+      - name: run
+        configMap:
+          name: piraeus-scaler-task
+          items:
+          - key: task
+            path: task
+            mode: 493
+      - name: var-lib-piraeus
+        hostPath:
+          path: /var/lib/piraeus
+      - name: dev
+        hostPath:
+          path: /dev
+      - name: dockersock
+        hostPath:
+          path: /var/run/docker.sock
+          type: Socket
+      - name: usr-src
+        hostPath:
+          path: /usr/src
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: piraeus/node
+                operator: In
+                values:
+                - "true"
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      - key: CriticalAddonsOnly
+        operator: Exists
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: piraeus-scaler-task
+  namespace: piraeus-system
+data:
+  task: |
+    #!/bin/sh -x
+    pool_name=DfltStorPool
+    pool_dir="${POOL_BASE_DIR}/${pool_name}"
+    mkdir -vp "$pool_dir"
+    linstor storage-pool list -n "$NODE_NAME" -s "$pool_name" | grep -vw "$pool_name" && \
+    linstor storage-pool create filethin "$NODE_NAME" "$pool_name" "$pool_dir"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: piraeus-csi-controller
+  namespace: piraeus-system
+  labels:
+    app.kubernetes.io/name: piraeus
+    app.kubernetes.io/component: piraeus-csi-controller
+spec:
+  serviceName: piraeus-csi-controller
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: piraeus
+      app.kubernetes.io/component: piraeus-csi-controller
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: piraeus
+        app.kubernetes.io/component: piraeus-csi-controller
+    spec:
+      serviceAccount: piraeus-csi-controller-sa
+      restartPolicy: Always
+      dnsPolicy: ClusterFirst
+      containers:
+      - name: csi-provisioner
+        image: quay.io/k8scsi/csi-provisioner:v1.5.0
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        args:
+        - --csi-address=$(ADDRESS)
+        - --v=5
+        - --feature-gates=Topology=true
+        - --timeout=120s
+        - --enable-leader-election
+        - --leader-election-type=leases
+        env:
+        - name: ADDRESS
+          value: /var/lib/csi/sockets/pluginproxy/csi.sock
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+        - name: socket-dir
+          mountPath: /var/lib/csi/sockets/pluginproxy/
+      - name: csi-attacher
+        image: quay.io/k8scsi/csi-attacher:v2.1.1
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        args:
+        - --v=5
+        - --csi-address=$(ADDRESS)
+        - --timeout=120s
+        - --leader-election=true
+        env:
+        - name: ADDRESS
+          value: /var/lib/csi/sockets/pluginproxy/csi.sock
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+        - name: socket-dir
+          mountPath: /var/lib/csi/sockets/pluginproxy/
+      - name: csi-snapshotter
+        image: quay.io/k8scsi/csi-snapshotter:v2.0.1
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        args:
+        - --csi-address=$(ADDRESS)
+        - --timeout=120s
+        - --leader-election=true
+        env:
+        - name: ADDRESS
+          value: /var/lib/csi/sockets/pluginproxy/csi.sock
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+        - name: socket-dir
+          mountPath: /var/lib/csi/sockets/pluginproxy/
+      - name: csi-cluster-driver-registrar
+        image: quay.io/k8scsi/csi-cluster-driver-registrar:v1.0.1
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        args:
+        - --v=5
+        - --pod-info-mount-version="v1"
+        - --csi-address=$(ADDRESS)
+        env:
+        - name: ADDRESS
+          value: /var/lib/csi/sockets/pluginproxy/csi.sock
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+        - name: socket-dir
+          mountPath: /var/lib/csi/sockets/pluginproxy/
+      - name: piraeus-csi-plugin
+        image: quay.io/piraeusdatastore/piraeus-csi:v0.7.4
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        args:
+        - --csi-endpoint=$(CSI_ENDPOINT)
+        - --node=$(KUBE_NODE_NAME)
+        - --linstor-endpoint=$(LS_CONTROLLERS)
+        - --log-level=debug
+        env:
+        - name: CSI_ENDPOINT
+          value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
+        - name: KUBE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: LS_CONTROLLERS
+          value: http://piraeus-controller.piraeus-system.svc.cluster.local:3370
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+        - name: socket-dir
+          mountPath: /var/lib/csi/sockets/pluginproxy/
+      volumes:
+      - name: timezone
+        hostPath:
+          path: /usr/share/zoneinfo/Etc/UTC
+      - name: socket-dir
+        emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: In
+                values:
+                - piraeus-csi-controller
+            topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      - key: CriticalAddonsOnly
+        operator: Exists
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: piraeus-csi-controller-sa
+  namespace: piraeus-system
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: piraeus-csi-controller-provisioner-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - list
+  - watch
+  - create
+  - update
+  - patch
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshots
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshotcontents
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - '*'
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: piraeus-csi-controller-provisioner-binding
+subjects:
+- kind: ServiceAccount
+  name: piraeus-csi-controller-sa
+  namespace: piraeus-system
+roleRef:
+  kind: ClusterRole
+  name: piraeus-csi-controller-provisioner-role
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: piraeus-csi-controller-attacher-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - csinodes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - volumeattachments
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - '*'
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: piraeus-csi-controller-attacher-binding
+subjects:
+- kind: ServiceAccount
+  name: piraeus-csi-controller-sa
+  namespace: piraeus-system
+roleRef:
+  kind: ClusterRole
+  name: piraeus-csi-controller-attacher-role
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: piraeus-csi-controller-cluster-driver-registrar-role
+rules:
+- apiGroups:
+  - csi.storage.k8s.io
+  resources:
+  - csidrivers
+  verbs:
+  - create
+  - delete
+  - list
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - create
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - '*'
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: piraeus-csi-controller-cluster-driver-registrar-binding
+subjects:
+- kind: ServiceAccount
+  name: piraeus-csi-controller-sa
+  namespace: piraeus-system
+roleRef:
+  kind: ClusterRole
+  name: piraeus-csi-controller-cluster-driver-registrar-role
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: piraeus-csi-controller-snapshotter-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - list
+  - watch
+  - create
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshotclasses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshotcontents
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - delete
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshots
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - create
+  - list
+  - watch
+  - delete
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshots/status
+  verbs:
+  - update
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - '*'
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: piraeus-csi-controller-snapshotter-binding
+subjects:
+- kind: ServiceAccount
+  name: piraeus-controller-sa
+  namespace: piraeus-system
+roleRef:
+  kind: ClusterRole
+  name: piraeus-csi-controller-snapshotter-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: storage.k8s.io/v1beta1
+kind: CSIDriver
+metadata:
+  name: linstor.csi.linbit.com
+spec:
+  attachRequired: true
+  podInfoOnMount: true
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: piraeus-csi-node
+  namespace: piraeus-system
+spec:
+  minReadySeconds: 0
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: piraeus
+      app.kubernetes.io/component: piraeus-csi-node
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: piraeus
+        app.kubernetes.io/component: piraeus-csi-node
+    spec:
+      serviceAccount: piraeus-csi-node-sa
+      restartPolicy: Always
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: csi-node-driver-registrar
+        image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        args:
+        - --v=5
+        - --csi-address=$(ADDRESS)
+        - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - rm -rf /registration/linstor.csi.linbit.com /registration/linstor.csi.linbit.com-reg.sock
+        env:
+        - name: ADDRESS
+          value: /csi/csi.sock
+        - name: DRIVER_REG_SOCK_PATH
+          value: /var/lib/kubelet/plugins/linstor.csi.linbit.com/csi.sock
+        - name: KUBE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+        - name: plugin-dir
+          mountPath: /csi/
+        - name: registration-dir
+          mountPath: /registration/
+      - name: piraeus-csi-plugin
+        image: quay.io/piraeusdatastore/piraeus-csi:v0.7.4
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        args:
+        - --csi-endpoint=$(CSI_ENDPOINT)
+        - --node=$(KUBE_NODE_NAME)
+        - --linstor-endpoint=$(LS_CONTROLLERS)
+        - --log-level=debug
+        env:
+        - name: CSI_ENDPOINT
+          value: unix:///csi/csi.sock
+        - name: KUBE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: LS_CONTROLLERS
+          value: http://piraeus-controller.piraeus-system.svc.cluster.local:3370
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+            - SYS_ADMIN
+          allowPrivilegeEscalation: true
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+        - name: plugin-dir
+          mountPath: /csi
+        - name: pods-mount-dir
+          mountPath: /var/lib/kubelet
+          mountPropagation: Bidirectional
+        - name: device-dir
+          mountPath: /dev
+      volumes:
+      - name: timezone
+        hostPath:
+          path: /usr/share/zoneinfo/Etc/UTC
+      - name: registration-dir
+        hostPath:
+          path: /var/lib/kubelet/plugins_registry/
+          type: DirectoryOrCreate
+      - name: plugin-dir
+        hostPath:
+          path: /var/lib/kubelet/plugins/linstor.csi.linbit.com/
+          type: DirectoryOrCreate
+      - name: pods-mount-dir
+        hostPath:
+          path: /var/lib/kubelet
+          type: Directory
+      - name: device-dir
+        hostPath:
+          path: /dev
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: piraeus/node
+                operator: In
+                values:
+                - "true"
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      - key: CriticalAddonsOnly
+        operator: Exists
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: piraeus-csi-node-sa
+  namespace: piraeus-system
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: piraeus-csi-node-driver-registrar-role
+  namespace: piraeus-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: piraeus-csi-node-driver-registrar-binding
+subjects:
+- kind: ServiceAccount
+  name: piraeus-csi-node-sa
+  namespace: piraeus-system
+roleRef:
+  kind: ClusterRole
+  name: piraeus-csi-node-driver-registrar-role
+  apiGroup: rbac.authorization.k8s.io
+---
