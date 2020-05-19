@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 _curl () {
     curl -Ss --connect-timeout 1 --retry 3 --retry-delay 0 "$@"
@@ -28,7 +28,7 @@ _etcd_cluster() {
 
 _etcd_member_id() {
     _curl "${ETCD_ENDPOINT}"/v2/members | jq -r ".members[] | select(.name==\"$1\").id"
-} 
+}
 
 _etcd_remove_member() {
     member_id="$( _etcd_member_id "$1" )"
@@ -49,10 +49,9 @@ EOF
     | jq '.'
 }
 
-_etcd_reset_data_dir() {
+_etcd_backup_data_dir() {
     timestamp="$( date +%Y-%m-%d_%H-%M-%S )"
     data_dir=/var/lib/etcd/data
     [ -d "$data_dir" ] && \
-    mv -vf "$data_dir" "${data_dir}.${timestamp}"
-    mkdir -vp "$data_dir"
+    cp -vrf "$data_dir" "${data_dir}.${timestamp}"
 }

@@ -8,5 +8,5 @@ if [ "$MAP_HOST_LVM" = 'true' ]; then
 #!/bin/sh
 nsenter --target 1 --mount --uts --ipc --net --pid -- "$(basename $0)" "$@"
 EOF
-    chmod +x "$cmdpath" 
+    chmod +x "$cmdpath"
 fi
