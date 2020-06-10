@@ -19,14 +19,7 @@ docker run -it --rm --privileged \
    -v /lib/modules:/lib/modules:ro -v /usr/src:/usr/src:ro \
    piraeusdatastore/drbd9-centos7:latest
 ```
-
-## Ubuntu based systems:
-
-```sh
-docker run -it --rm --privileged \
-   -v /lib/modules:/lib/modules:ro -v /usr/src:/usr/src:ro -v /usr/lib:/usr/lib:ro \
-   piraeusdatastore/drbd9-bionic:latest
-```
+We provide loader images for Ubuntu Bionic, and RHEL/CentOS 7/8.
 
 ## Installing the kernel objects to the host
 
