@@ -26,10 +26,10 @@ upload:
 			docker tag $$pd:$(TAG) $$r/$$pd:$(TAG) ; \
 			docker tag $$pd:$(TAG) $$r/$$pd:latest ; \
 				if [ "$$f" = "${DEFAULT_CENTOS}" ]; then \
-					docker tag $$pd:$(TAG) $$r/centos:$(TAG) ; \
-					docker tag $$pd:$(TAG) $$r/centos:latest ; \
-					docker push $$r/centos:$(TAG) ; \
-					docker push $$r/centos:latest ; \
+					docker tag $$pd:$(TAG) $$r/drbd9-centos:$(TAG) ; \
+					docker tag $$pd:$(TAG) $$r/drbd9-centos:latest ; \
+					docker push $$r/drbd9-centos:$(TAG) ; \
+					docker push $$r/drbd9-centos:latest ; \
 				fi; \
 			docker push $$r/$$pd:$(TAG) ; \
 			docker push $$r/$$pd:latest ; \
