@@ -50,5 +50,9 @@ Additionally, container images provided by LINBIT as commercal offer on [drbd.io
 on RHEL/UBI images and are for example OpenShift certified.
 
 # Maintainer workflow
-- `make update TAG=v1.0.0 NOCACHE=true`
-- `make upload TAG=v1.0.0 REGISTRY='quay.io/piraeusdatastore piraeusdatastore'`
+Let github do it for you! See [our github workflow!](../../.github/workflows/build-injector.yaml)
+
+or
+
+- `make update NOCACHE=true`
+- `make upload REGISTRY='quay.io/piraeusdatastore'`
