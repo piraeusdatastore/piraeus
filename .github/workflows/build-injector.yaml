@@ -1,0 +1,26 @@
+name: Build driver loader
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - dockerfiles/drbd-driver-loader/*
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: build images
+        run: |
+          cd dockerfiles/drbd-driver-loader
+          make update
+      - name: login to registry
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          docker login --username=${DOCKER_USERNAME} --password-stdin quay.io <<< "${DOCKER_PASSWORD}"
+      - name: push images
+        run: |
+          cd dockerfiles/drbd-driver-loader
+          make upload REGISTRY=quay.io/piraeusdatastore
