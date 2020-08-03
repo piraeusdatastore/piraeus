@@ -1,5 +1,7 @@
 PROJECT ?= piraeus-server
 REGISTRY ?= piraeusdatastore
+K8S_AWAIT_ELECTION_VERSION ?= v0.1.0
+ARCH ?= amd64
 TAG ?= latest
 NOCACHE ?= false
 
@@ -10,7 +12,7 @@ all: update upload
 
 .PHONY: update
 update:
-	docker build --no-cache=$(NOCACHE) -t $(PROJECT):$(TAG) .
+	docker build --build-arg K8S_AWAIT_ELECTION_VERSION=$(K8S_AWAIT_ELECTION_VERSION) --build-arg ARCH=$(ARCH) --no-cache=$(NOCACHE) -t $(PROJECT):$(TAG) .
 	docker tag $(PROJECT):$(TAG) $(PROJECT):latest
 
 .PHONY: upload
