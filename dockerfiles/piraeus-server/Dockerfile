@@ -31,5 +31,10 @@ EXPOSE 3366/tcp 3367/tcp
 
 COPY entry.sh /usr/bin/piraeus-entry.sh
 
+ARG ARCH
+ARG K8S_AWAIT_ELECTION_VERSION
+
+RUN wget https://github.com/LINBIT/k8s-await-election/releases/download/${K8S_AWAIT_ELECTION_VERSION}/k8s-await-election-${K8S_AWAIT_ELECTION_VERSION}-linux-${ARCH}.tar.gz -O - | tar -xvz -C /usr/bin/
+
 CMD ["startSatellite"]
-ENTRYPOINT ["/usr/bin/piraeus-entry.sh"]
+ENTRYPOINT ["/usr/bin/k8s-await-election", "/usr/bin/piraeus-entry.sh"]
