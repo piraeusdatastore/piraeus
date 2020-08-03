@@ -49,7 +49,7 @@ kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/mast
 
 This may take several minutes. You may observe the pods by command:
 ```
-kubectl -n kube-system get pod -l app.kubernetes.io/name=piraeus
+kubectl -n piraeus-system get pod -l app.kubernetes.io/name=piraeus
 ```
 Once the pods have started, the status of Piraeus can be checked by following commands.
 
@@ -83,7 +83,7 @@ The [demo](demo) directory contains examples of how to use `DfltStorPool`.
 For instance:
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/demo/demo-sts.yaml
+kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/demo/mysql/demo-sts-mysql.yaml
 ```
 
 This demo statefulset is a 3-node MySQL cluster. Demo pods and pvcs are under `piraeus` namespace.
