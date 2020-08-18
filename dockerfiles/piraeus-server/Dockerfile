@@ -2,6 +2,8 @@ FROM debian:buster
 
 MAINTAINER Roland Kammerer <roland.kammerer@linbit.com>
 
+ARG LINSTOR_VERSION
+
 RUN { echo 'APT::Install-Recommends "false";' ; echo 'APT::Install-Suggests "false";' ; } > /etc/apt/apt.conf.d/99_piraeus
 RUN apt-get update && apt-get install -y wget ca-certificates
 RUN apt-get install -y gnupg2 && \
@@ -9,10 +11,10 @@ RUN apt-get install -y gnupg2 && \
 	 echo "deb http://packages.linbit.com/piraeus buster drbd-9.0" > /etc/apt/sources.list.d/linbit.list && \
 	 apt-get update && \
 	 apt-get install -y default-jre-headless && \
-	 apt-get install -y udev linstor-controller linstor-satellite linstor-client \
-	 drbd-utils wget xfsprogs jq procps nvme-cli \
+	 apt-get install -y udev drbd-utils wget xfsprogs jq procps nvme-cli \
 	 net-tools iputils-ping iproute2 dnsutils netcat sysstat curl \
 	 util-linux && \
+	 apt-get install -y linstor-controller=$LINSTOR_VERSION linstor-satellite=$LINSTOR_VERSION linstor-common=$LINSTOR_VERSION  linstor-client && \
 	 apt-get clean
 # remove jre-headless with linstor 0.9.13
 
