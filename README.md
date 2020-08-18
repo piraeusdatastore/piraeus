@@ -163,7 +163,7 @@ If the error is
 /init/bin/init-node.sh: line 57: /etc/drbd.conf: Is a directory 
 ```
 
-Login into each node, remove the directory and create a file
+Login into each node, remove the directory and create a new file
 
 ```
 sudo rm -Rf /etc/drbd.conf
