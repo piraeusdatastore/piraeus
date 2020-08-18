@@ -1,0 +1,26 @@
+name: Build piraeus-server
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - dockerfiles/piraeus-server/*
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: build images
+        run: |
+          cd dockerfiles/piraeus-server
+          make update
+      - name: login to registry
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          docker login --username=${DOCKER_USERNAME} --password-stdin "quay.io" <<< "${DOCKER_PASSWORD}"
+      - name: push images
+        run: |
+          cd dockerfiles/piraeus-server
+          make upload REGISTRY="quay.io/piraeusdatastore"
