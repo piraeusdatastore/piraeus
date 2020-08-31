@@ -5,6 +5,7 @@ on:
       - master
     paths:
       - dockerfiles/drbd-driver-loader/*
+      - .github/workflows/build-injector.yaml
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -16,11 +17,14 @@ jobs:
           make update
       - name: login to registry
         env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          QUAYIO_USERNAME: ${{ secrets.QUAYIO_USERNAME }}
+          QUAYIO_PASSWORD: ${{ secrets.QUAYIO_PASSWORD }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         run: |
-          docker login --username=${DOCKER_USERNAME} --password-stdin quay.io <<< "${DOCKER_PASSWORD}"
+          docker login --username=${QUAYIO_USERNAME} --password-stdin quay.io <<< "${QUAYIO_PASSWORD}"
+          docker login --username=${DOCKERHUB_USERNAME} --password-stdin docker.io <<< "${DOCKERHUB_PASSWORD}"
       - name: push images
         run: |
           cd dockerfiles/drbd-driver-loader
-          make upload REGISTRY=quay.io/piraeusdatastore
+          make upload REGISTRY="quay.io/piraeusdatastore docker.io/piraeusdatastore"
