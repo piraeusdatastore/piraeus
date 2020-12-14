@@ -1,5 +1,5 @@
 PROJECT ?= drbd9
-DF = Dockerfile.centos7 Dockerfile.centos8 Dockerfile.bionic
+DF = Dockerfile.centos7 Dockerfile.centos8 Dockerfile.bionic Dockerfile.focal
 DEFAULT_CENTOS = Dockerfile.centos7
 REGISTRY ?= piraeusdatastore
 NOCACHE ?= false
