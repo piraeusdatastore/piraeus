@@ -10,13 +10,16 @@ RUN apt-get install -y gnupg2 && \
 	 wget -O- https://packages.linbit.com/package-signing-pubkey.asc | apt-key add - && \
 	 echo "deb http://packages.linbit.com/piraeus buster drbd-9.0" > /etc/apt/sources.list.d/linbit.list && \
 	 apt-get update && \
-	 apt-get install -y default-jre-headless && \
 	 apt-get install -y udev drbd-utils wget xfsprogs jq procps nvme-cli \
 	 net-tools iputils-ping iproute2 dnsutils netcat sysstat curl \
 	 util-linux && \
 	 apt-get install -y linstor-controller=$LINSTOR_VERSION linstor-satellite=$LINSTOR_VERSION linstor-common=$LINSTOR_VERSION  linstor-client && \
 	 apt-get clean
-# remove jre-headless with linstor 0.9.13
+
+# Log directory need to be group writable. OpenShift assigns random UID and GID, without extra RBAC changes we can only influence the GID.
+RUN mkdir /var/log/linstor-controller && \
+	 chown 0:1000 /var/log/linstor-controller && \
+	 chmod -R 0775 /var/log/linstor-controller
 
 # satellite
 RUN wget https://packages.linbit.com/piraeus/lvm2_2.03.02-3+b1_amd64.deb -O /tmp/l.deb && { dpkg -i /tmp/l.deb; apt-get install -y -f; } && rm -f /tmp/l.deb && apt-get remove -y udev && apt-get clean
