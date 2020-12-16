@@ -22,11 +22,14 @@ RUN mkdir /var/log/linstor-controller && \
 	 chmod -R 0775 /var/log/linstor-controller
 
 # satellite
-RUN wget https://packages.linbit.com/piraeus/lvm2_2.03.02-3+b1_amd64.deb -O /tmp/l.deb && { dpkg -i /tmp/l.deb; apt-get install -y -f; } && rm -f /tmp/l.deb && apt-get remove -y udev && apt-get clean
+# needs a newer lvm, debian bug #932433
+COPY preferences /etc/apt/preferences
+RUN echo 'deb http://deb.debian.org/debian/ bullseye main contrib' >> /etc/apt/sources.list && \
+	apt-get update && apt-get install -y -t testing lvm2 && apt-get remove -y udev && apt-get clean
 RUN sed -i 's/udev_rules.*=.*/udev_rules=0/ ; s/udev_sync.*=.*/udev_sync=0/ ; s/obtain_device_list_from_udev.*=.*/obtain_device_list_from_udev=0/' /etc/lvm/lvm.conf
 
-# only get zfsutils from backports
-RUN echo 'deb http://deb.debian.org/debian buster-backports main contrib' > /etc/apt/sources.list && apt update && apt-get install -y zfsutils-linux && apt clean all
+# get zfsutils from testing
+RUN apt-get install -y -t testing zfsutils-linux && apt-get clean
 
 # controller
 EXPOSE 3376/tcp 3377/tcp 3370/tcp 3371/tcp
