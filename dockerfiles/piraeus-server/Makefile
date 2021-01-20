@@ -1,6 +1,6 @@
 PROJECT ?= piraeus-server
 REGISTRY ?= piraeusdatastore
-K8S_AWAIT_ELECTION_VERSION ?= v0.2.2
+K8S_AWAIT_ELECTION_VERSION ?= v0.2.3
 ARCH ?= amd64
 NOCACHE ?= false
 
