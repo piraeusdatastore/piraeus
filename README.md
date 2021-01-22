@@ -49,7 +49,7 @@ kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/mast
 
 This may take several minutes. You may observe the pods by command:
 ```
-kubectl -n kube-system get pod -l app.kubernetes.io/name=piraeus
+kubectl -n piraeus-system get pod -l app.kubernetes.io/name=piraeus
 ```
 Once the pods have started, the status of Piraeus can be checked by following commands.
 
@@ -83,7 +83,7 @@ The [demo](demo) directory contains examples of how to use `DfltStorPool`.
 For instance:
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/demo/demo-sts.yaml
+kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/demo/mysql/demo-sts-mysql.yaml
 ```
 
 This demo statefulset is a 3-node MySQL cluster. Demo pods and pvcs are under `piraeus` namespace.
@@ -140,3 +140,38 @@ kernel modules from source and load them into the host kernel.
 [linstor-client](https://github.com/LINBIT/linstor-client) which can be used for cluster setup.  It also
 contains some useful debugging tools.
 - [piraeus-client](dockerfiles/piraeus-client) is a stand alone version of the [linstor-client](https://github.com/LINBIT/linstor-client).
+
+## Toubleshooting
+
+### Init container doesn't start
+
+Identify the POD that has issues
+
+```
+kubectl -n piraeus-system get pods
+```
+
+Check the logs of the POD having issues
+
+```
+kubectl -n piraeus-system logs <POD name> -c init
+```
+
+If the error is  
+
+```
+/init/bin/init-node.sh: line 57: /etc/drbd.conf: Is a directory 
+```
+
+Login into each node, remove the directory and create a new file
+
+```
+sudo rm -Rf /etc/drbd.conf
+sudo touch /etc/drbd.conf
+```
+
+Delete the POD to recrete it
+
+```
+kubectl -n piraeus-system delete pod <POD name>
+```
