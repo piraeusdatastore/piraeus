@@ -49,7 +49,7 @@ kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/mast
 
 This may take several minutes. You may observe the pods by command:
 ```
-kubectl -n kube-system get pod -l app.kubernetes.io/name=piraeus
+kubectl -n piraeus-system get pod -l app.kubernetes.io/name=piraeus
 ```
 Once the pods have started, the status of Piraeus can be checked by following commands.
 
