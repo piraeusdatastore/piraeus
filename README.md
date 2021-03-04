@@ -38,7 +38,7 @@ This is `kernel-devel` for CentOS based distributions and `` linux-headers-`unam
 Install as follows:
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/deploy/all.yaml
+kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/legacy/deploy/all.yaml
 ```
 
 This may take several minutes. You may observe the pods by command:
@@ -67,7 +67,7 @@ The [demo](demo) directory contains examples of how to use `DfltStorPool`.
 For instance:
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/demo/demo-sts.yaml
+kubectl apply -f https://raw.githubusercontent.com/piraeusdatastore/piraeus/master/legacy/demo/mysql/demo-sts-mysql.yaml
 ```
 
 This demo statefulset is a 3-node MySQL cluster. Demo pods and pvcs are under `piraeus` namespace.
