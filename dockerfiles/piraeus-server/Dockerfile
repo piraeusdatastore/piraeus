@@ -19,7 +19,9 @@ RUN apt-get install -y gnupg2 && \
 # Log directory need to be group writable. OpenShift assigns random UID and GID, without extra RBAC changes we can only influence the GID.
 RUN mkdir /var/log/linstor-controller && \
 	 chown 0:1000 /var/log/linstor-controller && \
-	 chmod -R 0775 /var/log/linstor-controller
+	 chmod -R 0775 /var/log/linstor-controller && \
+	 # Ensure we log to files in containers, otherwise SOS reports won't show any logs at all
+	 sed -i 's#<!-- <appender-ref ref="FILE" /> -->#<appender-ref ref="FILE" />#' /usr/share/linstor-server/lib/conf/logback.xml
 
 # satellite
 # needs a newer lvm, debian bug #932433
