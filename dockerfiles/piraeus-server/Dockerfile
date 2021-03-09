@@ -12,7 +12,7 @@ RUN apt-get install -y gnupg2 && \
 	 apt-get update && \
 	 apt-get install -y udev drbd-utils wget xfsprogs jq procps nvme-cli \
 	 net-tools iputils-ping iproute2 dnsutils netcat sysstat curl \
-	 util-linux && \
+	 util-linux cryptsetup && \
 	 apt-get install -y linstor-controller=$LINSTOR_VERSION linstor-satellite=$LINSTOR_VERSION linstor-common=$LINSTOR_VERSION  linstor-client && \
 	 apt-get clean
 
