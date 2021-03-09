@@ -1,5 +1,6 @@
 name: Build piraeus-client
 on:
+  workflow_dispatch:
   push:
     branches:
       - master

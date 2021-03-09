@@ -1,5 +1,6 @@
 name: Build piraeus-server
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
