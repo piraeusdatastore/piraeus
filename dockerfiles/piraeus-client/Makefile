@@ -10,7 +10,7 @@ all: update upload
 .PHONY: update
 update:
 	. ./VERSION.env ; \
-	docker build --build-arg LINSTOR_CLIENT_VERSION=$$LINSTOR_CLIENT_VERSION --no-cache=$(NOCACHE) -t $(PROJECT):v$$LINSTOR_CLIENT_VERSION . ; \
+	docker build --build-arg LINSTOR_CLIENT_VERSION=$$LINSTOR_CLIENT_VERSION --build-arg PYTHON_LINSTOR_VERSION=$$PYTHON_LINSTOR_VERSION --no-cache=$(NOCACHE) -t $(PROJECT):v$$LINSTOR_CLIENT_VERSION . ; \
 	docker tag $(PROJECT):v$$LINSTOR_CLIENT_VERSION $(PROJECT):v$$SHORT_VERSION ; \
 	docker tag $(PROJECT):v$$LINSTOR_CLIENT_VERSION $(PROJECT):latest
 
