@@ -1,0 +1,31 @@
+name: Build drbd-reactor
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - dockerfiles/drbd-reactor/*
+      - .github/workflows/build-drbd-reactor.yaml
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: build images
+        run: |
+          cd dockerfiles/drbd-reactor
+          make update
+      - name: login to registry
+        env:
+          QUAYIO_USERNAME: ${{ secrets.QUAYIO_USERNAME }}
+          QUAYIO_PASSWORD: ${{ secrets.QUAYIO_PASSWORD }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+        run: |
+          docker login --username=${QUAYIO_USERNAME} --password-stdin quay.io <<< "${QUAYIO_PASSWORD}"
+          docker login --username=${DOCKERHUB_USERNAME} --password-stdin docker.io <<< "${DOCKERHUB_PASSWORD}"
+      - name: push images
+        run: |
+          cd dockerfiles/drbd-reactor
+          make upload REGISTRY="quay.io/piraeusdatastore docker.io/piraeusdatastore"
