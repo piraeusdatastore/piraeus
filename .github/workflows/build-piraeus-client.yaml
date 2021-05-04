@@ -29,6 +29,8 @@ jobs:
           echo ::set-output name=tags::${TAGS}
           echo ::set-output name=docker_image::${DOCKERHUB_IMAGAE}
           echo ::set-output name=quay_image::${QUAYIO_IMAGE}
+          echo ::set-output name=linstor_client_version::${LINSTOR_CLIENT_VERSION}
+          echo ::set-output name=python_linstor_version::${PYTHON_LINSTOR_VERSION}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@master
@@ -53,6 +55,9 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           builder: ${{ steps.buildx.outputs.name }}
+          build-args: |
+            LINSTOR_CLIENT_VERSION=${{ steps.prep.outputs.linstor_client_version }}
+            PYTHON_LINSTOR_VERSION=${{ steps.prep.outputs.python_linstor_version }}
           context: dockerfiles/piraeus-client
           platforms: linux/amd64,linux/arm64
           push: true
