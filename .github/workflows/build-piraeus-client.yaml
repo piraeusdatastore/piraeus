@@ -23,9 +23,7 @@ jobs:
           cd dockerfiles/piraeus-client
           . ./VERSION.env
 
-          DOCKERHUB_TAGS="${DOCKERHUB_IMAGAE}:${VERSION},${DOCKERHUB_IMAGAE}:${SHORT_VERSION}",${DOCKERHUB_IMAGAE}:latest"
-          QUAYIO_TAGS="${QUAYIO_IMAGE}:${VERSION},${QUAYIO_IMAGE}:${SHORT_VERSION}",${QUAYIO_IMAGE}:latest"
-          TAGS="${QUAYIO_TAGS},${DOCKERHUB_TAGS}"
+          TAGS="${DOCKERHUB_IMAGAE}:${LINSTOR_CLIENT_VERSION},${DOCKERHUB_IMAGAE}:${SHORT_VERSION}",${DOCKERHUB_IMAGAE}:latest,${QUAYIO_IMAGE}:${LINSTOR_CLIENT_VERSION},${QUAYIO_IMAGE}:${SHORT_VERSION}",${QUAYIO_IMAGE}:latest"
 
           # Set output parameters.
           echo ::set-output name=tags::${TAGS}
