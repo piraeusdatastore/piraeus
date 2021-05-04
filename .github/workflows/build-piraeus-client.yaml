@@ -23,10 +23,15 @@ jobs:
           cd dockerfiles/piraeus-client
           . ./VERSION.env
 
-          TAGS="${DOCKERHUB_IMAGAE}:${LINSTOR_CLIENT_VERSION},${DOCKERHUB_IMAGAE}:${SHORT_VERSION}",${DOCKERHUB_IMAGAE}:latest,${QUAYIO_IMAGE}:${LINSTOR_CLIENT_VERSION},${QUAYIO_IMAGE}:${SHORT_VERSION}",${QUAYIO_IMAGE}:latest"
+          
+          TAGS="${VERSION} ${LINSTOR_CLIENT_VERSION} ${SHORT_VERSION}"
+          IMAGE_TAGS=""
+          for t in $(TAGS); do
+            IMAGE_TAGS="$IMAGE_TAGS,${DOCKERHUB_IMAGAE}:$t,${QUAYIO_IMAGE}:$t"
+          done
 
           # Set output parameters.
-          echo ::set-output name=tags::${TAGS}
+          echo ::set-output name=image_tags::${IMAGE_TAGS}
           echo ::set-output name=docker_image::${DOCKERHUB_IMAGAE}
           echo ::set-output name=quay_image::${QUAYIO_IMAGE}
           echo ::set-output name=linstor_client_version::${LINSTOR_CLIENT_VERSION}
@@ -61,4 +66,4 @@ jobs:
           context: dockerfiles/piraeus-client
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.prep.outputs.tags }}
+          tags: ${{ steps.prep.outputs.image_tags }}
