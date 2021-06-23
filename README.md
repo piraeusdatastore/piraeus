@@ -19,6 +19,8 @@ The Piraeus Project consists of:
 [DRBD]: https://github.com/LINBIT/drbd-9.0
 [LINSTOR]: https://github.com/LINBIT/linstor-server
 
+Piraeus is a [CNCF Sandbox Project](https://www.cncf.io/sandbox-projects/).
+
 ## Getting started
 
 Installing Piraeus can be as easy as:
