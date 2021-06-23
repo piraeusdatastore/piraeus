@@ -52,6 +52,18 @@ A Piraeus repository may contain its own CONTRIBUTING file, containing instructi
 In general, we like to keep our git history readable by making liberal use of [`git rebase`](https://git-scm.com/book/en/v2/Git-Branching-Rebasing)
 before creating a pull request.
 
+Every contributer has to certify that any changes in a pull request are their own, or that they have the right to share
+the code. This is done via a [Developer Certificate of Origin](https://developercertificate.org/) in the form of a
+`Signed-off-by` line in each commit message. For example:
+
+```
+This is my commit message
+
+Signed-off-by: Random J Developer <random@developer.example.org>
+```
+
+Run `git commit --signoff` to automatically create such a line for new commits.
+
 After you've created your pull request, a [maintainer](./MAINTAINERS.md) will review all changes. The maintainer may
 request changes or approve of the request as is. Once approved, the maintainer will merge the changes into the Piraeus
 repository.
