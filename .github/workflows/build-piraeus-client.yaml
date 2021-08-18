@@ -7,16 +7,53 @@ on:
     paths:
       - dockerfiles/piraeus-client/*
       - .github/workflows/build-piraeus-client.yaml
+  pull_request:
+    paths:
+      - dockerfiles/piraeus-client/*
+      - .github/workflows/build-piraeus-client.yaml
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: build images
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Prepare
+        id: prep
         run: |
+          DOCKERHUB_IMAGE=docker.io/piraeusdatastore/piraeus-client
+          QUAYIO_IMAGE=quay.io/piraeusdatastore/piraeus-client
+
           cd dockerfiles/piraeus-client
-          make update
+          . ./VERSION.env
+
+          DOCKERHUB_TAG_FULL="${DOCKERHUB_IMAGE}:${LINSTOR_CLIENT_VERSION}"
+          DOCKERHUB_TAG_SHORT="${DOCKERHUB_IMAGE}:${SHORT_VERSION}"
+          DOCKERHUB_TAG_LATEST="${DOCKERHUB_IMAGE}:latest"
+          QUAYIO_TAG_FULL="${QUAYIO_IMAGE}:${LINSTOR_CLIENT_VERSION}"
+          QUAYIO_TAG_SHORT="${QUAYIO_IMAGE}:${SHORT_VERSION}"
+          QUAYIO_TAG_LATEST="${QUAYIO_IMAGE}:latest"
+
+          TAGS="$DOCKERHUB_TAG_FULL","$DOCKERHUB_TAG_SHORT","$DOCKERHUB_TAG_LATEST","$QUAYIO_TAG_FULL","$QUAYIO_TAG_SHORT","$QUAYIO_TAG_LATEST"
+
+          # Set output parameters.
+          echo ::set-output name=tags::${TAGS}
+          echo ::set-output name=docker_image::${DOCKERHUB_IMAGE}
+          echo ::set-output name=quay_image::${QUAYIO_IMAGE}
+          echo ::set-output name=linstor_client_version::${LINSTOR_CLIENT_VERSION}
+          echo ::set-output name=python_linstor_version::${PYTHON_LINSTOR_VERSION}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@master
+
       - name: login to registry
+        if: ${{ github.event_name != 'pull_request' }}
         env:
           QUAYIO_USERNAME: ${{ secrets.QUAYIO_USERNAME }}
           QUAYIO_PASSWORD: ${{ secrets.QUAYIO_PASSWORD }}
@@ -25,7 +62,15 @@ jobs:
         run: |
           docker login --username=${QUAYIO_USERNAME} --password-stdin quay.io <<< "${QUAYIO_PASSWORD}"
           docker login --username=${DOCKERHUB_USERNAME} --password-stdin docker.io <<< "${DOCKERHUB_PASSWORD}"
-      - name: push images
-        run: |
-          cd dockerfiles/piraeus-client
-          make upload REGISTRY="quay.io/piraeusdatastore docker.io/piraeusdatastore"
+
+      - name: Build
+        uses: docker/build-push-action@v2
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          build-args: |
+            LINSTOR_CLIENT_VERSION=${{ steps.prep.outputs.linstor_client_version }}
+            PYTHON_LINSTOR_VERSION=${{ steps.prep.outputs.python_linstor_version }}
+          context: dockerfiles/piraeus-client
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.prep.outputs.tags }}
