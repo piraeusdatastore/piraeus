@@ -3,6 +3,7 @@ DF = Dockerfile.centos7 Dockerfile.centos8 Dockerfile.bionic Dockerfile.focal
 DEFAULT_CENTOS = Dockerfile.centos7
 REGISTRY ?= piraeusdatastore
 NOCACHE ?= false
+PLATFORMS = linux/amd64,linux/arm64
 
 help:
 	@echo "Useful targets: 'update', 'upload'"
@@ -25,11 +26,9 @@ upload:
 	for r in $(REGISTRY); do \
 		for f in $(DF); do \
 			pd=$(PROJECT)-$$(echo $$f | sed 's/^Dockerfile\.//'); \
-			docker tag $$pd:v$$DRBD_VERSION $$r/$$pd:v$$DRBD_VERSION ; \
-			docker tag $$pd:v$$SHORT_VERSION $$r/$$pd:v$$SHORT_VERSION ; \
-			docker tag $$pd:latest $$r/$$pd:latest ; \
-			docker push $$r/$$pd:v$$DRBD_VERSION ; \
-			docker push $$r/$$pd:v$$SHORT_VERSION ; \
-			docker push $$r/$$pd:latest ; \
+			docker buildx build --push --build-arg DRBD_VERSION=$$DRBD_VERSION --no-cache=$(NOCACHE) --platform=$(PLATFORMS) -f $$f \
+				--tag $$r/$$pd:v$$DRBD_VERSION \
+				--tag $$r/$$pd:v$$SHORT_VERSION \
+				--tag $$r/$$pd:latest . ; \
 		done; \
 	done
