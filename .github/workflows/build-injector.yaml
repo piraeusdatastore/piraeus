@@ -12,10 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: build images
-        run: |
-          cd dockerfiles/drbd-driver-loader
-          make update
       - name: login to registry
         env:
           QUAYIO_USERNAME: ${{ secrets.QUAYIO_USERNAME }}
