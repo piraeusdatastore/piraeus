@@ -6,8 +6,8 @@ ARG DRBD_VERSION
 RUN yum -y update-minimal --security --sec-severity=Important --sec-severity=Critical && \
 	yum install -y wget gcc make patch curl elfutils-libelf-devel && yum clean all -y
 
-RUN wget https://pkg.linbit.com/downloads/drbd/9.0/drbd-${DRBD_VERSION}.tar.gz -O /drbd.tar.gz && \
-    wget https://raw.githubusercontent.com/LINBIT/drbd/drbd-9.0/docker/entry.sh -O /entry.sh
+RUN wget https://pkg.linbit.com/downloads/drbd/9/drbd-${DRBD_VERSION}.tar.gz -O /drbd.tar.gz && \
+    wget https://raw.githubusercontent.com/LINBIT/drbd/master/docker/entry.sh -O /entry.sh
 
 ENV LB_HOW compile
 RUN chmod +x /entry.sh

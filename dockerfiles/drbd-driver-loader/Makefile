@@ -16,7 +16,6 @@ update:
 	for f in $(DF); do \
 		pd=$(PROJECT)-$$(echo $$f | sed 's/^Dockerfile\.//'); \
 		docker build --build-arg DRBD_VERSION=$$DRBD_VERSION --no-cache=$(NOCACHE) -f $$f -t $$pd:v$$DRBD_VERSION . ; \
-		docker tag $$pd:v$$DRBD_VERSION $$pd:v$$SHORT_VERSION ; \
 		docker tag $$pd:v$$DRBD_VERSION $$pd:latest ; \
 	done
 
@@ -28,7 +27,6 @@ upload:
 			pd=$(PROJECT)-$$(echo $$f | sed 's/^Dockerfile\.//'); \
 			docker buildx build --push --build-arg DRBD_VERSION=$$DRBD_VERSION --no-cache=$(NOCACHE) --platform=$(PLATFORMS) -f $$f \
 				--tag $$r/$$pd:v$$DRBD_VERSION \
-				--tag $$r/$$pd:v$$SHORT_VERSION \
 				--tag $$r/$$pd:latest . ; \
 		done; \
 	done
