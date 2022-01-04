@@ -8,11 +8,33 @@ RUN { echo 'APT::Install-Recommends "false";' ; echo 'APT::Install-Suggests "fal
 RUN apt-get update && apt-get install -y wget ca-certificates
 RUN apt-get install -y gnupg2 && \
 	 wget -O- https://packages.linbit.com/package-signing-pubkey.asc | apt-key add - && \
-	 echo "deb http://packages.linbit.com/piraeus buster drbd-9.0" > /etc/apt/sources.list.d/linbit.list && \
+	 echo "deb http://packages.linbit.com/piraeus buster drbd-9" > /etc/apt/sources.list.d/linbit.list && \
 	 apt-get update && \
-	 apt-get install -y udev drbd-utils wget xfsprogs jq procps nvme-cli \
-	 net-tools iputils-ping iproute2 dnsutils netcat sysstat curl \
-	 util-linux cryptsetup && \
+	# Install useful utilities and general dependencies
+	 apt-get install -y udev drbd-utils jq net-tools iputils-ping iproute2 dnsutils netcat sysstat curl util-linux && \
+	# Install dependencies for optional features \
+	 apt-get install -y \
+	# cryptsetup: luks layer
+	  cryptsetup \
+	# e2fsprogs: LINSTOR can create file systems \
+	  e2fsprogs \
+	# lsscsi: exos layer \
+	  lsscsi \
+	# multipath-tools: exos layer \
+	  multipath-tools \
+	# nvme-cli: nvme layer
+	  nvme-cli \
+	# procps: used by LINSTOR to find orphaned send/receive processes \
+	  procps \
+	# socat: used with thin-send-recv to send snapshots to another LINSTOR cluster
+	  socat \
+	# thin-send-recv: used to send/receive snapshots of LVM thin volumes \
+	  thin-send-recv \
+	# xfsprogs: LINSTOR can create file systems; xfs deps \
+	  xfsprogs \
+	# zstd: used with thin-send-recv to send snapshots to another LINSTOR cluster \
+	  zstd \
+	 && \
 	 apt-get install -y linstor-controller=$LINSTOR_VERSION linstor-satellite=$LINSTOR_VERSION linstor-common=$LINSTOR_VERSION  linstor-client && \
 	 apt-get clean
 
