@@ -1,6 +1,7 @@
 PROJECT ?= drbd-reactor
 REGISTRY ?= piraeusdatastore
 NOCACHE ?= false
+PLATFORMS ?= linux/amd64,linux/arm64
 
 help:
 	@echo "Useful targets: 'update', 'upload'"
@@ -10,18 +11,13 @@ all: update upload
 .PHONY: update
 update:
 	. ./VERSION.env ; \
-	docker build --build-arg DRBD_REACTOR_VERSION=$$DRBD_REACTOR_VERSION --no-cache=$(NOCACHE) -t $(PROJECT):v$$DRBD_REACTOR_VERSION . ; \
-	docker tag $(PROJECT):v$$DRBD_REACTOR_VERSION $(PROJECT):v$$SHORT_VERSION ; \
-	docker tag $(PROJECT):v$$DRBD_REACTOR_VERSION $(PROJECT):latest ; \
+	for r in $(REGISTRY); do \
+		docker buildx build $(_EXTRA_ARGS) --build-arg DRBD_REACTOR_VERSION=$$DRBD_REACTOR_VERSION --no-cache=$(NOCACHE) --platform=$(PLATFORMS) \
+			--tag $$r/$(PROJECT):v$$DRBD_REACTOR_VERSION \
+			--tag $$r/$(PROJECT):v$$SHORT_VERSION \
+			--tag $$r/$(PROJECT):latest . ;\
+	done
 
 .PHONY: upload
 upload:
-	. ./VERSION.env ; \
-	for r in $(REGISTRY); do \
-		docker tag $(PROJECT):v$$DRBD_REACTOR_VERSION $$r/$(PROJECT):v$$DRBD_REACTOR_VERSION ; \
-		docker tag $(PROJECT):v$$SHORT_VERSION $$r/$(PROJECT):v$$SHORT_VERSION ; \
-		docker tag $(PROJECT):latest $$r/$(PROJECT):latest ; \
-		docker push $$r/$(PROJECT):v$$DRBD_REACTOR_VERSION ; \
-		docker push $$r/$(PROJECT):v$$SHORT_VERSION ; \
-		docker push $$r/$(PROJECT):latest ; \
-	done
+	make update _EXTRA_ARGS=--push
