@@ -46,7 +46,7 @@ ones provided by LINBIT for its customers.
 
 Container used for module loading are based on Centos/Ubuntu.
 
-Additionally, container images provided by LINBIT as commercal offer on [drbd.io](http://drbd.io), are based
+Additionally, container images provided by LINBIT as commercial offer on [drbd.io](http://drbd.io), are based
 on RHEL/UBI images and are for example OpenShift certified.
 
 # Maintainer workflow
