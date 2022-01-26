@@ -23,7 +23,7 @@ PPA. These are maintained at a best effort basis, but make sure to understand th
 [differences](https://launchpad.net/~linbit/+archive/ubuntu/linbit-drbd9-stack) between these packages and the
 ones provided by LINBIT for its customers.
 
-Additionally, container images provided by LINBIT as commercal offer on [drbd.io](http://drbd.io), are based
+Additionally, container images provided by LINBIT as commercial offer on [drbd.io](http://drbd.io), are based
 on RHEL/UBI images and are for example OpenShift certified.
 
 # Maintainer workflow
