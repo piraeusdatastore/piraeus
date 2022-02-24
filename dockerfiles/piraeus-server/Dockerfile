@@ -1,14 +1,17 @@
-FROM debian:buster
+FROM debian:bullseye
 
 MAINTAINER Roland Kammerer <roland.kammerer@linbit.com>
 
 ARG LINSTOR_VERSION
 
 RUN { echo 'APT::Install-Recommends "false";' ; echo 'APT::Install-Suggests "false";' ; } > /etc/apt/apt.conf.d/99_piraeus
-RUN apt-get update && apt-get install -y wget ca-certificates
+RUN apt-get update && apt-get install -y wget ca-certificates && apt-get clean
 RUN apt-get install -y gnupg2 && \
 	 wget -O- https://packages.linbit.com/package-signing-pubkey.asc | apt-key add - && \
-	 echo "deb http://packages.linbit.com/piraeus buster drbd-9" > /etc/apt/sources.list.d/linbit.list && \
+	# Enable contrib repos for zfsutils \
+	 sed -r -i 's/^deb(.*)$/deb\1 contrib/' /etc/apt/sources.list && \
+	 echo "deb http://packages.linbit.com/public debian-bullseye misc" > /etc/apt/sources.list.d/linbit.list && \
+	 echo "deb http://packages.linbit.com/public/staging debian-bullseye misc" >> /etc/apt/sources.list.d/linbit.list && \
 	 apt-get update && \
 	# Install useful utilities and general dependencies
 	 apt-get install -y udev drbd-utils jq net-tools iputils-ping iproute2 dnsutils netcat sysstat curl util-linux && \
@@ -20,6 +23,8 @@ RUN apt-get install -y gnupg2 && \
 	  e2fsprogs \
 	# lsscsi: exos layer \
 	  lsscsi \
+    # lvm2: manage lvm storage pools \
+      lvm2 \
 	# multipath-tools: exos layer \
 	  multipath-tools \
 	# nvme-cli: nvme layer
@@ -34,7 +39,11 @@ RUN apt-get install -y gnupg2 && \
 	  xfsprogs \
 	# zstd: used with thin-send-recv to send snapshots to another LINSTOR cluster \
 	  zstd \
+	# zfsutils-linux: for zfs storage pools \
+	  zfsutils-linux \
 	 && \
+	# remove udev, no need for it in the container \
+	 apt-get remove -y udev && \
 	 apt-get install -y linstor-controller=$LINSTOR_VERSION linstor-satellite=$LINSTOR_VERSION linstor-common=$LINSTOR_VERSION  linstor-client && \
 	 apt-get clean
 
@@ -45,16 +54,8 @@ RUN mkdir /var/log/linstor-controller && \
 	 # Ensure we log to files in containers, otherwise SOS reports won't show any logs at all
 	 sed -i 's#<!-- <appender-ref ref="FILE" /> -->#<appender-ref ref="FILE" />#' /usr/share/linstor-server/lib/conf/logback.xml
 
-# satellite
-# needs a newer lvm, debian bug #932433
-COPY preferences /etc/apt/preferences
-RUN echo 'deb http://deb.debian.org/debian/ bullseye main contrib' >> /etc/apt/sources.list && \
-	apt-get update && apt-get install -y -t bullseye lvm2 && apt-get remove -y udev && apt-get clean
 RUN sed -i 's/udev_rules.*=.*/udev_rules=0/ ; s/udev_sync.*=.*/udev_sync=0/ ; s/obtain_device_list_from_udev.*=.*/obtain_device_list_from_udev=0/' /etc/lvm/lvm.conf
 RUN sed -i '/^devices {/a global_filter = [ "r|^/dev/drbd|" ]' /etc/lvm/lvm.conf
-
-# get zfsutils from bullseye
-RUN apt-get install -y -t bullseye zfsutils-linux && apt-get clean
 
 # controller
 EXPOSE 3376/tcp 3377/tcp 3370/tcp 3371/tcp
