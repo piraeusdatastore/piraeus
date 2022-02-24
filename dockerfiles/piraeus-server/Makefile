@@ -15,8 +15,8 @@ update:
 		docker buildx build $(_EXTRA_ARGS) --build-arg LINSTOR_VERSION=$$LINSTOR_VERSION \
 			--build-arg K8S_AWAIT_ELECTION_VERSION=$$K8S_AWAIT_ELECTION_VERSION \
 			--no-cache=$(NOCACHE) --platform=$(PLATFORMS) \
-			--tag $$r/$(PROJECT):v$$LINSTOR_VERSION \
-			--tag $$r/$(PROJECT):v$$SHORT_VERSION \
+			--tag $$r/$(PROJECT):v$${LINSTOR_VERSION//'~'/-} \
+			--tag $$r/$(PROJECT):v$${SHORT_VERSION//'~'/-} \
 			--tag $$r/$(PROJECT):latest . ;\
 	done
 

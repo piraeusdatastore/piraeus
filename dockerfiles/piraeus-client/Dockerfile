@@ -1,4 +1,4 @@
-FROM debian:buster
+FROM debian:bullseye
 
 MAINTAINER Roland Kammerer <roland.kammerer@linbit.com>
 
@@ -9,7 +9,7 @@ RUN { echo 'APT::Install-Recommends "false";' ; echo 'APT::Install-Suggests "fal
 RUN apt-get update && apt-get install -y wget ca-certificates
 RUN apt-get install -y gnupg2 && \
     wget -O- https://packages.linbit.com/package-signing-pubkey.asc | apt-key add - && \
-    echo "deb http://packages.linbit.com/piraeus buster drbd-9" > /etc/apt/sources.list.d/linbit.list && \
+    echo "deb http://packages.linbit.com/public debian-bullseye misc" > /etc/apt/sources.list.d/linbit.list && \
     apt-get update && \
     apt-get install -y linstor-client=$LINSTOR_CLIENT_VERSION python-linstor=$PYTHON_LINSTOR_VERSION && \
     apt-get autoremove -y gnupg2 && apt-get clean
