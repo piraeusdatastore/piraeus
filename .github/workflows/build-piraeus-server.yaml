@@ -25,11 +25,11 @@ jobs:
           cd dockerfiles/piraeus-server
           . ./VERSION.env
 
-          DOCKERHUB_TAG_FULL="${DOCKERHUB_IMAGE}:v${LINSTOR_VERSION//'~'/-}"
-          DOCKERHUB_TAG_SHORT="${DOCKERHUB_IMAGE}:v${SHORT_VERSION//'~'/-}"
+          DOCKERHUB_TAG_FULL="${DOCKERHUB_IMAGE}:v$(echo -n $LINSTOR_VERSION | tr '~' -)"
+          DOCKERHUB_TAG_SHORT="${DOCKERHUB_IMAGE}:v$(echo -n $SHORT_VERSION | tr '~' -)"
           DOCKERHUB_TAG_LATEST="${DOCKERHUB_IMAGE}:latest"
-          QUAYIO_TAG_FULL="${QUAYIO_IMAGE}:v${LINSTOR_VERSION//'~'/-}"
-          QUAYIO_TAG_SHORT="${QUAYIO_IMAGE}:v${SHORT_VERSION//'~'/-}"
+          QUAYIO_TAG_FULL="${QUAYIO_IMAGE}:v$(echo -n $LINSTOR_VERSION | tr '~' -)"
+          QUAYIO_TAG_SHORT="${QUAYIO_IMAGE}:v$(echo -n $SHORT_VERSION | tr '~' -)"
           QUAYIO_TAG_LATEST="${QUAYIO_IMAGE}:latest"
 
           TAGS="$DOCKERHUB_TAG_FULL","$DOCKERHUB_TAG_SHORT","$DOCKERHUB_TAG_LATEST","$QUAYIO_TAG_FULL","$QUAYIO_TAG_SHORT","$QUAYIO_TAG_LATEST"
