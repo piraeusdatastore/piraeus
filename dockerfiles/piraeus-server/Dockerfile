@@ -56,8 +56,8 @@ RUN mkdir /var/log/linstor-controller && \
 	 # Ensure we log to files in containers, otherwise SOS reports won't show any logs at all
 	 sed -i 's#<!-- <appender-ref ref="FILE" /> -->#<appender-ref ref="FILE" />#' /usr/share/linstor-server/lib/conf/logback.xml
 
-RUN sed -i 's/udev_rules.*=.*/udev_rules=0/ ; s/udev_sync.*=.*/udev_sync=0/ ; s/obtain_device_list_from_udev.*=.*/obtain_device_list_from_udev=0/' /etc/lvm/lvm.conf
-RUN sed -i '/^devices {/a global_filter = [ "r|^/dev/drbd|" ]' /etc/lvm/lvm.conf
+
+RUN lvmconfig --type current --mergedconfig --config 'activation { udev_rules = 0 } devices { global_filter = [ "r|^/dev/drbd|" ] obtain_device_list_from_udev = 0}' > /etc/lvm/lvm.conf.new && mv /etc/lvm/lvm.conf.new /etc/lvm/lvm.conf
 
 # controller
 EXPOSE 3376/tcp 3377/tcp 3370/tcp 3371/tcp
