@@ -58,6 +58,7 @@ RUN mkdir /var/log/linstor-controller && \
 
 
 RUN lvmconfig --type current --mergedconfig --config 'activation { udev_rules = 0 } devices { global_filter = [ "r|^/dev/drbd|" ] obtain_device_list_from_udev = 0}' > /etc/lvm/lvm.conf.new && mv /etc/lvm/lvm.conf.new /etc/lvm/lvm.conf
+RUN echo 'global { usage-count no; }' > /etc/drbd.d/global_common.conf
 
 # controller
 EXPOSE 3376/tcp 3377/tcp 3370/tcp 3371/tcp
