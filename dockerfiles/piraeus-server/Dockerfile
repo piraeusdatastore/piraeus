@@ -25,8 +25,8 @@ RUN apt-get install -y gnupg2 && \
 	  e2fsprogs \
 	# lsscsi: exos layer \
 	  lsscsi \
-    # lvm2: manage lvm storage pools \
-      lvm2 \
+	# lvm2: manage lvm storage pools \
+	  lvm2 \
 	# multipath-tools: exos layer \
 	  multipath-tools \
 	# nvme-cli: nvme layer
