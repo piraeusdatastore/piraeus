@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 try_import_key() {
   indir=$1
