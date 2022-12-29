@@ -74,5 +74,10 @@ ARG TARGETARCH
 
 RUN wget https://github.com/LINBIT/k8s-await-election/releases/download/${K8S_AWAIT_ELECTION_VERSION}/k8s-await-election-${K8S_AWAIT_ELECTION_VERSION}-linux-${TARGETARCH}.tar.gz -O - | tar -xvz -C /usr/bin/
 
+ARG LOSETUP_CONTAINER_VERSION=v1.0.1
+RUN wget "https://github.com/LINBIT/losetup-container/releases/download/${LOSETUP_CONTAINER_VERSION}/losetup-container-$(uname -m)-unknown-linux-gnu.tar.gz" -O - | tar -xvz -C /usr/local/sbin && \
+	 printf '#!/bin/sh\nLOSETUP_CONTAINER_ORIGINAL_LOSETUP=%s exec /usr/local/sbin/losetup-container "$@"\n' $(command -v losetup) > /usr/local/sbin/losetup && \
+	 chmod +x /usr/local/sbin/losetup
+
 CMD ["startSatellite"]
 ENTRYPOINT ["/usr/bin/k8s-await-election", "/usr/bin/piraeus-entry.sh"]
