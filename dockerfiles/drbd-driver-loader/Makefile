@@ -11,13 +11,14 @@ all: update upload
 
 .PHONY: update
 update:
-	. ./VERSION.env ; \
-	for r in $(REGISTRY); do \
-		for f in $(DF); do \
-			pd=$(PROJECT)-$$(echo $$f | sed 's/^Dockerfile\.//'); \
-			docker buildx build $(_EXTRA_ARGS) --build-arg DRBD_VERSION=$$DRBD_VERSION --no-cache=$(NOCACHE) --platform=$(PLATFORMS) -f $$f \
-				--tag $$r/$$pd:v$$DRBD_VERSION \
-				--tag $$r/$$pd:latest . ; \
+	for version_env in ./VERSION*.env ; \
+		. $version_env ; \
+		for r in $(REGISTRY); do \
+			for f in $(DF); do \
+				pd=$(PROJECT)-$$(echo $$f | sed 's/^Dockerfile\.//'); \
+				docker buildx build $(_EXTRA_ARGS) --build-arg DRBD_VERSION=$$DRBD_VERSION --no-cache=$(NOCACHE) --platform=$(PLATFORMS) -f $$f \
+					--tag $$r/$$pd:v$$DRBD_VERSION . ; \
+			done; \
 		done; \
 	done
 
