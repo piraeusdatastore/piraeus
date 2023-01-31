@@ -11,8 +11,8 @@ all: update upload
 
 .PHONY: update
 update:
-	for version_env in ./VERSION*.env ; \
-		. $version_env ; \
+	for version_env in ./VERSION*.env ; do \
+		. $$version_env ; \
 		for r in $(REGISTRY); do \
 			for f in $(DF); do \
 				pd=$(PROJECT)-$$(echo $$f | sed 's/^Dockerfile\.//'); \
