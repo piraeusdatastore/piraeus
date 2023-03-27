@@ -3,9 +3,10 @@
 Piraeus is a high performance, highly-available, simple, secure, and cloud agnostic storage solution for Kubernetes.
 
 The Piraeus Project consists of:
-* A [Helm Chart and Kubernetes Operator] to create, configure and maintain all components of Piraeus.
+* A [Kubernetes Operator] to create, configure and maintain all components of Piraeus.
 * A [CSI Driver] to provision persistent volumes and snapshots on the storage cluster maintained by Piraeus.
 * A [High Availability Controller] to speed up the failover process of stateful workloads
+* A [Volume Affinity Controller], keeping Kubernetes Persistent Volumes reported affinity in sync with the cluster.
 * Container images for the open source components Piraeus is built on:
   * [DRBD] is used as the underlying storage replication mechanism between cluster nodes.
     [Documentation](https://docs.linbit.com/docs/users-guide-9.0/) is provided by [LINBIT](https://www.linbit.com/).
@@ -13,10 +14,11 @@ The Piraeus Project consists of:
     the backing storage devices.
     [Documentation](https://docs.linbit.com/docs/linstor-guide/) is provided by [LINBIT](https://www.linbit.com/).
 
-[Helm Chart and Kubernetes Operator]: https://github.com/piraeusdatastore/piraeus-operator
+[Kubernetes Operator]: https://github.com/piraeusdatastore/piraeus-operator
 [CSI Driver]: https://github.com/piraeusdatastore/linstor-csi
-[High Availability Controller]: https://github.com/piraeusdatastore/piraeus-ha-controller 
-[DRBD]: https://github.com/LINBIT/drbd-9.0
+[High Availability Controller]: https://github.com/piraeusdatastore/piraeus-ha-controller
+[Volume Affinity Controller]: https://github.com/piraeusdatastore/linstor-affinity-controller
+[DRBD]: https://github.com/LINBIT/drbd
 [LINSTOR]: https://github.com/LINBIT/linstor-server
 
 Piraeus is a [CNCF Sandbox Project](https://www.cncf.io/sandbox-projects/).
@@ -26,21 +28,26 @@ Piraeus is a [CNCF Sandbox Project](https://www.cncf.io/sandbox-projects/).
 Installing Piraeus can be as easy as:
 
 ```
-$ git clone https://github.com/piraeusdatastore/piraeus-operator.git
-$ cd piraeus-operator
-$ git checkout v1.3.1 # Switch to the latest release!
-$ helm install piraeus-op ./charts/piraeus 
+$ kubectl apply --server-side -k "https://github.com/piraeusdatastore/piraeus-operator//config/default?ref=v2"
+namespace/piraeus-datastore configured
+...
+$ kubectl wait pod --for=condition=Ready -n piraeus-datastore -l app.kubernetes.io/component=piraeus-operator
+pod/piraeus-operator-controller-manager-dd898f48c-bhbtv condition met
+$ kubectl apply -f - <<EOF
+apiVersion: piraeus.io/v1
+kind: LinstorCluster
+metadata:
+  name: linstorcluster
+spec: {}
+EOF
 ```
 
-Head on over to the [Piraeus Operator repository] to learn more. It contains detailed instructions on how to get started
+Head on over to the [Piraeus Operator docs] to learn more. It contains detailed instructions on how to get started
 using Piraeus.
 
-[Piraeus Operator repository]: https://github.com/piraeusdatastore/piraeus-operator
+[Piraeus Operator docs]: https://github.com/piraeusdatastore/piraeus-operator/tree/v2/docs
 
-It also contains a set of basic YAML files for deployment without Helm. See [here](https://github.com/piraeusdatastore/piraeus-operator/tree/master/deploy).
-
-This repository also contains a set of YAML files for deploying Piraeus without the aid of the Piraeus Operator. Since
-they are no longer actively maintained, they have been moved to [legacy](./legacy/).
+It also contains a basic Helm chart. See [here](https://github.com/piraeusdatastore/piraeus-operator/tree/v2/charts/piraeus).
 
 ### Contributing
 
