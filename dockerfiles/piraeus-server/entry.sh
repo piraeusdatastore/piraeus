@@ -1,5 +1,31 @@
 #!/bin/bash
 
+set -e
+
+run_migration() {
+	if /usr/share/linstor-server/bin/linstor-config all-migrations-applied --logs=/var/log/linstor-controller --config-directory=/etc/linstor "$@" ; then
+		return 0
+	fi
+
+	VERSION=$(/usr/share/linstor-server/bin/linstor-config run-migration -v)
+
+	BACKUP_NAME=${BACKUP_NAME:-linstor-backup-for-$(hostname)}
+
+	if ! kubectl get secrets "${BACKUP_NAME}"; then
+		mkdir -p /run/migration
+		cd /run/migration
+		kubectl api-resources --api-group=internal.linstor.linbit.com -oname | xargs --no-run-if-empty kubectl get crds -oyaml > crds.yaml
+		for CRD in $(kubectl api-resources --api-group=internal.linstor.linbit.com -oname); do
+			kubectl get "${CRD}" -oyaml > "${CRD}.yaml"
+		done
+		tar -czvf backup.tar.gz -- *.yaml
+		kubectl create secret generic "${BACKUP_NAME}" --type piraeus.io/linstor-backup --from-file=backup.tar.gz
+		kubectl annotate secrets "${BACKUP_NAME}" "piraeus.io/linstor-version=${VERSION}"
+	fi
+
+	/usr/share/linstor-server/bin/linstor-config run-migration --config-directory=/etc/linstor "$@"
+}
+
 try_import_key() {
   indir=$1
   [ -d "$indir" ] || return 0
@@ -36,6 +62,10 @@ case $1 in
 	startController)
 		shift
 		/usr/share/linstor-server/bin/Controller --logs=/var/log/linstor-controller --config-directory=/etc/linstor "$@"
+		;;
+	runMigration)
+		shift
+		run_migration "$@"
 		;;
 	*) linstor "$@" ;;
 esac
