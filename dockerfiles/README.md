@@ -11,6 +11,7 @@ a `README.md` with more information.
   [linstor-client](https://github.com/LINBIT/linstor-client) which can be used for cluster setup.  It also
   contains some useful debugging tools.
 - [piraeus-client](dockerfiles/piraeus-client) is a stand alone version of the [linstor-client](https://github.com/LINBIT/linstor-client).
+- [ktls-utils](./ktls-utils) is the user space utility used to initiate the TLS handshake on behald of DRBD.
 
 ### Warning
 Changes to the subdirectory will trigger a rebuild of the associated container images
