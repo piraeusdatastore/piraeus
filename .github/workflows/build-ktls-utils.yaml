@@ -41,13 +41,13 @@ jobs:
           echo ::set-output name=ktls_utils_version::${KTLS_UTILS_VERSION}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@master
+        uses: docker/setup-qemu-action@v3
         with:
           platforms: linux/amd64,linux/arm64
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@master
+        uses: docker/setup-buildx-action@v3
       - name: login to registry
         if: ${{ github.event_name != 'pull_request' }}
         env:
