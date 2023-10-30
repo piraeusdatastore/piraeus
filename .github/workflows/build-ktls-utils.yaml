@@ -1,0 +1,71 @@
+name: Build ktls-utils
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - dockerfiles/ktls-utils/*
+      - .github/workflows/build-ktls-utils.yaml
+  pull_request:
+    paths:
+      - dockerfiles/ktls-utils/*
+      - .github/workflows/build-ktls-utils.yaml
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Prepare
+        id: prep
+        run: |
+          DOCKERHUB_IMAGE=docker.io/piraeusdatastore/ktls-utils
+          QUAYIO_IMAGE=quay.io/piraeusdatastore/ktls-utils
+
+          cd dockerfiles/ktls-utils
+          . ./VERSION.env
+
+          DOCKERHUB_TAG_FULL="${DOCKERHUB_IMAGE}:v${KTLS_UTILS_VERSION}"
+          DOCKERHUB_TAG_SHORT="${DOCKERHUB_IMAGE}:v${SHORT_VERSION}"
+          DOCKERHUB_TAG_LATEST="${DOCKERHUB_IMAGE}:latest"
+          QUAYIO_TAG_FULL="${QUAYIO_IMAGE}:v${KTLS_UTILS_VERSION}"
+          QUAYIO_TAG_SHORT="${QUAYIO_IMAGE}:v${SHORT_VERSION}"
+          QUAYIO_TAG_LATEST="${QUAYIO_IMAGE}:latest"
+
+          TAGS="$DOCKERHUB_TAG_FULL","$DOCKERHUB_TAG_SHORT","$DOCKERHUB_TAG_LATEST","$QUAYIO_TAG_FULL","$QUAYIO_TAG_SHORT","$QUAYIO_TAG_LATEST"
+
+          # Set output parameters.
+          echo ::set-output name=tags::${TAGS}
+          echo ::set-output name=docker_image::${DOCKERHUB_IMAGE}
+          echo ::set-output name=quay_image::${QUAYIO_IMAGE}
+          echo ::set-output name=ktls_utils_version::${KTLS_UTILS_VERSION}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@master
+      - name: login to registry
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          QUAYIO_USERNAME: ${{ secrets.QUAYIO_USERNAME }}
+          QUAYIO_PASSWORD: ${{ secrets.QUAYIO_PASSWORD }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+        run: |
+          docker login --username=${QUAYIO_USERNAME} --password-stdin quay.io <<< "${QUAYIO_PASSWORD}"
+          docker login --username=${DOCKERHUB_USERNAME} --password-stdin docker.io <<< "${DOCKERHUB_PASSWORD}"
+
+      - name: Build
+        uses: docker/build-push-action@v2
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          build-args: |
+            KTLS_UTILS_VERSION=${{ steps.prep.outputs.ktls_utils_version }}
+          context: dockerfiles/ktls-utils
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.prep.outputs.tags }}
