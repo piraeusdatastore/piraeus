@@ -15,8 +15,11 @@ parameters are passed back to the kernel via standard kTLS socket options.
 
 # How to use
 
-The image starts `tlshd` and loads the standard (empty) configuration. To apply your own configuration, place
-them in `/etc/tlshd.conf` in the container.
+The image starts `tlshd` and loads the standard configuration, loading key material from `/etc/tlshd.d`.
+`tlshd` is looking for `/etc/tlshd.d/ca.crt` as trusted CA certificate, `/etc/tlshd.d/tls.key` as private key
+and `/etc/tlshd.d/tls.crt` as certificate.
+
+To apply your own configuration, place it at `/etc/tlshd.conf` in the container.
 
 # Registries
 - [Docker Hub](https://hub.docker.com/r/piraeusdatastore/ktls-utils)

@@ -13,4 +13,6 @@ RUN apt-get install -y gnupg2 && \
 	 apt-get install -y ktls-utils=$KTLS_UTILS_VERSION && \
 	 apt-get clean
 
+COPY --chmod=0600 tlshd.conf /etc/tlshd.conf
+
 CMD ["/usr/sbin/tlshd", "--stderr"]
