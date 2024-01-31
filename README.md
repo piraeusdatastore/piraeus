@@ -59,6 +59,17 @@ Active communication channels:
 
 * [Slack](https://piraeus-datastore.slack.com/join/shared_invite/enQtOTM4OTk3MDcxMTIzLTM4YTdiMWI2YWZmMTYzYTg4YjQ0MjMxM2MxZDliZmEwNDA0MjBhMjIxY2UwYmY5YWU0NDBhNzFiNDFiN2JkM2Q)
 
+Piraeus Datastore is mainly a glue project that connects LINSTOR and DRBD to Kubernetes. Therefore,
+communication channels for [LINSTOR] and [DRBD] are also relevant for people interested in Piraeus
+Datastore. This is ...
+* [LINBIT community slack]
+* [DRBD related mailing lists]
+* [LINBIT community meetings]
+
+[LINBIT community slack]: https://linbit-community.slack.com/join/shared_invite/enQtOTg0MTEzOTA4ODY0LTFkZGY3ZjgzYjEzZmM2OGVmODJlMWI2MjlhMTg3M2UyOGFiOWMxMmI1MWM4Yjc0YzQzYWU0MjAzNGRmM2M5Y2Q#/shared-invite/email
+[DRBD related mailing lists]: https://lists.linbit.com/
+[LINBIT community meetings]: https://linbit.com/community-meeting/
+
 ### License
 
 Piraeus Datastore is licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE).
