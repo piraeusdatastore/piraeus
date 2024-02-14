@@ -26,3 +26,4 @@ This list is sorted in chronological order, based on the submission date.
 | Organization | Contact | Date | Description of Use |
 | ------------ | ------- | ---- | ------------------ |
 | [LINBIT](https://linbit.com/) | @wanzenbug | 2024-02-14 | At LINBIT, we develop Open Source SDS solutions, including Piraeus Datastore. We use Piraues Datastore to power our own internal infrastructure, ensuring we benefit from all the features we developed. |
+| [Ænix](https://aenix.io/) | @kvaps | 2024-02-14 | Ænix provides consulting services for cloud providers and uses Piraeus Datastore to run virtual machines and containers in free PaaS platform [Cozystack](https://cozystack.io). |
