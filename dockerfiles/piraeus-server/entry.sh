@@ -47,8 +47,13 @@ try_import_key /etc/linstor/https-pem /etc/linstor/https/keystore.jks /etc/linst
 
 case $1 in
 	startSatellite)
+		declare -a EXEC_PREFIX
+		if [ -n "$LB_FORCE_NODE_NAME" ]; then
+			EXEC_PREFIX+=(unshare --uts -- sh -ec 'hostname "$LB_FORCE_NODE_NAME"; exec "$@"' --)
+		fi
+
 		shift
-		exec /usr/share/linstor-server/bin/Satellite --logs=/var/log/linstor-satellite --config-directory=/etc/linstor --skip-hostname-check "$@"
+		exec "${EXEC_PREFIX[@]}" /usr/share/linstor-server/bin/Satellite --logs=/var/log/linstor-satellite --config-directory=/etc/linstor "$@"
 		;;
 	startController)
 		shift
