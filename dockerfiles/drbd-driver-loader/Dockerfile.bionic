@@ -1,7 +1,19 @@
 FROM ubuntu:bionic
-MAINTAINER Roland Kammerer <roland.kammerer@linbit.com>
 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y kmod gnupg wget make gcc patch curl && apt-get clean
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install --no-install-recommends -y \
+      ca-certificates \
+      kmod \
+      gnupg \
+      wget \
+      make \
+      # Ubuntu has multiple kernel versions that may be using different gcc versions: use the dkms package to install them all
+      $(apt-get install -s dkms | awk '/^Inst gcc/{print $2}') \
+      patch \
+      elfutils \
+      curl && \
+    apt-get clean
 
 ARG DRBD_VERSION
 RUN wget https://pkg.linbit.com/downloads/drbd/9/drbd-${DRBD_VERSION}.tar.gz -O /drbd.tar.gz && \
