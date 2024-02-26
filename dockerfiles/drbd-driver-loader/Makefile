@@ -1,5 +1,5 @@
 PROJECT ?= drbd9
-DF = Dockerfile.centos7 Dockerfile.almalinux8 Dockerfile.almalinux9 Dockerfile.centos8 Dockerfile.bionic Dockerfile.focal Dockerfile.jammy Dockerfile.flatcar Dockerfile.bullseye Dockerfile.buster Dockerfile.bookworm
+DF = Dockerfile.centos7 Dockerfile.almalinux8 Dockerfile.almalinux9 Dockerfile.centos8 Dockerfile.bionic Dockerfile.focal Dockerfile.jammy Dockerfile.bullseye Dockerfile.buster Dockerfile.bookworm
 REGISTRY ?= piraeusdatastore
 NOCACHE ?= false
 PLATFORMS ?= linux/amd64,linux/arm64
