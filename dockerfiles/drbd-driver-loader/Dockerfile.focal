@@ -1,10 +1,9 @@
 FROM ubuntu:focal
 MAINTAINER Roland Kammerer <roland.kammerer@linbit.com>
 
-ARG DRBD_VERSION
-
 RUN apt-get update && apt-get upgrade -y && apt-get install -y kmod gnupg wget make gcc patch elfutils curl && apt-get clean
 
+ARG DRBD_VERSION
 RUN wget https://pkg.linbit.com/downloads/drbd/9/drbd-${DRBD_VERSION}.tar.gz -O /drbd.tar.gz && \
     wget https://raw.githubusercontent.com/LINBIT/drbd/master/docker/entry.sh -O /entry.sh && chmod +x /entry.sh
 
