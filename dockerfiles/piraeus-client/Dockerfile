@@ -1,4 +1,4 @@
-ARG DISTRO=bullseye
+ARG DISTRO=bookworm
 FROM debian:$DISTRO
 
 MAINTAINER Roland Kammerer <roland.kammerer@linbit.com>

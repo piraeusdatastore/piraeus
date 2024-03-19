@@ -1,4 +1,4 @@
-ARG DISTRO=bullseye
+ARG DISTRO=bookworm
 FROM debian:$DISTRO
 
 MAINTAINER Roland Kammerer <roland.kammerer@linbit.com>
@@ -11,12 +11,12 @@ RUN apt-get update && apt-get install -y wget ca-certificates && apt-get clean
 RUN apt-get install -y gnupg2 && \
 	 wget -O- https://packages.linbit.com/package-signing-pubkey.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/linbit-keyring.gpg && \
 	# Enable contrib repos for zfsutils \
-	 sed -r -i 's/^deb(.*)$/deb\1 contrib/' /etc/apt/sources.list && \
+	 sed -i -r 's/^Components: (.*)$/Components: \1 contrib/' /etc/apt/sources.list.d/debian.sources && \
 	 echo "deb http://packages.linbit.com/public" $DISTRO "misc" > /etc/apt/sources.list.d/linbit.list && \
 	 echo "deb http://packages.linbit.com/public/staging" $DISTRO "misc" >> /etc/apt/sources.list.d/linbit.list && \
 	 apt-get update && \
 	# Install useful utilities and general dependencies
-	 apt-get install -y udev drbd-utils jq net-tools iputils-ping iproute2 dnsutils netcat sysstat curl util-linux && \
+	 apt-get install -y udev drbd-utils jq net-tools iputils-ping iproute2 dnsutils netcat-traditional sysstat curl util-linux && \
 	# Install dependencies for optional features \
 	 apt-get install -y \
 	# cryptsetup: luks layer

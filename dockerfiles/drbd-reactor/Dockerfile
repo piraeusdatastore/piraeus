@@ -1,4 +1,4 @@
-ARG DISTRO=bullseye
+ARG DISTRO=bookworm
 FROM debian:$DISTRO
 
 ARG DRBD_REACTOR_VERSION
