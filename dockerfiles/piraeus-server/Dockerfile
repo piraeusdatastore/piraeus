@@ -14,6 +14,7 @@ RUN apt-get install -y gnupg2 && \
 	 sed -i -r 's/^Components: (.*)$/Components: \1 contrib/' /etc/apt/sources.list.d/debian.sources && \
 	 echo "deb http://packages.linbit.com/public" $DISTRO "misc" > /etc/apt/sources.list.d/linbit.list && \
 	 echo "deb http://packages.linbit.com/public/staging" $DISTRO "misc" >> /etc/apt/sources.list.d/linbit.list && \
+	 echo "deb http://deb.debian.org/debian $DISTRO-backports contrib" > /etc/apt/sources.list.d/backports.list  && \
 	 apt-get update && \
 	# Install useful utilities and general dependencies
 	 apt-get install -y udev drbd-utils jq net-tools iputils-ping iproute2 dnsutils netcat-traditional sysstat curl util-linux && \
@@ -42,7 +43,7 @@ RUN apt-get install -y gnupg2 && \
 	# zstd: used with thin-send-recv to send snapshots to another LINSTOR cluster \
 	  zstd \
 	# zfsutils-linux: for zfs storage pools \
-	  zfsutils-linux \
+	  zfsutils-linux/$DISTRO-backports \
 	 && \
 	# remove udev, no need for it in the container \
 	 apt-get remove -y udev && \
