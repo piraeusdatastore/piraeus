@@ -58,7 +58,7 @@ RUN mkdir /var/log/linstor-controller && \
 	 sed -i 's#<!-- <appender-ref ref="FILE" /> -->#<appender-ref ref="FILE" />#' /usr/share/linstor-server/lib/conf/logback.xml
 
 
-RUN lvmconfig --type current --mergedconfig --config 'activation { udev_rules = 0 monitoring = 0 } devices { global_filter = [ "r|^/dev/drbd|" ] obtain_device_list_from_udev = 0}' > /etc/lvm/lvm.conf.new && mv /etc/lvm/lvm.conf.new /etc/lvm/lvm.conf
+RUN lvmconfig --type current --mergedconfig --config 'activation { udev_sync = 0 udev_rules = 0 monitoring = 0 } devices { global_filter = [ "r|^/dev/drbd|" ] obtain_device_list_from_udev = 0}' > /etc/lvm/lvm.conf.new && mv /etc/lvm/lvm.conf.new /etc/lvm/lvm.conf
 RUN echo 'global { usage-count no; }' > /etc/drbd.d/global_common.conf
 
 # controller
