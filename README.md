@@ -62,11 +62,11 @@ Active communication channels:
 Piraeus Datastore is mainly a glue project that connects LINSTOR and DRBD to Kubernetes. Therefore,
 communication channels for [LINSTOR] and [DRBD] are also relevant for people interested in Piraeus
 Datastore. This is ...
-* [LINBIT community slack]
+* [LINBIT community forums]
 * [DRBD related mailing lists]
 * [LINBIT community meetings]
 
-[LINBIT community slack]: https://linbit-community.slack.com/join/shared_invite/enQtOTg0MTEzOTA4ODY0LTFkZGY3ZjgzYjEzZmM2OGVmODJlMWI2MjlhMTg3M2UyOGFiOWMxMmI1MWM4Yjc0YzQzYWU0MjAzNGRmM2M5Y2Q#/shared-invite/email
+[LINBIT community forums]: https://forums.linbit.com/
 [DRBD related mailing lists]: https://lists.linbit.com/
 [LINBIT community meetings]: https://linbit.com/community-meeting/
 
