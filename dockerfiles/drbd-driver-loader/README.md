@@ -48,11 +48,3 @@ Container used for module loading are based on Centos/Ubuntu.
 
 Additionally, container images provided by LINBIT as commercial offer on [drbd.io](http://drbd.io), are based
 on RHEL/UBI images and are for example OpenShift certified.
-
-# Maintainer workflow
-Let github do it for you! See [our github workflow!](../../.github/workflows/build-injector.yaml)
-
-or
-
-- `make update NOCACHE=true`
-- `make upload REGISTRY='quay.io/piraeusdatastore'`
