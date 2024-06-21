@@ -24,7 +24,3 @@ To apply your own configuration, place it at `/etc/tlshd.conf` in the container.
 # Registries
 - [Docker Hub](https://hub.docker.com/r/piraeusdatastore/ktls-utils)
 - [quay.io](https://quay.io/repository/piraeusdatastore/ktls-utils)
-
-# Maintainer workflow
-- `make update TAG=v0.10 NOCACHE=true`
-- `make upload TAG=v0.10 REGISTRY='quay.io/piraeusdatastore piraeusdatastore'`

@@ -10,12 +10,12 @@ linstor-satellite](https://github.com/LINBIT/linstor-server) components, as well
 # How to use
 ## As a controller
 ```
-docker run -d --name=piraeus-controller -p 3370:3370 piraeusdatastore/piraeus-server startController
+docker run -d --name=piraeus-controller -p 3370:3370 quay.io/piraeusdatastore/piraeus-server startController
 ```
 
 ## As a satellite
 ```sh
-docker run -d --name=piraeus-satellite --net=host --privileged -v /dev:/dev piraeusdatastore/piraeus-server startSatellite
+docker run -d --name=piraeus-satellite --net=host --privileged -v /dev:/dev quay.io/piraeusdatastore/piraeus-server startSatellite
 ```
 
 If `startSatellite` is omitted, and no other command is given, starting a satellite is the default. Host
@@ -24,7 +24,7 @@ them), as well as for communicating with the DRBD kernel module via "netlink".
 
 ## As a client
 ```sh
-docker run -it --rm -e LS_CONTROLLERS=yourcontrollerIP piraeusdatastore/piraeus-server node list
+docker run -it --rm -e LS_CONTROLLERS=yourcontrollerIP quay.io/piraeusdatastore/piraeus-server node list
 ```
 
 If the command is not `startController` and not `startSatellite`, it is interpreted as a client command. The
@@ -42,7 +42,3 @@ ones provided by LINBIT for its customers.
 
 Additionally, container images provided by LINBIT as commercial offer on [drbd.io](http://drbd.io), are based
 on RHEL/UBI images and are for example OpenShift certified.
-
-# Maintainer workflow
-- `make update TAG=v1.0.0 NOCACHE=true`
-- `make upload TAG=v1.0.0 REGISTRY='quay.io/piraeusdatastore piraeusdatastore'`
