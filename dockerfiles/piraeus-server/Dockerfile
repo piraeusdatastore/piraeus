@@ -37,8 +37,7 @@ RUN apt-get install -y gnupg2 && \
 	# socat: used with thin-send-recv to send snapshots to another LINSTOR cluster
 	  socat \
 	# thin-send-recv: used to send/receive snapshots of LVM thin volumes \
-        # Pinned to 1.0.2-1 because of compat issues \
-	  thin-send-recv=1.0.2-1 \
+	  thin-send-recv \
 	# xfsprogs: LINSTOR can create file systems; xfs deps \
 	  xfsprogs \
 	# zstd: used with thin-send-recv to send snapshots to another LINSTOR cluster \
