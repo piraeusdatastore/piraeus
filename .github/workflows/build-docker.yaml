@@ -44,8 +44,6 @@ jobs:
           provenance: true
           sbom: true
           push: ${{ github.event_name != 'pull_request' }}
-          set: |
-            *.cache-from=type=gha
-            *.cache-to=type=gha,mode=max
         env:
           GIT_COMMIT: ${{ github.sha }}
+          CACHE: true
