@@ -25,10 +25,7 @@ variable VERSIONS {
 }
 
 variable "REGISTRIES" {
-  default = [
-    "quay.io/piraeusdatastore",
-    "docker.io/piraeusdatastore",
-  ]
+  default = "quay.io/piraeusdatastore,docker.io/piraeusdatastore"
 }
 
 # Replace all characters that are not supported in a target name with "-".
@@ -41,7 +38,7 @@ function "escape" {
 function "tags" {
   params = [name, version]
   result = flatten([
-    for registry in REGISTRIES :
+    for registry in split(",", REGISTRIES) :
     [
       // Full version
       "${registry}/${name}:v${version}",
