@@ -1,7 +1,8 @@
 FROM centos:centos7
 MAINTAINER Roland Kammerer <roland.kammerer@linbit.com>
 
-RUN yum -y update-minimal --security --sec-severity=Important --sec-severity=Critical && \
+RUN sed -e 's/^mirrorlist=/#mirrorlist=/' -e 's%^#baseurl=http://mirror.centos.org%baseurl=http://vault.centos.org%' -i /etc/yum.repos.d/*.repo && \
+    yum -y update-minimal --security --sec-severity=Important --sec-severity=Critical && \
 	yum install -y gcc make patch diffutils perl kmod && yum clean all -y
 
 ARG DRBD_VERSION
