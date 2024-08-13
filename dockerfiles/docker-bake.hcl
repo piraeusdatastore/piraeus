@@ -16,7 +16,7 @@ variable "CACHE" {
 
 variable VERSIONS {
   default = {
-    DRBD = ["9.2.10", "9.1.21"]
+    DRBD = ["9.2.11", "9.1.22"]
     DRBD_REACTOR       = "1.4.1-1"
     K8S_AWAIT_ELECTION = "v0.4.1"
     KTLS_UTILS         = "0.11-1"
