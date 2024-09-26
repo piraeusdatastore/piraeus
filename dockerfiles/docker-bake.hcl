@@ -75,49 +75,56 @@ group "default" {
 }
 
 target "base" {
+  dockerfile = "base.Dockerfile"
+  args = {
+    DISTRO = DISTRO
+  }
+}
+
+target "common" {
   platforms = ["linux/amd64", "linux/arm64"]
 }
 
 target "piraeus-server" {
-  inherits = ["base"]
+  inherits = ["common"]
   tags = tags("piraeus-server", VERSIONS["LINSTOR"])
   cache-from = cache-from("piraeus-server")
   cache-to = cache-to("piraeus-server")
   context = "piraeus-server"
+  contexts = { base = "target:base" }
   args = {
-    DISTRO                     = DISTRO
     LINSTOR_VERSION            = VERSIONS["LINSTOR"]
     K8S_AWAIT_ELECTION_VERSION = VERSIONS["K8S_AWAIT_ELECTION"]
   }
 }
 
 target "ktls-utils" {
-  inherits = ["base"]
+  inherits = ["common"]
   tags = tags("ktls-utils", VERSIONS["KTLS_UTILS"])
   cache-from = cache-from("ktls-utils")
   cache-to = cache-to("ktls-utils")
   context = "ktls-utils"
+  contexts = { base = "target:base" }
   args = {
-    DISTRO             = DISTRO
     KTLS_UTILS_VERSION = VERSIONS["KTLS_UTILS"]
   }
 }
 
 target "drbd-reactor" {
-  inherits = ["base"]
+  inherits = ["common"]
   tags = tags("drbd-reactor", VERSIONS["DRBD_REACTOR"])
   cache-from = cache-from("drbd-reactor")
   cache-to = cache-to("drbd-reactor")
   context = "drbd-reactor"
+  contexts = { base = "target:base" }
   args = {
-    DISTRO               = DISTRO
     DRBD_REACTOR_VERSION = VERSIONS["DRBD_REACTOR"]
   }
 }
 
 target "drbd-driver-loader" {
   name       = "drbd-driver-loader-${distro}-${escape(drbd_version)}"
-  inherits = ["base"]
+  inherits = ["common"]
   tags = tags("drbd9-${distro}", drbd_version)
   cache-from = cache-from("drbd9-${distro}")
   cache-to = cache-to("drbd9-${distro}")
