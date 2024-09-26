@@ -1,20 +1,13 @@
-ARG DISTRO=bookworm
-FROM debian:$DISTRO
+FROM base
 
-MAINTAINER Roland Kammerer <roland.kammerer@linbit.com>
-
-ARG LINSTOR_VERSION
-ARG DISTRO
-
-RUN { echo 'APT::Install-Recommends "false";' ; echo 'APT::Install-Suggests "false";' ; } > /etc/apt/apt.conf.d/99_piraeus
-RUN apt-get update && apt-get install -y wget ca-certificates && apt-get clean
-RUN apt-get install -y gnupg2 && \
-	 wget -O- https://packages.linbit.com/package-signing-pubkey.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/linbit-keyring.gpg && \
+ARG LINSTOR_VERSION=*
+RUN --mount=type=cache,target=/var/cache,sharing=private \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=private \
+    --mount=type=tmpfs,target=/var/log \
 	# Enable contrib repos for zfsutils \
+	 . /etc/os-release && \
 	 sed -i -r 's/^Components: (.*)$/Components: \1 contrib/' /etc/apt/sources.list.d/debian.sources && \
-	 echo "deb http://packages.linbit.com/public" $DISTRO "misc" > /etc/apt/sources.list.d/linbit.list && \
-	 echo "deb http://packages.linbit.com/public/staging" $DISTRO "misc" >> /etc/apt/sources.list.d/linbit.list && \
-	 echo "deb http://deb.debian.org/debian $DISTRO-backports contrib" > /etc/apt/sources.list.d/backports.list  && \
+	 echo "deb http://deb.debian.org/debian $VERSION_CODENAME-backports contrib" > /etc/apt/sources.list.d/backports.list && \
 	 apt-get update && \
 	# Install useful utilities and general dependencies
 	 apt-get install -y udev drbd-utils jq net-tools iputils-ping iproute2 dnsutils netcat-traditional sysstat curl util-linux && \
@@ -43,12 +36,11 @@ RUN apt-get install -y gnupg2 && \
 	# zstd: used with thin-send-recv to send snapshots to another LINSTOR cluster \
 	  zstd \
 	# zfsutils-linux: for zfs storage pools \
-	  zfsutils-linux/$DISTRO-backports \
+	  zfsutils-linux/$VERSION_CODENAME-backports \
 	 && \
 	# remove udev, no need for it in the container \
 	 apt-get remove -y udev && \
-	 apt-get install -y linstor-controller=$LINSTOR_VERSION linstor-satellite=$LINSTOR_VERSION linstor-common=$LINSTOR_VERSION  linstor-client && \
-	 apt-get clean
+	 apt-get install -y linstor-controller=$LINSTOR_VERSION linstor-satellite=$LINSTOR_VERSION linstor-common=$LINSTOR_VERSION linstor-client
 
 # Log directory need to be group writable. OpenShift assigns random UID and GID, without extra RBAC changes we can only influence the GID.
 RUN mkdir /var/log/linstor-controller && \

@@ -1,17 +1,11 @@
-ARG DISTRO=bookworm
-FROM debian:$DISTRO
+FROM base
 
-ARG KTLS_UTILS_VERSION
-ARG DISTRO
-
-RUN { echo 'APT::Install-Recommends "false";' ; echo 'APT::Install-Suggests "false";' ; } > /etc/apt/apt.conf.d/99_piraeus
-RUN apt-get update && apt-get install -y wget ca-certificates
-RUN apt-get install -y gnupg2 && \
-	 wget -O- https://packages.linbit.com/package-signing-pubkey.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/linbit-keyring.gpg && \
-	 echo "deb http://packages.linbit.com/public" $DISTRO "misc" > /etc/apt/sources.list.d/linbit.list && \
+ARG KTLS_UTILS_VERSION=*
+RUN --mount=type=cache,target=/var/cache,sharing=private \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=private \
+    --mount=type=tmpfs,target=/var/log \
 	 apt-get update && \
-	 apt-get install -y tini ktls-utils=$KTLS_UTILS_VERSION && \
-	 apt-get clean
+	 apt-get install -y tini ktls-utils=$KTLS_UTILS_VERSION
 
 COPY --chmod=0600 tlshd.conf /etc/tlshd.conf
 
