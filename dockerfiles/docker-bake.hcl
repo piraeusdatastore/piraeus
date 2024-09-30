@@ -76,6 +76,7 @@ group "default" {
 
 target "base" {
   dockerfile = "base.Dockerfile"
+  inherits = ["common"]
   args = {
     DISTRO = DISTRO
   }
