@@ -40,7 +40,7 @@ RUN --mount=type=cache,target=/var/cache,sharing=private \
 	 && \
 	# remove udev, no need for it in the container \
 	 apt-get remove -y udev && \
-	 apt-get install -y linstor-controller=$LINSTOR_VERSION linstor-satellite=$LINSTOR_VERSION linstor-common=$LINSTOR_VERSION linstor-client
+	 apt-get install -y linstor-controller=$LINSTOR_VERSION linstor-satellite=$LINSTOR_VERSION linstor-common=$LINSTOR_VERSION linstor-client linstor-gui
 
 # Log directory need to be group writable. OpenShift assigns random UID and GID, without extra RBAC changes we can only influence the GID.
 RUN mkdir /var/log/linstor-controller && \
