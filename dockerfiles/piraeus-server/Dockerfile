@@ -72,7 +72,7 @@ RUN wget "https://github.com/LINBIT/losetup-container/releases/download/${LOSETU
 	 printf '#!/bin/sh\nLOSETUP_CONTAINER_ORIGINAL_LOSETUP=%s exec /usr/local/sbin/losetup-container "$@"\n' $(command -v losetup) > /usr/local/sbin/losetup && \
 	 chmod +x /usr/local/sbin/losetup
 
-RUN wget "https://dl.k8s.io/$(wget -O - https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/${TARGETARCH}/kubectl" -O /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl
+RUN wget "https://dl.k8s.io/$(wget -O - https://dl.k8s.io/release/stable.txt)/bin/linux/${TARGETARCH}/kubectl" -O /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl
 
 CMD ["startSatellite"]
 ENTRYPOINT ["/usr/bin/k8s-await-election", "/usr/bin/piraeus-entry.sh"]
