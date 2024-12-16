@@ -23,6 +23,9 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
+      - name: Set up cosign
+        uses: sigstore/cosign-installer@v3
+        # if: ${{ github.event_name != 'pull_request' }}
       - name: login to Docker Hub
         if: ${{ github.event_name != 'pull_request' }}
         uses: docker/login-action@v3
@@ -36,14 +39,28 @@ jobs:
           registry: quay.io
           username: ${{ secrets.QUAYIO_USERNAME }}
           password: ${{ secrets.QUAYIO_PASSWORD }}
+      - name: Login to GitHub Container Registry
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         uses: docker/bake-action@v5
+        id: bake
         with:
           builder: ${{ steps.buildx.outputs.name }}
           workdir: dockerfiles
           provenance: true
           sbom: true
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
+          targets: ktls-utils
         env:
           GIT_COMMIT: ${{ github.sha }}
           CACHE: true
+          REGISTRIES: ghcr.io/piraeusdatastore
+      - name: Sign images
+        run: |
+          jq '.[] | ."containerimage.digest" as $DIGEST | ."image.name" | split(",")[] | "\(.)@\($DIGEST)"' -r <<<'${{ steps.bake.outputs.metadata }}' \
+            | xargs cosign sign --yes
