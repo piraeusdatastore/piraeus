@@ -40,6 +40,7 @@ jobs:
         uses: docker/bake-action@v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
+          source: .
           workdir: dockerfiles
           provenance: true
           sbom: true
