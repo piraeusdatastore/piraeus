@@ -20,7 +20,7 @@ variable VERSIONS {
     DRBD_REACTOR       = "1.7.0-1"
     K8S_AWAIT_ELECTION = "v0.4.1"
     KTLS_UTILS         = "0.11-1"
-    LINSTOR            = "1.30.3-1"
+    LINSTOR            = "1.30.4-1"
   }
 }
 
