@@ -16,7 +16,7 @@ variable "CACHE" {
 
 variable VERSIONS {
   default = {
-    DRBD = ["9.2.13", "9.1.23"]
+    DRBD = ["9.2.14"]
     DRBD_REACTOR       = "1.8.0-1"
     K8S_AWAIT_ELECTION = "v0.4.1"
     KTLS_UTILS         = "1.0.0-1"
@@ -134,12 +134,10 @@ target "drbd-driver-loader" {
   matrix = {
     drbd_version = VERSIONS["DRBD"]
     distro = [
-      "centos7",
       "centos8",
       "almalinux8",
       "almalinux9",
-      "bionic",
-      "focal",
+      "almalinux10",
       "jammy",
       "noble",
       "bullseye",
