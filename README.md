@@ -28,7 +28,7 @@ Piraeus is a [CNCF Sandbox Project](https://www.cncf.io/sandbox-projects/).
 Installing Piraeus can be as easy as:
 
 ```
-$ kubectl apply --server-side -k "https://github.com/piraeusdatastore/piraeus-operator//config/default?ref=v2"
+$ kubectl apply --server-side -f "https://github.com/piraeusdatastore/piraeus-operator/releases/latest/download/manifest.yaml"
 namespace/piraeus-datastore configured
 ...
 $ kubectl wait pod --for=condition=Ready -n piraeus-datastore -l app.kubernetes.io/component=piraeus-operator
@@ -45,7 +45,7 @@ EOF
 Head on over to the [Piraeus Operator docs] to learn more. It contains detailed instructions on how to get started
 using Piraeus.
 
-[Piraeus Operator docs]: https://github.com/piraeusdatastore/piraeus-operator/tree/v2/docs
+[Piraeus Operator docs]: https://piraeus.io/docs/
 
 It also contains a basic Helm chart. See [here](https://github.com/piraeusdatastore/piraeus-operator/tree/v2/charts/piraeus).
 
