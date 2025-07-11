@@ -17,10 +17,10 @@ variable "CACHE" {
 variable VERSIONS {
   default = {
     DRBD = ["9.2.14"]
-    DRBD_REACTOR       = "1.8.0-1"
+    DRBD_REACTOR       = "1.9.0-1"
     K8S_AWAIT_ELECTION = "v0.4.1"
     KTLS_UTILS         = "1.1.0-1"
-    LINSTOR            = "1.31.2-1"
+    LINSTOR            = "1.31.3-1"
   }
 }
 
