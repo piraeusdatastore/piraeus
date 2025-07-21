@@ -13,6 +13,7 @@ RUN apt-get update && \
       diffutils \
       perl \
       elfutils \
+      libc-dev \
       curl && \
     apt-get clean
 
