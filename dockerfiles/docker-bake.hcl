@@ -142,6 +142,7 @@ target "drbd-driver-loader" {
       "noble",
       "bullseye",
       "bookworm",
+      "trixie",
     ]
   }
   args = {
