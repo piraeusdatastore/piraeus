@@ -16,11 +16,16 @@ variable "CACHE" {
 
 variable VERSIONS {
   default = {
-    DRBD = ["9.2.14"]
-    DRBD_REACTOR       = "1.9.0-1"
+    # renovate: type=github-tags url=https://github.com depName=LINBIT/drbd extractVersion=^drbd-(?<version>.*)$
+    DRBD    = "9.2.14"
+    # renovate: type=github-tags url=https://github.com depName=LINBIT/k8s-await-election
     K8S_AWAIT_ELECTION = "v0.4.1"
-    KTLS_UTILS         = "1.1.0-1"
-    LINSTOR            = "1.32.1-1"
+    # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=drbd-reactor
+    DRBD_REACTOR = "1.9.0-1"
+    # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=ktls-utils
+    KTLS_UTILS = "1.1.0-1"
+    # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=linstor-common
+    LINSTOR = "1.32.1-1"
   }
 }
 
@@ -124,15 +129,14 @@ target "drbd-reactor" {
 }
 
 target "drbd-driver-loader" {
-  name       = "drbd-driver-loader-${distro}-${escape(drbd_version)}"
+  name       = "drbd-driver-loader-${distro}"
   inherits = ["common"]
-  tags = tags("drbd9-${distro}", drbd_version)
+  tags = tags("drbd9-${distro}", VERSIONS["DRBD"])
   cache-from = cache-from("drbd9-${distro}")
   cache-to = cache-to("drbd9-${distro}")
   context    = "drbd-driver-loader"
   dockerfile = "Dockerfile.${distro}"
   matrix = {
-    drbd_version = VERSIONS["DRBD"]
     distro = [
       "centos8",
       "almalinux8",
@@ -146,6 +150,6 @@ target "drbd-driver-loader" {
     ]
   }
   args = {
-    DRBD_VERSION = drbd_version
+    DRBD_VERSION = VERSIONS["DRBD"]
   }
 }

@@ -1,0 +1,24 @@
+{
+  "extends": ["config:recommended", "group:allNonMajor"],
+  "enabledManagers": [],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": "dockerfiles/docker-bake.hcl",
+      "matchStrings": [
+        "#\\s*renovate:\\s*type=(?<type>.*?)\\s*url=(?<url>.*?)\\s*depName=(?<depName>.*?)\\s*(extractVersion=(?<extractVersion>.*?))?\\s*\\S+\\s*=\\s*\"(?<currentValue>.*)\""
+      ],
+      "registryUrlTemplate": "{{{decodeURIComponent url}}}",
+      "datasourceTemplate": "{{type}}",
+      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^(?<version>.*)${{/if}}"
+    }
+  ],
+  "github-actions": {
+    "description": "Managed by dependabot",
+    "enabled": false
+  },
+  "dockerfile": {
+    "description": "Managed manually",
+    "enabled": false
+  }
+}
