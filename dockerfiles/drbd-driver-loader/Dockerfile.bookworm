@@ -1,6 +1,6 @@
 FROM debian:bookworm
 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y kmod gnupg make gcc patch diffutils perl elfutils curl 'linux-kbuild-*' && apt-get clean
+RUN apt-get update && apt-get upgrade -y && apt-get install -y kmod gnupg make gcc patch coccinelle diffutils perl elfutils curl 'linux-kbuild-*' && apt-get clean
 
 ARG DRBD_VERSION
 ADD https://pkg.linbit.com/downloads/drbd/9/drbd-${DRBD_VERSION}.tar.gz /drbd.tar.gz
