@@ -58,4 +58,4 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: |
           jq '.[] | select(type=="object") | select(."containerimage.digest") | ."containerimage.digest" as $DIGEST | ."image.name" | split(":")[0] | "\(.)@\($DIGEST)"' -r <<<'${{ steps.bake.outputs.metadata }}' \
-            | xargs --no-run-if-emtpy cosign sign --yes
+            | xargs --no-run-if-empty cosign sign --yes
