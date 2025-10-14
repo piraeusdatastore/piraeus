@@ -19,9 +19,9 @@ variable VERSIONS {
     # renovate: type=github-tags url=https://github.com depName=LINBIT/drbd extractVersion=^drbd-(?<version>.*)$
     DRBD    = "9.2.15"
     # renovate: type=github-tags url=https://github.com depName=LINBIT/k8s-await-election
-    K8S_AWAIT_ELECTION = "v0.4.1"
+    K8S_AWAIT_ELECTION = "v0.4.2"
     # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=drbd-reactor
-    DRBD_REACTOR = "1.9.0-1"
+    DRBD_REACTOR = "1.10.0-1"
     # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=ktls-utils
     KTLS_UTILS = "1.2.1-1"
     # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=linstor-common
