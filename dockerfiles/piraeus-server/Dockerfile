@@ -1,6 +1,7 @@
 FROM base
 
 ARG LINSTOR_VERSION=*
+ARG LINSTOR_GUI_VERSION=*
 RUN --mount=type=cache,target=/var/cache,sharing=private \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=private \
     --mount=type=tmpfs,target=/var/log \
@@ -40,7 +41,7 @@ RUN --mount=type=cache,target=/var/cache,sharing=private \
 	 && \
 	# remove udev, no need for it in the container \
 	 apt-get remove -y udev && \
-	 apt-get install -y linstor-controller=$LINSTOR_VERSION linstor-satellite=$LINSTOR_VERSION linstor-common=$LINSTOR_VERSION linstor-client linstor-gui
+	 apt-get install -y linstor-controller=$LINSTOR_VERSION linstor-satellite=$LINSTOR_VERSION linstor-common=$LINSTOR_VERSION linstor-gui=$LINSTOR_GUI_VERSION linstor-client
 
 # Log directory need to be group writable. OpenShift assigns random UID and GID, without extra RBAC changes we can only influence the GID.
 RUN mkdir /var/log/linstor-controller && \

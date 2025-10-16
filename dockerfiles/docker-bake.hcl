@@ -26,6 +26,8 @@ variable VERSIONS {
     KTLS_UTILS = "1.2.1-1"
     # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=linstor-common
     LINSTOR = "1.32.3-1"
+    # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=linstor-gui
+    LINSTOR_GUI = "1.9.10-1"
   }
 }
 
@@ -100,6 +102,7 @@ target "piraeus-server" {
   contexts = { base = "target:base" }
   args = {
     LINSTOR_VERSION            = VERSIONS["LINSTOR"]
+    LINSTOR_GUI_VERSION        = VERSIONS["LINSTOR_GUI"]
     K8S_AWAIT_ELECTION_VERSION = VERSIONS["K8S_AWAIT_ELECTION"]
   }
 }
