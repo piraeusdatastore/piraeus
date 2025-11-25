@@ -17,7 +17,7 @@ variable "CACHE" {
 variable VERSIONS {
   default = {
     # renovate: type=github-tags url=https://github.com depName=LINBIT/drbd extractVersion=^drbd-(?<version>.*)$
-    DRBD    = "9.2.15"
+    DRBD    = "9.2.16"
     # renovate: type=github-tags url=https://github.com depName=LINBIT/k8s-await-election
     K8S_AWAIT_ELECTION = "v0.4.2"
     # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=drbd-reactor
