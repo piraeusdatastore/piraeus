@@ -25,9 +25,9 @@ variable VERSIONS {
     # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=ktls-utils
     KTLS_UTILS = "1.2.1-1"
     # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=linstor-common
-    LINSTOR = "1.32.3-1"
+    LINSTOR = "1.33.0-1"
     # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=linstor-gui
-    LINSTOR_GUI = "2.0.0-1"
+    LINSTOR_GUI = "2.1.0-1"
   }
 }
 
