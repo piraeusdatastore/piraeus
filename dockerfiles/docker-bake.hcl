@@ -27,7 +27,7 @@ variable VERSIONS {
     # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=linstor-common
     LINSTOR = "1.33.0-1"
     # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=linstor-gui
-    LINSTOR_GUI = "2.1.0-1"
+    LINSTOR_GUI = "2.2.0-1"
   }
 }
 
