@@ -46,8 +46,7 @@ jobs:
         id: bake
         with:
           builder: ${{ steps.buildx.outputs.name }}
-          source: .
-          workdir: dockerfiles
+          source: ./dockerfiles/
           provenance: true
           sbom: true
           push: ${{ github.event_name != 'pull_request' }}
