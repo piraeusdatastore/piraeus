@@ -147,6 +147,7 @@ target "drbd-driver-loader" {
       "almalinux10",
       "jammy",
       "noble",
+      "resolute",
       "bullseye",
       "bookworm",
       "trixie",
