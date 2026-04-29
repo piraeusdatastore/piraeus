@@ -15,7 +15,6 @@ RUN apt-get update && \
       perl \
       elfutils \
       libc-dev \
-      coccinelle \
       curl && \
     apt-get clean
 
