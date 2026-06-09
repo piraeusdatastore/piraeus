@@ -55,6 +55,9 @@ jobs:
           CACHE: true
       - name: Sign images
         if: ${{ github.event_name != 'pull_request' }}
+        env:
+          BUILD_METADATA: ${{ steps.bake.outputs.metadata }}
         run: |
-          jq '.[] | select(type=="object") | select(."containerimage.digest") | ."containerimage.digest" as $DIGEST | ."image.name" | split(":")[0] | "\(.)@\($DIGEST)"' -r <<<'${{ steps.bake.outputs.metadata }}' \
+          printf '%s' "$BUILD_METADATA" \
+            | jq '.[] | select(type=="object") | select(."containerimage.digest") | ."containerimage.digest" as $DIGEST | ."image.name" | split(":")[0] | "\(.)@\($DIGEST)"' -r \
             | xargs --no-run-if-empty cosign sign --yes
