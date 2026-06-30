@@ -1,4 +1,4 @@
-ARG DISTRO=bookworm
+ARG DISTRO=trixie
 FROM debian:$DISTRO
 
 RUN { echo 'APT::Install-Recommends "false";' ; echo 'APT::Install-Suggests "false";' ; } > /etc/apt/apt.conf.d/99_piraeus

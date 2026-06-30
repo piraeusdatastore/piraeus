@@ -1,5 +1,5 @@
 variable "DISTRO" {
-  default = "bookworm"
+  default = "trixie"
 }
 
 variable "GIT_COMMIT" {
@@ -20,13 +20,13 @@ variable VERSIONS {
     DRBD    = "9.3.2"
     # renovate: type=github-tags url=https://github.com depName=LINBIT/k8s-await-election
     K8S_AWAIT_ELECTION = "v0.4.2"
-    # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=drbd-reactor
+    # renovate: type=deb url=https://packages.linbit.com/public?suite=trixie&components=misc&binaryArch=amd64 depName=drbd-reactor
     DRBD_REACTOR = "1.11.0-1"
-    # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=ktls-utils
+    # renovate: type=deb url=https://packages.linbit.com/public?suite=trixie&components=misc&binaryArch=amd64 depName=ktls-utils
     KTLS_UTILS = "1.2.1-1"
-    # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=linstor-common
+    # renovate: type=deb url=https://packages.linbit.com/public?suite=trixie&components=misc&binaryArch=amd64 depName=linstor-common
     LINSTOR = "1.33.3-1"
-    # renovate: type=deb url=https://packages.linbit.com/public?suite=bookworm&components=misc&binaryArch=amd64 depName=linstor-gui
+    # renovate: type=deb url=https://packages.linbit.com/public?suite=trixie&components=misc&binaryArch=amd64 depName=linstor-gui
     LINSTOR_GUI = "2.4.0-1"
   }
 }
