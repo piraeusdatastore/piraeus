@@ -53,6 +53,7 @@ jobs:
         env:
           GIT_COMMIT: ${{ github.sha }}
           CACHE: true
+          BUILDX_METADATA_PROVENANCE: disabled
       - name: Sign images
         if: ${{ github.event_name != 'pull_request' }}
         env:
