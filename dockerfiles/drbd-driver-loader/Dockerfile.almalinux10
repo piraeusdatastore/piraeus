@@ -1,7 +1,7 @@
 FROM almalinux:10
 MAINTAINER Roland Kammerer <roland.kammerer@linbit.com>
 
-RUN dnf -y update-minimal --security --sec-severity=Important --sec-severity=Critical && \
+RUN dnf -y upgrade && \
 	dnf install -y gcc make patch diffutils perl elfutils-libelf-devel kmod && dnf clean all -y
 
 ARG DRBD_VERSION
