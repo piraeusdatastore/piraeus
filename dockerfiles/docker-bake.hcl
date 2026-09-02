@@ -19,7 +19,7 @@ variable VERSIONS {
     # renovate: type=github-tags url=https://github.com depName=LINBIT/drbd extractVersion=^drbd-(?<version>.*)$
     DRBD    = "9.3.3"
     # renovate: type=github-tags url=https://github.com depName=LINBIT/k8s-await-election
-    K8S_AWAIT_ELECTION = "v0.5.0"
+    K8S_AWAIT_ELECTION = "v0.5.1"
     # renovate: type=deb url=https://packages.linbit.com/public?suite=trixie&components=misc&binaryArch=amd64 depName=drbd-reactor
     DRBD_REACTOR = "1.12.0-1"
     # renovate: type=deb url=https://packages.linbit.com/public?suite=trixie&components=misc&binaryArch=amd64 depName=ktls-utils
