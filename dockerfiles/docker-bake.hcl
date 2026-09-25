@@ -148,7 +148,6 @@ target "drbd-driver-loader" {
       "jammy",
       "noble",
       "resolute",
-      "bullseye",
       "bookworm",
       "trixie",
     ]
