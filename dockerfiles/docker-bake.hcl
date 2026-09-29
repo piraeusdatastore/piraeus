@@ -23,7 +23,7 @@ variable VERSIONS {
     # renovate: type=deb url=https://packages.linbit.com/public?suite=trixie&components=misc&binaryArch=amd64 depName=drbd-reactor
     DRBD_REACTOR = "1.12.0-1"
     # renovate: type=deb url=https://packages.linbit.com/public?suite=trixie&components=misc&binaryArch=amd64 depName=ktls-utils
-    KTLS_UTILS = "1.2.1-1"
+    KTLS_UTILS = "1.5.0-1"
     # renovate: type=deb url=https://packages.linbit.com/public?suite=trixie&components=misc&binaryArch=amd64 depName=linstor-common
     LINSTOR = "1.35.2-1"
     # renovate: type=deb url=https://packages.linbit.com/public?suite=trixie&components=misc&binaryArch=amd64 depName=linstor-gui
