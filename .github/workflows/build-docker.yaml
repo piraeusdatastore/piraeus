@@ -1,6 +1,11 @@
 name: Build docker
 on:
   workflow_dispatch:
+    inputs:
+      no-cache:
+        description: Build without using the build cache
+        type: boolean
+        default: false
   push:
     branches:
       - master
@@ -50,6 +55,8 @@ jobs:
           provenance: true
           sbom: true
           push: ${{ github.event_name != 'pull_request' }}
+          no-cache: ${{ inputs.no-cache == true }}
+          pull: ${{ inputs.no-cache == true }}
         env:
           GIT_COMMIT: ${{ github.sha }}
           CACHE: true
