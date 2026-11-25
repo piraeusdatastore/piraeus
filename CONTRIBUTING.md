@@ -1,105 +1,163 @@
 # Contributing to Piraeus
 
-Welcome to Piraeus! Piraeus consists of several repositories under the organization.
-We encourage you to help out by reporting issues, improving documentation, fixing bugs, or adding new features.
-Please also take a look at our code of conduct, which details how contributors are expected to conduct themselves as
-part of the Piraeus community.
+Piraeus consists of several repositories in the [`piraeusdatastore`](https://github.com/piraeusdatastore) GitHub organization.
+You can contribute by reporting issues, improving documentation, fixing bugs, or adding features.
+The [code of conduct](./CODE_OF_CONDUCT.md) describes how contributors are expected to behave in the Piraeus community.
 
 ## Reporting issues
 
-To be honest, we regard every user of Piraeus as a very kind contributor.
-After experiencing Piraeus, you may have some feedback for the project.
-Then feel free to open an issue.
+Open an issue in the repository of the affected component, for example to:
 
-There are lot of cases when you could open an issue:
+- Report a bug or a performance problem.
+- Request or propose a feature.
+- Report missing or incorrect documentation.
+- Ask a question about the project.
 
-- bug report
-- feature request
-- performance issues
-- feature proposal
-- feature design
-- help wanted
-- doc incomplete
-- test improvement
-- any questions on project
-- and more...
+Remove sensitive data from the issue description and from any logs you attach.
+Sensitive data includes passwords, secret keys, network locations, and private business data.
 
-Please remember to remove sensitive data from your issue description. Sensitive data includes passwords, secret keys,
-network locations, private business data and so on.
+## Code and documentation contributions
 
-## Code and doc contribution
+Submit code and documentation changes as pull requests on GitHub.
+Pull requests can fix bugs or typos, add missing tests, improve features, remove unused code, refactor code, or correct documentation.
 
-Every action to make Piraeus better is encouraged.
-On GitHub, every improvement for Piraeus could be via a PR (short for pull request).
+## Contribution workflow
 
-- If you find a typo, try to fix it
-- If you find a bug, try to fix it
-- If you find some redundant codes, try to remove it
-- If you find some test cases missing, try to add them
-- If you could enhance a feature, please DO NOT hesitate
-- If you find code implicit, try to add comments to make it clear
-- If you find code ugly, try to refactor that
-- If you can help to improve documents, that is great
-- If you find document incorrect, go ahead and fix it
-- ...
+Piraeus follows the "Fork and Pull Request" workflow on GitHub.
+[GitHub Docs](https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project) describe how to create a fork and open a pull request.
 
-### Contribution workflow
+The sections [Commits](#commits), [Changelog](#changelog), and [Pull request review](#pull-request-review) apply to all Piraeus repositories.
+A repository can have its own `CONTRIBUTING.md` file that describes the target branch, development tools, tests, and other details specific to that repository.
+If a repository guide differs from this guide, follow the repository guide.
 
-Piraeus follows the basic "Fork and Pull Request" workflow on GitHub. [Here](https://guides.github.com/activities/forking/)
-is a short introduction on how to create your own forks and pull requests. 
+Before you work on a larger change, open an issue to discuss it.
 
-A Piraeus repository may contain its own CONTRIBUTING file, containing instructions specific to that repository.
-In general, we like to keep our git history readable by making liberal use of [`git rebase`](https://git-scm.com/book/en/v2/Git-Branching-Rebasing)
-before creating a pull request.
+Rebase your branch onto the target branch with [`git rebase`](https://git-scm.com/book/en/v2/Git-Branching-Rebasing).
+Do not merge the target branch into your branch.
 
-Every contributer has to certify that any changes in a pull request are their own, or that they have the right to share
-the code. This is done via a [Developer Certificate of Origin](https://developercertificate.org/) in the form of a
-`Signed-off-by` line in each commit message. For example:
+After you open a pull request, a [maintainer](./MAINTAINERS.md) reviews the changes.
+The maintainer either requests changes or approves the pull request.
+After approval, the maintainer merges the pull request.
+
+## Commits
+
+* Limit each commit to one logical change, including the files generated for it.
+* Each commit must build and pass the tests.
+  If a commit does not build, `git bisect` cannot test it.
+* Do not combine refactoring, formatting changes, and functional changes in one commit.
+
+### Commit messages
+
+* Write the subject line in the imperative mood, for example `Add option to set the replica count`.
+  Do not end it with a period.
+* Limit the subject line to about 50 characters.
+  A prefix is not required.
+* Separate the body from the subject line with a blank line.
+* Wrap the body at 80 characters.
+* In the body, describe why the change is necessary and what it changes.
+  Leave out details that the diff shows.
+* Do not reference GitHub issues or pull requests, for example `Fixes #123`.
+  Link them in the pull request description instead.
 
 ```
-This is my commit message
+Add option to set the replica count
+
+The replica count was fixed at 2. Clusters with more than two nodes
+could not use additional replicas for redundancy.
 
 Signed-off-by: Random J Developer <random@developer.example.org>
 ```
 
-Run `git commit --signoff` to automatically create such a line for new commits.
+### Developer Certificate of Origin
 
-After you've created your pull request, a [maintainer](./MAINTAINERS.md) will review all changes. The maintainer may
-request changes or approve of the request as is. Once approved, the maintainer will merge the changes into the Piraeus
-repository.
+Piraeus uses the [Developer Certificate of Origin](https://developercertificate.org/).
+With it, you certify that the changes in a pull request are your own, or that you have the right to share them.
+Add a `Signed-off-by` line with your name and email address to every commit.
+The `-s` flag of `git commit` adds the line:
 
-## Engage to help anything
+```
+$ git commit -s -m 'Add option to set the replica count'
+```
 
-We choose GitHub as the primary place for Piraeus to collaborate.
-So the latest updates of Piraeus are always here.
-Although contributions via PR is an explicit way to help, we still call for any other ways.
+## Changelog
 
-- reply to issues if you can
-- help solve other users' problems
-- help review the code from other contributors in PRs
-- discuss about Piraeus to make things clearer
-- advocate Piraeus technology beyond GitHub
-- write blogs on Piraeus and so on
+Repositories with a `CHANGELOG.md` file follow the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
 
-In a word, **ANY HELP IS CONTRIBUTION**.
+* For every change that affects users, add an entry under `[Unreleased]`, in the matching subsection: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, or `Security`.
+* Describe the effect on the user in one or two lines.
+  Do not describe the implementation.
+* Add the entry in the same pull request as the change.
+* Do not add an entry for changes to documentation, CI, or tests.
+* If users must take an action during an upgrade, state the action in the entry.
+  The repository guide describes where to document the upgrade steps in detail.
 
-## Join Piraeus as a member
+```
+## [Unreleased]
 
-It is also welcomed that you join the Piraeus team if you are willing to participate in the Piraeus community regularly.
+### Added
+
+- Option to set the replica count for new volumes.
+
+### Fixed
+
+- Volumes no longer stay in `Pending` after a node restart.
+```
+
+## Pull request review
+
+### Opening a pull request
+
+* In the description, explain what the pull request changes and why.
+  Link the related issue.
+* Limit a pull request to one topic.
+  Open separate pull requests for unrelated changes.
+* Mark a pull request that is not ready for review as a draft.
+
+### Addressing review comments
+
+* Reply to every review comment with the change you made, or with the reason you did not make a change.
+* Fold follow-up fixes into the commits that introduced the problem.
+  Do not add separate commits that address review comments.
+* Do not apply suggestions with the GitHub web interface.
+  GitHub creates a separate commit without a `Signed-off-by` line.
+  Apply the suggestion locally and fold it into the matching commit.
+
+To fold a fix into an existing commit, create a fixup commit, squash it into its target, and update the pull request:
+
+```
+$ git commit -s --fixup=<commit>
+$ git rebase -i --autosquash <commit>~
+$ git push --force-with-lease
+```
+
+After you push the changes, request a new review from the reviewer.
+
+## Other ways to contribute
+
+Piraeus development takes place on GitHub.
+Besides pull requests, you can contribute by:
+
+- Answering questions in issues.
+- Reviewing pull requests from other contributors.
+- Writing about Piraeus outside of GitHub, for example in blog posts.
+
+## Joining the Piraeus team
+
+Contributors who take part in the community regularly can join the Piraeus team.
 
 ### Requirements
 
-- Have read [Contributing to Piraeus](./CONTRIBUTING.md) carefully
-- Have read [Contributor Covenant Code of Conduct](./CODE_OF_CONDUCT.md)
-- Have submitted multiple PRs to the community
-- Be active in the community; may including but not limited to
-    - Submitting or commenting on issues
-    - Contributing PRs to the community
-    - Reviewing PRs in the community
+- Read this contributing guide.
+- Read the [Contributor Covenant Code of Conduct](./CODE_OF_CONDUCT.md).
+- Submit several pull requests.
+- Take part in the community, for example by:
+    - Opening or commenting on issues.
+    - Submitting pull requests.
+    - Reviewing pull requests.
 
-### How to do it
+### Applying
 
-You can do it in either of two ways:
+Apply in one of two ways:
 
-- Submit a PR in the project repo
-- Contact the team the [community](./README.md#community) channels
+- Open a pull request in this repository.
+- Contact the team through the [community](./README.md#community) channels.
